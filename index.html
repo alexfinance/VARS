@@ -972,7 +972,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         )}
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16}}>
-          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 09:46 GST</p>
+          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 09:57 GST</p>
           <button
             onClick={() => { localStorage.removeItem('varspm_data'); try { if (typeof window.supabase !== 'undefined') { const sb = window.supabase.createClient('https://whgoaglmguopxrzfjifj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZ29hZ2xtZ3VvcHhyemZqaWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjY1MDEsImV4cCI6MjA5MDgwMjUwMX0.TL6klBDqfyAUvpgKXxha-1hpH6keaeARZvJk3rc5vhg'); sb.from('app_state').upsert({ id: 'main', data: {} }); } } catch(e){} window.location.reload(); }}
             style={{background:'none',border:'none',color:'#cc0000',fontSize:11,cursor:'pointer',textDecoration:'underline'}}
@@ -1028,7 +1028,7 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
 };
 
 // ==================== TOP BAR ====================
-const TopBar = ({ onCreateClick, onMenuToggle }) => {
+const TopBar = ({ onCreateClick, onMenuToggle, onLogout }) => {
   const [showCreate, setShowCreate] = useState(false);
   return (
     <div className="topbar">
@@ -1058,6 +1058,7 @@ const TopBar = ({ onCreateClick, onMenuToggle }) => {
         </div>
         <div className="topbar-icon"><Icon name="bell" size={16}/></div>
         <div className="avatar"><Icon name="user" size={16}/></div>
+        <button onClick={onLogout} style={{background:'none',border:'1px solid #ddd',borderRadius:6,padding:'6px 10px',fontSize:11,color:'#666',cursor:'pointer',marginLeft:4}}>Logout</button>
       </div>
     </div>
   );
@@ -2414,22 +2415,23 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
   }, [step, qrData]);
 
   const getShareText = () => {
-    if (!qrData) return '';
+    const d = qrData;
+    if (!d) return '';
     return [
       '🏢 *VARS PM — Visitor Pre-Approval*',
       '',
       '✅ Your visit has been pre-approved!',
       '',
-      '🔖 Permit: ' + qrData.permit,
-      '🏠 Property: ' + qrData.property,
-      '🚪 Unit: ' + qrData.unit,
-      '👤 Host: ' + qrData.resident,
-      '📅 Date: ' + qrData.date,
-      '⏰ Time: ' + qrData.time,
-      '🚗 Vehicle: ' + qrData.vehicle,
+      '🔖 Permit: ' + d.permit,
+      '🏠 Property: ' + d.property,
+      '🚪 Unit: ' + d.unit,
+      '👤 Host: ' + d.resident,
+      '📅 Date: ' + d.date,
+      '⏰ Time: ' + d.time,
+      '🚗 Vehicle: ' + d.vehicle,
       '',
       '📋 Show this message or QR code at the gate.',
-      'Valid until: ' + qrData.validUntil
+      'Valid until: ' + d.validUntil
     ].join('\n');
   };
 
@@ -2851,6 +2853,74 @@ const ResidentApp = ({ onLogout }) => {
                 </div>
               ))}
             </div>
+
+            {vp && (function() {
+              const viewGetBlob = () => new Promise((resolve) => {
+                if (!viewQrRef.current) { resolve(null); return; }
+                const canvas = viewQrRef.current.querySelector('canvas');
+                if (!canvas) { resolve(null); return; }
+                const pad = 40, w = 400;
+                const pc = document.createElement('canvas'); pc.width = w; pc.height = 620;
+                const ctx = pc.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, 620);
+                ctx.fillStyle = '#ae9751'; ctx.fillRect(0, 0, w, 4);
+                ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('VARS PM — Visitor Pass', w/2, 36);
+                ctx.fillStyle = '#2d6a4f'; ctx.font = 'bold 13px Arial'; ctx.fillText('PRE-APPROVED', w/2, 58);
+                ctx.drawImage(canvas, (w - 180) / 2, 72, 180, 180);
+                ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 14px Arial'; ctx.fillText(vp.permit, w/2, 272);
+                ctx.textAlign = 'left'; ctx.font = '12px Arial';
+                let y = 298;
+                [['Visitor',vp.visitor],['Phone',vp.mobile],['Property',vp.property],['Unit',vp.unit],['Host',vp.resident],['Type',vp.type],['Date',vp.date],['Time',vp.time],['Vehicle',vp.vehicle],['Valid Until',vp.validUntil]].forEach(([l,v]) => {
+                  ctx.fillStyle = '#8a8a8a'; ctx.font = '11px Arial'; ctx.fillText(l, pad, y);
+                  ctx.fillStyle = '#1a1a1a'; ctx.font = '12px Arial'; ctx.fillText(v || '', 140, y); y += 24;
+                });
+                ctx.strokeStyle = '#e8e8e8'; ctx.beginPath(); ctx.moveTo(pad, y+4); ctx.lineTo(w-pad, y+4); ctx.stroke();
+                ctx.fillStyle = '#8a8a8a'; ctx.font = '10px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('Show this pass or scan QR code at the gate', w/2, y+24);
+                pc.toBlob((blob) => { resolve(blob); }, 'image/png');
+              });
+              const viewShare = async () => {
+                const blob = await viewGetBlob();
+                if (!blob) { showToast('Could not generate image'); return; }
+                const file = new File([blob], 'VARS-PM-Pass-' + vp.permit + '.png', { type: 'image/png' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                  try { await navigator.share({ files: [file] }); return; } catch(e) { if (e.name === 'AbortError') return; }
+                }
+                const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.download = file.name; a.href = url; a.click(); URL.revokeObjectURL(url);
+                showToast('Image saved — attach it in WhatsApp or Telegram');
+              };
+              const viewWhatsApp = async () => {
+                await viewShare();
+                window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent('Here is your visitor pass for ' + vp.property + '. Please show the attached QR image at the gate.'), '_blank');
+              };
+              const viewTelegram = async () => {
+                await viewShare();
+                window.open('https://t.me/share/url?url=' + encodeURIComponent('VARS PM Visitor Pass') + '&text=' + encodeURIComponent('Here is your visitor pass. Please show the attached QR image at the gate.'), '_blank');
+              };
+              const viewSave = async () => {
+                const blob = await viewGetBlob();
+                if (!blob) { showToast('Could not generate image'); return; }
+                const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.download = 'VARS-PM-Pass-' + vp.permit + '.png'; a.href = url; a.click(); URL.revokeObjectURL(url);
+              };
+              return (<React.Fragment>
+                <div style={{fontSize:11,color:'#8a8a8a',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:10,fontWeight:600}}>Share QR pass with your visitor</div>
+                <button onClick={viewShare} style={{width:'100%',padding:14,background:'#1a1a1a',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10,letterSpacing:'0.03em'}}>
+                  📤 Share Pass Image
+                </button>
+                <div style={{display:'flex',gap:8,marginBottom:10}}>
+                  <button onClick={viewWhatsApp} style={{flex:1,padding:14,background:'#25D366',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                    📱 WhatsApp
+                  </button>
+                  <button onClick={viewTelegram} style={{flex:1,padding:14,background:'#0088cc',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                    ✈️ Telegram
+                  </button>
+                </div>
+                <button onClick={viewSave} style={{width:'100%',padding:12,background:'#fff',color:'#1a1a1a',border:'1px solid #d0d0d0',borderRadius:6,fontSize:13,fontWeight:500,cursor:'pointer',marginBottom:16}}>
+                  💾 Save Pass Image to Phone
+                </button>
+              </React.Fragment>);
+            })()}
 
             <button onClick={() => { setCurrentPage('home'); setSelectedVisitor(null); }} style={{width:'100%',padding:14,background:'#1a1a1a',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',letterSpacing:'0.03em'}}>
               Back to Home
@@ -4078,7 +4148,7 @@ const App = () => {
       <div className="app-layout">
         <div className={`sidebar-overlay ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)}/>
         <Sidebar page={page} setPage={setPage} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout}/>
-        <TopBar onCreateClick={handleCreateClick} onMenuToggle={() => setSidebarOpen(!sidebarOpen)}/>
+        <TopBar onCreateClick={handleCreateClick} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout}/>
         <div className="main-content">{renderPage()}</div>
         <MobileBottomNav page={page} setPage={setPage}/>
       </div>
