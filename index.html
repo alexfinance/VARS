@@ -944,7 +944,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         )}
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16}}>
-          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0</p>
+          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 23:45</p>
           <button
             onClick={() => { localStorage.removeItem('varspm_data'); try { if (typeof window.supabase !== 'undefined') { const sb = window.supabase.createClient('https://whgoaglmguopxrzfjifj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZ29hZ2xtZ3VvcHhyemZqaWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjY1MDEsImV4cCI6MjA5MDgwMjUwMX0.TL6klBDqfyAUvpgKXxha-1hpH6keaeARZvJk3rc5vhg'); sb.from('app_state').upsert({ id: 'main', data: {} }); } } catch(e){} window.location.reload(); }}
             style={{background:'none',border:'none',color:'#cc0000',fontSize:11,cursor:'pointer',textDecoration:'underline'}}
@@ -3703,33 +3703,47 @@ const App = () => {
   const [toast, setToast] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState(supabaseReady ? 'connecting' : 'local');
-  const isSyncingRef = React.useRef(false);
+  const isWritingRef = React.useRef(false);  // true while we are saving to Supabase
   const writeTimerRef = React.useRef(null);
+  const lastCloudHashRef = React.useRef(''); // hash of last cloud data to detect real changes
 
-  // Load initial data from Supabase on mount
+  // Simple hash to compare data quickly
+  const quickHash = (obj) => { try { return JSON.stringify(obj).length + '_' + (obj.visitors||[]).length + '_' + (obj.entryLog||[]).length; } catch(e) { return ''; } };
+
+  // Load initial data from Supabase on mount + start polling
   useEffect(() => {
     if (!supabaseReady || !supabaseClient) return;
-    const loadFromCloud = async () => {
+
+    const loadFromCloud = async (isInitial) => {
+      // Don't poll while we're in the middle of writing
+      if (!isInitial && isWritingRef.current) return;
       try {
-        const { data: rows, error } = await supabaseClient
+        const { data: row, error } = await supabaseClient
           .from('app_state')
-          .select('data')
+          .select('data, updated_at')
           .eq('id', 'main')
           .single();
         if (error) {
-          console.log('Supabase read error:', error.message);
-          // Table might not exist yet — try to create initial row
-          if (error.code === 'PGRST116') {
-            console.log('No data row found — inserting initial data');
-            await supabaseClient.from('app_state').upsert({ id: 'main', data: initialData });
+          if (isInitial && error.code === 'PGRST116') {
+            console.log('No data row — creating initial');
+            await supabaseClient.from('app_state').upsert({ id: 'main', data: initialData, updated_at: new Date().toISOString() });
           }
-          setSyncStatus('offline');
+          if (isInitial) setSyncStatus('offline');
           return;
         }
-        if (rows && rows.data && Object.keys(rows.data).length > 0) {
-          isSyncingRef.current = true;
-          const cloudData = { ...rows.data };
-          delete cloudData._lastWriter; // strip internal field
+        if (row && row.data && Object.keys(row.data).length > 0) {
+          const cloudData = { ...row.data };
+          const writerDevice = cloudData._lastWriter || '';
+          delete cloudData._lastWriter;
+          const hash = quickHash(cloudData);
+
+          // Skip if data came from us OR hasn't changed
+          if (writerDevice === DEVICE_ID || hash === lastCloudHashRef.current) {
+            if (isInitial) setSyncStatus('online');
+            return;
+          }
+          console.log(isInitial ? 'Loaded cloud data' : 'Poll: new data from device ' + writerDevice);
+          lastCloudHashRef.current = hash;
           const merged = { ...initialData, ...cloudData };
           setData(merged);
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
@@ -3737,52 +3751,30 @@ const App = () => {
         setSyncStatus('online');
       } catch(e) {
         console.log('Supabase load error:', e);
-        setSyncStatus('offline');
+        if (isInitial) setSyncStatus('offline');
       }
     };
-    loadFromCloud();
-  }, []);
 
-  // Subscribe to real-time changes from Supabase (other devices only)
-  useEffect(() => {
-    if (!supabaseReady || !supabaseClient) return;
-    const channel = supabaseClient
-      .channel('app_state_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' }, (payload) => {
-        if (payload.new && payload.new.data) {
-          // Skip if this update came from our own device (device ID stored inside JSON)
-          if (payload.new.data._lastWriter === DEVICE_ID) {
-            console.log('Skipping own write echo');
-            return;
-          }
-          console.log('Applying remote update from device:', payload.new.data._lastWriter);
-          isSyncingRef.current = true;
-          const cloudData = { ...payload.new.data };
-          delete cloudData._lastWriter; // strip internal field
-          const merged = { ...initialData, ...cloudData };
-          setData(merged);
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
-          setSyncStatus('online');
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setSyncStatus('online');
-          console.log('Supabase real-time subscription active');
-        }
-      });
-    return () => { supabaseClient.removeChannel(channel); };
+    // Initial load
+    loadFromCloud(true);
+
+    // Poll every 4 seconds for changes from other devices
+    const pollId = setInterval(() => loadFromCloud(false), 4000);
+    console.log('Supabase polling started (every 4s)');
+    return () => clearInterval(pollId);
   }, []);
 
   // Write data to Supabase + localStorage when data changes (debounced)
   useEffect(() => {
-    if (isSyncingRef.current) { isSyncingRef.current = false; return; }
     // Save to localStorage immediately
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
-    // Write to Supabase — embed device ID inside JSON so no schema change needed
+    // Update our local hash so polling doesn't re-apply our own data
+    lastCloudHashRef.current = quickHash(data);
+    // Write to Supabase
     if (supabaseReady && supabaseClient) {
       if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
       writeTimerRef.current = setTimeout(async () => {
+        isWritingRef.current = true;
         try {
           const payload = { ...data, _lastWriter: DEVICE_ID };
           const { error } = await supabaseClient
@@ -3792,39 +3784,16 @@ const App = () => {
             console.log('Supabase write error:', error.message);
             setSyncStatus('offline');
           } else {
-            console.log('Supabase write OK');
+            console.log('Supabase write OK, visitors:', (data.visitors||[]).length);
             setSyncStatus('online');
           }
         } catch(e) {
           console.log('Supabase write exception:', e);
           setSyncStatus('offline');
         }
-      }, 500);
+        isWritingRef.current = false;
+      }, 600);
     }
-  }, [data]);
-
-  // BroadcastChannel fallback for same-browser multi-tab sync
-  useEffect(() => {
-    let bc = null;
-    try { bc = new BroadcastChannel('varspm_sync'); } catch(e) {}
-    if (!bc) return;
-    const handler = (event) => {
-      if (event.data && event.data.type === 'data_update') {
-        isSyncingRef.current = true;
-        setData({ ...initialData, ...event.data.data });
-      }
-    };
-    bc.addEventListener('message', handler);
-    return () => { bc.removeEventListener('message', handler); bc.close(); };
-  }, []);
-
-  useEffect(() => {
-    if (isSyncingRef.current) return;
-    try {
-      const bc = new BroadcastChannel('varspm_sync');
-      bc.postMessage({ type: 'data_update', data: data });
-      bc.close();
-    } catch(e) {}
   }, [data]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
