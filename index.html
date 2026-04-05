@@ -513,6 +513,8 @@ body{font-family:'Arial','Helvetica Neue',sans-serif;background:#f5f5f3;color:#1
 .sec-counter{display:flex;align-items:center;gap:8px}
 .sec-counter button{background:none;border:1px solid #444;width:24px;height:24px;border-radius:3px;color:#ccc;cursor:pointer;font-size:12px}
 .sec-counter input{flex:1;text-align:center;background:#1a1a1a;border:1px solid #333;border-radius:3px;color:#fff;width:50px;padding:4px;font-size:11px}
+.sec-entry-log-mobile{display:none}
+.sec-entry-log-desktop{display:table}
 .sec-utility-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
 .sec-utility-card{background:#2a2a2a;border:1px solid #333;border-radius:6px;padding:14px;text-align:center;cursor:pointer}
 .sec-utility-card p{font-size:11px;font-weight:500;color:#fff}
@@ -522,12 +524,38 @@ body{font-family:'Arial','Helvetica Neue',sans-serif;background:#f5f5f3;color:#1
 }
 
 @media(max-width:768px){
-  .sec-header{grid-template-columns:1fr;padding:12px}
-  .sec-tabs{padding:0 12px;gap:12px}
-  .sec-quick-actions{grid-template-columns:1fr}
+  .sec-header{grid-template-columns:1fr;padding:10px 12px;gap:8px}
+  .sec-header-left{flex-wrap:wrap}
+  .sec-gate-selector{display:none}
+  .sec-guard-info{display:none}
+  .sec-clock{position:absolute;right:12px;top:12px}
+  .sec-clock-time{font-size:14px}
+  .sec-tabs{padding:0 8px;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .sec-tab{padding:10px 8px;font-size:11px;white-space:nowrap;flex-shrink:0}
+  .sec-main-content{padding:10px}
+  .sec-quick-actions{grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+  .sec-quick-action-btn{padding:10px 6px}
+  .sec-quick-action-btn .icon{font-size:18px;margin-bottom:4px}
+  .sec-quick-action-btn .label{font-size:10px}
+  .sec-quick-action-btn .shortcut{display:none}
+  .sec-grid-3{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .sec-kpi-block{padding:12px}
+  .sec-kpi-number{font-size:24px}
+  .sec-entry-log{margin-top:12px}
+  .sec-entry-log-table{font-size:10px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .sec-entry-log-table th,.sec-entry-log-table td{padding:6px 8px;white-space:nowrap}
+  .sec-entry-log-table th{font-size:9px}
   .sec-type-selector{grid-template-columns:repeat(2,1fr)}
   .sec-unit-buttons{grid-template-columns:repeat(4,1fr)}
-  .sec-utility-cards{grid-template-columns:1fr}
+  .sec-utility-cards{grid-template-columns:repeat(3,1fr);gap:6px}
+  .sec-utility-card{padding:10px}
+  .sec-utility-card p{font-size:10px}
+  .sec-filter-row{gap:4px}
+  .sec-filter-chip{padding:6px 8px;font-size:10px}
+  .sec-pending-card{padding:10px}
+  .sec-visitor-now-card{padding:10px}
+  .sec-entry-log-mobile{display:block}
+  .sec-entry-log-desktop{display:none}
 }
 
 /* QR Scanner Styles */
@@ -944,7 +972,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         )}
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16}}>
-          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 23:45</p>
+          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 06 Apr 2026, 10:15 GST</p>
           <button
             onClick={() => { localStorage.removeItem('varspm_data'); try { if (typeof window.supabase !== 'undefined') { const sb = window.supabase.createClient('https://whgoaglmguopxrzfjifj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZ29hZ2xtZ3VvcHhyemZqaWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjY1MDEsImV4cCI6MjA5MDgwMjUwMX0.TL6klBDqfyAUvpgKXxha-1hpH6keaeARZvJk3rc5vhg'); sb.from('app_state').upsert({ id: 'main', data: {} }); } } catch(e){} window.location.reload(); }}
             style={{background:'none',border:'none',color:'#cc0000',fontSize:11,cursor:'pointer',textDecoration:'underline'}}
@@ -2304,7 +2332,8 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
       date: qrPayload.date,
       permitRef: permitRef,
       duration: '—',
-      qrCode: 'Pre-approved'
+      qrCode: 'Pre-approved',
+      qrPayload: qrPayload
     };
 
     // Entry for the entry log (Security dashboard + Resident activity)
@@ -2747,8 +2776,87 @@ const ResidentApp = ({ onLogout }) => {
     setSelectedForApproval(null);
   };
 
+  const viewQrRef = React.useRef(null);
+
+  // Generate QR code when viewing a visitor's detail
+  useEffect(() => {
+    if (currentPage === 'viewVisitor' && selectedVisitor && selectedVisitor.qrPayload && viewQrRef.current) {
+      viewQrRef.current.innerHTML = '';
+      const qrText = JSON.stringify({
+        _varspm: true,
+        permit: selectedVisitor.qrPayload.permit,
+        property: selectedVisitor.qrPayload.property,
+        unit: selectedVisitor.qrPayload.unit,
+        host: selectedVisitor.qrPayload.resident,
+        visitor: selectedVisitor.qrPayload.visitor,
+        phone: selectedVisitor.qrPayload.mobile,
+        type: selectedVisitor.qrPayload.type,
+        guests: selectedVisitor.qrPayload.guests,
+        vehicle: selectedVisitor.qrPayload.vehicle,
+        id: selectedVisitor.qrPayload.idDoc,
+        date: selectedVisitor.qrPayload.date,
+        time: selectedVisitor.qrPayload.time,
+        validUntil: selectedVisitor.qrPayload.validUntil,
+        status: 'PRE-APPROVED'
+      });
+      try {
+        new QRCode(viewQrRef.current, { text: qrText, width: 200, height: 200, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } catch(err) { console.log('QR regen error:', err); }
+    }
+  }, [currentPage, selectedVisitor]);
+
   const renderPage = () => {
     switch(currentPage) {
+      case 'viewVisitor':
+        if (!selectedVisitor) { setCurrentPage('home'); return null; }
+        const vp = selectedVisitor.qrPayload;
+        return (
+          <div className="res-content" style={{paddingBottom:80}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+              <button onClick={() => { setCurrentPage('home'); setSelectedVisitor(null); }} style={{background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#4d4d4f'}}>←</button>
+              <h3 style={{fontFamily:'Georgia,serif',fontSize:18,fontWeight:500,letterSpacing:'0.02em',margin:0}}>Visitor Pass</h3>
+            </div>
+
+            <div style={{background:'#fff',border:'1px solid #e8e8e8',borderRadius:6,padding:24,textAlign:'center',marginBottom:16}}>
+              <div style={{background:'#e8f5e9',color:'#2d6a4f',padding:'8px 16px',borderRadius:4,display:'inline-block',fontSize:13,fontWeight:600,letterSpacing:'0.04em',marginBottom:16}}>✓ PRE-APPROVED</div>
+              {vp ? (
+                <div ref={viewQrRef} style={{display:'flex',justifyContent:'center',marginBottom:16}}></div>
+              ) : (
+                <div style={{padding:20,color:'#999',fontSize:13}}>QR code not available (visitor was created before this feature)</div>
+              )}
+              <div style={{fontSize:11,color:'#8a8a8a',marginBottom:8}}>Scan this QR code at the gate</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>{selectedVisitor.permitRef || '—'}</div>
+              <div style={{fontSize:12,color:'#4d4d4f'}}>{selectedVisitor.name}</div>
+            </div>
+
+            <div style={{background:'#fff',border:'1px solid #e8e8e8',borderRadius:6,padding:20,marginBottom:16}}>
+              <div style={{fontSize:11,color:'#8a8a8a',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:12,fontWeight:600}}>Pass Details</div>
+              {[
+                ['Property', vp ? vp.property : 'Sky Tower - The Pinnacle Residences'],
+                ['Unit / Flat', selectedVisitor.flat],
+                ['Host', selectedVisitor.resident],
+                ['Visitor', selectedVisitor.name],
+                ['Phone', selectedVisitor.contact],
+                ['Type', selectedVisitor.type],
+                ['Total Guests', vp ? String(vp.guests) : '1'],
+                ['Vehicle', vp ? vp.vehicle : 'N/A'],
+                ['ID Document', vp ? vp.idDoc : '—'],
+                ['Date', selectedVisitor.date],
+                ['Time', selectedVisitor.time],
+                ['Valid Until', vp ? vp.validUntil : '—'],
+              ].map(([label, val], i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom: i < 11 ? '1px solid #f0f0f0' : 'none'}}>
+                  <span style={{fontSize:12,color:'#8a8a8a'}}>{label}</span>
+                  <span style={{fontSize:12,color:'#1a1a1a',fontWeight:500,textAlign:'right',maxWidth:'60%'}}>{val}</span>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => { setCurrentPage('home'); setSelectedVisitor(null); }} style={{width:'100%',padding:14,background:'#1a1a1a',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',letterSpacing:'0.03em'}}>
+              Back to Home
+            </button>
+          </div>
+        );
       case 'home':
         return (
           <div className="res-content">
@@ -2758,7 +2866,7 @@ const ResidentApp = ({ onLogout }) => {
                 <span onClick={() => setCurrentPage('preapprove')} style={{background:'#1a1a1a',color:'#fff',padding:'4px 10px',borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer'}}>+ Pre-approved</span>
               </div>
               {data.visitors.filter(v => v.status === 'Scheduled').length > 0 ? (
-                <div className="res-visitor-card" style={{background:'#faf8f5',borderLeft:'3px solid #ae9751'}}>
+                <div className="res-visitor-card" style={{background:'#faf8f5',borderLeft:'3px solid #ae9751',cursor:'pointer'}} onClick={() => { const v = data.visitors.filter(v => v.status === 'Scheduled')[0]; setSelectedVisitor(v); setCurrentPage('viewVisitor'); }}>
                   <div className="name">{data.visitors.filter(v => v.status === 'Scheduled')[0].name}</div>
                   <div style={{fontSize:12,color:'#999',marginBottom:4}}>{data.visitors.filter(v => v.status === 'Scheduled')[0].type} — Pre-approved</div>
                   <div style={{fontSize:12,color:'#666',marginBottom:4}}>{data.visitors.filter(v => v.status === 'Scheduled')[0].contact} — {data.visitors.filter(v => v.status === 'Scheduled')[0].time}</div>
@@ -2782,7 +2890,7 @@ const ResidentApp = ({ onLogout }) => {
               <h3 className="res-section-title">All Visitors ({data.visitors.length})</h3>
               {/* Show pre-approved/scheduled visitors */}
               {data.visitors.filter(v => v.status === 'Scheduled').map(v => (
-                <div key={'sched-'+v.id} className="res-visitor-card" style={{borderLeft:'3px solid #ae9751'}}>
+                <div key={'sched-'+v.id} className="res-visitor-card" style={{borderLeft:'3px solid #ae9751',cursor:'pointer'}} onClick={() => { setSelectedVisitor(v); setCurrentPage('viewVisitor'); }}>
                   <div style={{display:'flex',justifyContent:'space-between'}}>
                     <div>
                       <div className="name">{v.name}</div>
@@ -3323,8 +3431,44 @@ const SecurityApp = ({ onLogout }) => {
   const { data, setData, showToast } = useApp();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedVisitor, setSelectedVisitor] = useState(null);
+  const [viewingVisitor, setViewingVisitor] = useState(null); // for detail view
   const [showScanner, setShowScanner] = useState(false);
   const [scannedData, setScannedData] = useState(null);
+  const secQrRef = React.useRef(null);
+
+  // Look up full visitor data (with qrPayload) by permit ref or name
+  const findFullVisitor = (entry) => {
+    if (!entry) return null;
+    // Try matching by permit ref first
+    if (entry.refId) {
+      const match = data.visitors.find(v => v.permitRef === entry.refId);
+      if (match) return match;
+    }
+    // Try matching by visitor name
+    const name = entry.visitor || entry.name;
+    if (name) {
+      const match = data.visitors.find(v => v.name === name);
+      if (match) return match;
+    }
+    return null;
+  };
+
+  // Generate QR code when viewing visitor detail
+  useEffect(() => {
+    if (viewingVisitor && viewingVisitor.qrPayload && secQrRef.current) {
+      secQrRef.current.innerHTML = '';
+      const vp = viewingVisitor.qrPayload;
+      const qrText = JSON.stringify({
+        _varspm: true, permit: vp.permit, property: vp.property, unit: vp.unit,
+        host: vp.resident, visitor: vp.visitor, phone: vp.mobile, type: vp.type,
+        guests: vp.guests, vehicle: vp.vehicle, id: vp.idDoc, date: vp.date,
+        time: vp.time, validUntil: vp.validUntil, status: 'PRE-APPROVED'
+      });
+      try {
+        new QRCode(secQrRef.current, { text: qrText, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } catch(err) { console.log('QR regen error:', err); }
+    }
+  }, [viewingVisitor]);
 
   const handleQrScanned = (qrText) => {
     setShowScanner(false);
@@ -3396,6 +3540,64 @@ const SecurityApp = ({ onLogout }) => {
     showToast(info.visitor + ' has been ' + (actionLabels[info.action] || 'processed'));
   };
 
+  // Visitor detail view for Security app
+  const renderVisitorDetail = () => {
+    if (!viewingVisitor) return null;
+    const vp = viewingVisitor.qrPayload;
+    const entry = data.entryLog.find(e => e.refId === viewingVisitor.permitRef) || {};
+    return (
+      <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#1a1a1a',zIndex:1000,overflowY:'auto',padding:16}}>
+        <div style={{maxWidth:500,margin:'0 auto'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+            <button onClick={() => setViewingVisitor(null)} style={{background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#ae9751'}}>← Back</button>
+            <h3 style={{fontSize:16,fontWeight:600,color:'#fff',margin:0}}>Visitor Details</h3>
+          </div>
+
+          <div style={{background:'#2a2a2a',border:'1px solid #333',borderRadius:8,padding:20,textAlign:'center',marginBottom:16}}>
+            <div style={{background: viewingVisitor.status === 'Inside' ? '#1b5e20' : viewingVisitor.status === 'Rejected' ? '#b71c1c' : '#ae9751',
+              color:'#fff',padding:'6px 16px',borderRadius:4,display:'inline-block',fontSize:12,fontWeight:600,letterSpacing:'0.04em',marginBottom:16}}>
+              {viewingVisitor.status === 'Inside' ? '✓ CLEARED' : viewingVisitor.status === 'Scheduled' ? '⏳ PRE-APPROVED' : viewingVisitor.status === 'Rejected' ? '✕ REJECTED' : viewingVisitor.status.toUpperCase()}
+            </div>
+            {vp ? (
+              <div ref={secQrRef} style={{display:'flex',justifyContent:'center',marginBottom:12}}></div>
+            ) : (
+              <div style={{padding:16,color:'#666',fontSize:12}}>QR code not available</div>
+            )}
+            <div style={{fontSize:13,fontWeight:600,color:'#fff',marginBottom:4}}>{viewingVisitor.permitRef || '—'}</div>
+            <div style={{fontSize:12,color:'#999'}}>{viewingVisitor.name}</div>
+          </div>
+
+          <div style={{background:'#2a2a2a',border:'1px solid #333',borderRadius:8,padding:16,marginBottom:16}}>
+            <div style={{fontSize:11,color:'#ae9751',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:12,fontWeight:600}}>Visitor Information</div>
+            {[
+              ['Name', viewingVisitor.name],
+              ['Phone', viewingVisitor.contact || (vp && vp.mobile) || '—'],
+              ['Type', viewingVisitor.type],
+              ['Unit', viewingVisitor.flat],
+              ['Host', viewingVisitor.resident || (vp && vp.resident) || '—'],
+              ['Vehicle', vp ? vp.vehicle : '—'],
+              ['ID Document', vp ? vp.idDoc : '—'],
+              ['Date', viewingVisitor.date || '—'],
+              ['Time', viewingVisitor.time || '—'],
+              ['Valid Until', vp ? vp.validUntil : '—'],
+              ['Gate', viewingVisitor.gate || 'Main Gate'],
+              ['Status', entry.status || viewingVisitor.status || '—'],
+            ].map(([label, val], i) => (
+              <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom: i < 11 ? '1px solid #333' : 'none'}}>
+                <span style={{fontSize:12,color:'#888'}}>{label}</span>
+                <span style={{fontSize:12,color:'#fff',fontWeight:500,textAlign:'right',maxWidth:'60%'}}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => setViewingVisitor(null)} style={{width:'100%',padding:12,background:'#ae9751',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer'}}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if(currentTab === 'dashboard') {
       return (
@@ -3421,19 +3623,18 @@ const SecurityApp = ({ onLogout }) => {
           <div className="sec-grid-3">
             <div className="sec-column">
               <div className="sec-kpi-block">
-                <div className="sec-kpi-number">24</div>
+                <div className="sec-kpi-number">{data.insideVisitors.length + data.pendingApprovals.length}</div>
                 <div className="sec-kpi-label">TOTAL PERSONS INSIDE</div>
                 <div className="sec-kpi-breakdown">
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Cleared:</span><span className="sec-breakdown-count">18</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Pending:</span><span className="sec-breakdown-count">4</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Flagged:</span><span className="sec-breakdown-count">2</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Cleared:</span><span className="sec-breakdown-count">{data.insideVisitors.length}</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Pending:</span><span className="sec-breakdown-count">{data.pendingApprovals.length}</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Scheduled:</span><span className="sec-breakdown-count">{data.visitors.filter(v => v.status === 'Scheduled').length}</span></div>
                 </div>
                 <div className="sec-kpi-breakdown" style={{marginTop:12,paddingTop:12,borderTop:'1px solid #333'}}>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Resident Guests:</span><span className="sec-breakdown-count">8</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Delivery:</span><span className="sec-breakdown-count">6</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Vendors/Service:</span><span className="sec-breakdown-count">5</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Contractors:</span><span className="sec-breakdown-count">3</span></div>
-                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Move In/Out:</span><span className="sec-breakdown-count">2</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Guests:</span><span className="sec-breakdown-count">{data.visitors.filter(v => v.type === 'Guest').length}</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Delivery:</span><span className="sec-breakdown-count">{data.visitors.filter(v => v.type === 'Delivery').length}</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Contractors:</span><span className="sec-breakdown-count">{data.visitors.filter(v => v.type === 'Contractor').length}</span></div>
+                  <div className="sec-breakdown-line"><span className="sec-breakdown-type">Service:</span><span className="sec-breakdown-count">{data.visitors.filter(v => v.type === 'Service' || v.type === 'Vendor').length}</span></div>
                 </div>
                 <button className="sec-view-all-btn">VIEW FULL INSIDE LIST</button>
               </div>
@@ -3441,7 +3642,7 @@ const SecurityApp = ({ onLogout }) => {
 
             <div className="sec-column">
               <div className="sec-kpi-block">
-                <div style={{fontSize:16,fontWeight:600,color:'#ffc107',marginBottom:12}}>⏳ 4 WAITING</div>
+                <div style={{fontSize:16,fontWeight:600,color:'#ffc107',marginBottom:12}}>⏳ {data.pendingApprovals.length} WAITING</div>
                 <div className="sec-kpi-label">PENDING APPROVALS</div>
                 {data.pendingApprovals.slice(0,2).map(p => (
                   <div key={p.id} className="sec-pending-card">
@@ -3459,13 +3660,17 @@ const SecurityApp = ({ onLogout }) => {
 
               <div className="sec-kpi-block">
                 <div className="sec-kpi-label">TODAY'S SCHEDULE</div>
-                {data.todayScheduleSecurity.map((s,i) => (
-                  <div key={i} className="sec-schedule-item">
-                    <div className="sec-schedule-time">{s.time}</div>
-                    <div className="sec-schedule-desc">{s.description}</div>
-                    <div className="sec-schedule-meta">{s.flat} • {s.type}</div>
-                  </div>
-                ))}
+                {data.todayScheduleSecurity.map((s,i) => {
+                  const name = (s.description || '').split(' — ')[0];
+                  const match = data.visitors.find(v => v.name === name);
+                  return (
+                    <div key={i} className="sec-schedule-item" style={{cursor: match ? 'pointer' : 'default'}} onClick={() => { if (match) setViewingVisitor(match); }}>
+                      <div className="sec-schedule-time">{s.time}</div>
+                      <div className="sec-schedule-desc">{s.description}</div>
+                      <div className="sec-schedule-meta">{s.flat} • {s.type}</div>
+                    </div>
+                  );
+                })}
                 <button className="sec-view-all-btn">VIEW FULL SCHEDULE</button>
               </div>
             </div>
@@ -3499,7 +3704,20 @@ const SecurityApp = ({ onLogout }) => {
 
           <div className="sec-entry-log">
             <div style={{fontSize:13,fontWeight:600,color:'#fff',marginBottom:12}}>RECENT ENTRY LOG</div>
-            <table className="sec-entry-log-table">
+            {/* Mobile: card layout */}
+            <div className="sec-entry-log-mobile">
+              {data.entryLog.slice(0,6).map((e,i) => (
+                <div key={e.id} style={{background:'#2a2a2a',border:'1px solid #333',borderRadius:6,padding:12,marginBottom:8,cursor:'pointer'}} onClick={() => { const match = findFullVisitor(e); if (match) setViewingVisitor(match); }}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <div style={{fontWeight:600,fontSize:13,color:'#fff'}}>{e.visitor}</div>
+                    <span className={`status-badge status-${e.status.toLowerCase().replace(/\s+/g,'-')}`} style={{display:'inline-block',padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600}}>{e.status}</span>
+                  </div>
+                  <div style={{fontSize:11,color:'#999'}}>{e.type} • {e.flat} • {e.timeIn}</div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop: table layout */}
+            <table className="sec-entry-log-table sec-entry-log-desktop">
               <thead>
                 <tr>
                   <th style={{width:30}}>#</th>
@@ -3512,7 +3730,7 @@ const SecurityApp = ({ onLogout }) => {
               </thead>
               <tbody>
                 {data.entryLog.slice(0,6).map((e,i) => (
-                  <tr key={e.id}>
+                  <tr key={e.id} style={{cursor:'pointer'}} onClick={() => { const match = findFullVisitor(e); if (match) setViewingVisitor(match); }}>
                     <td>{i+1}</td>
                     <td>{e.visitor}</td>
                     <td>{e.type}</td>
@@ -3523,7 +3741,7 @@ const SecurityApp = ({ onLogout }) => {
                 ))}
               </tbody>
             </table>
-            <div style={{fontSize:11,color:'#999',marginTop:12}}>Showing 6 of 142 entries</div>
+            <div style={{fontSize:11,color:'#999',marginTop:12}}>Showing 6 of {data.entryLog.length} entries</div>
           </div>
 
           <div className="sec-utility-cards">
@@ -3572,7 +3790,7 @@ const SecurityApp = ({ onLogout }) => {
                   <td>{e.timeIn}</td>
                   <td>{e.duration}</td>
                   <td><span className={`status-badge status-${e.status.toLowerCase().replace(/\s+/g,'-')}`}>{e.status}</span></td>
-                  <td><button style={{background:'none',border:'none',color:'#ccc',cursor:'pointer',fontSize:11}}>View</button></td>
+                  <td><button onClick={() => { const match = findFullVisitor(e); if (match) setViewingVisitor(match); }} style={{background:'none',border:'none',color:'#ae9751',cursor:'pointer',fontSize:11,textDecoration:'underline'}}>View</button></td>
                 </tr>
               ))}
             </tbody>
@@ -3586,6 +3804,7 @@ const SecurityApp = ({ onLogout }) => {
 
   return (
     <div className="sec-app">
+      {viewingVisitor && renderVisitorDetail()}
       <div className="sec-header">
         <div className="sec-header-left">
           <div className="sec-header-left" style={{gap:12}}>
