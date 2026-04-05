@@ -877,8 +877,8 @@ const SimpleChart = ({ heights = [15,25,20,30,35,20,10], labels = ['Mon','Tue','
 );
 
 // ==================== LOGIN PAGE ====================
-const LoginPage = ({ onLogin, syncStatus }) => {
-  const [selectedRole, setSelectedRole] = useState('resident');
+const LoginPage = ({ onLogin, syncStatus, scanRef }) => {
+  const [selectedRole, setSelectedRole] = useState(scanRef ? 'security' : 'resident');
   const [email, setEmail] = useState('nitin@resident.ae');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -911,6 +911,9 @@ const LoginPage = ({ onLogin, syncStatus }) => {
       <div className="login-card" style={{maxWidth:500}}>
         <div className="logo"><div className="v-badge">V</div><span style={{fontSize:20,fontWeight:700}}>VARS PM</span></div>
         <h1>Welcome back</h1>
+        {scanRef && <div style={{background:'#fff3cd',border:'1px solid #ffc107',borderRadius:8,padding:'10px 14px',marginBottom:16,fontSize:13,color:'#856404'}}>
+          Visitor pass <strong>{scanRef}</strong> scanned. Log in as <strong>Security Guard</strong> to verify this visitor.
+        </div>}
         <p>Select your role and sign in</p>
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:24}}>
@@ -972,7 +975,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         )}
 
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16}}>
-          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 10:31 GST</p>
+          <p style={{fontSize:12,color:'#888'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · Code updated: 05 Apr 2026, 11:02 GST</p>
           <button
             onClick={() => { localStorage.removeItem('varspm_data'); try { if (typeof window.supabase !== 'undefined') { const sb = window.supabase.createClient('https://whgoaglmguopxrzfjifj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZ29hZ2xtZ3VvcHhyemZqaWZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjY1MDEsImV4cCI6MjA5MDgwMjUwMX0.TL6klBDqfyAUvpgKXxha-1hpH6keaeARZvJk3rc5vhg'); sb.from('app_state').upsert({ id: 'main', data: {} }); } } catch(e){} window.location.reload(); }}
             style={{background:'none',border:'none',color:'#cc0000',fontSize:11,cursor:'pointer',textDecoration:'underline'}}
@@ -2380,13 +2383,15 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
     }));
   };
 
-  // QR URL helper — uses external API for reliable scannable QR codes
-  const getQrUrl = (text) => 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(text || 'UNKNOWN');
+  // QR contains a URL so iPhone camera opens the app directly
+  const getQrImgUrl = (permit) => {
+    const appUrl = 'https://alexfinance.github.io/VARS/?scan=' + encodeURIComponent(permit || 'UNKNOWN');
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(appUrl);
+  };
 
   useEffect(() => {
     if (step === 'qr' && qrData && qrRef.current) {
-      const qrText = qrData.permit || 'UNKNOWN';
-      qrRef.current.innerHTML = '<img src="' + getQrUrl(qrText) + '" width="280" height="280" style="display:block;margin:0 auto;" />';
+      qrRef.current.innerHTML = '<img src="' + getQrImgUrl(qrData.permit) + '" width="280" height="280" style="display:block;margin:0 auto;" crossorigin="anonymous" />';
     }
   }, [step, qrData]);
 
@@ -2720,14 +2725,16 @@ const ResidentApp = ({ onLogout }) => {
 
   const viewQrRef = React.useRef(null);
 
-  // QR URL helper for resident view
-  const getViewQrUrl = (text) => 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(text || 'UNKNOWN');
+  // QR URL for saved visitor view
+  const getViewQrImgUrl = (permit) => {
+    const appUrl = 'https://alexfinance.github.io/VARS/?scan=' + encodeURIComponent(permit || 'UNKNOWN');
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(appUrl);
+  };
 
   useEffect(() => {
     if (currentPage === 'viewVisitor' && selectedVisitor && selectedVisitor.qrPayload && viewQrRef.current) {
       const sp = selectedVisitor.qrPayload;
-      const qrText = sp.permit || 'UNKNOWN';
-      viewQrRef.current.innerHTML = '<img src="' + getViewQrUrl(qrText) + '" width="280" height="280" style="display:block;margin:0 auto;" />';
+      viewQrRef.current.innerHTML = '<img src="' + getViewQrImgUrl(sp.permit) + '" width="280" height="280" style="display:block;margin:0 auto;" crossorigin="anonymous" />';
     }
   }, [currentPage, selectedVisitor]);
 
@@ -3444,14 +3451,25 @@ const ScannedVisitorForm = ({ scannedData, onClose, onSave }) => {
   );
 };
 
-const SecurityApp = ({ onLogout }) => {
+const SecurityApp = ({ onLogout, initialScanRef }) => {
   const { data, setData, showToast } = useApp();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [viewingVisitor, setViewingVisitor] = useState(null); // for detail view
   const [showScanner, setShowScanner] = useState(false);
-  const [scannedData, setScannedData] = useState(null);
+  const [scannedData, setScannedData] = useState(initialScanRef || null);
   const secQrRef = React.useRef(null);
+  const initialScanUsed = React.useRef(false);
+
+  // If opened via QR URL scan, auto-trigger lookup after data loads from cloud
+  useEffect(() => {
+    if (initialScanRef && !initialScanUsed.current && data && data.visitors && data.visitors.length > 0) {
+      initialScanUsed.current = true;
+      setScannedData(initialScanRef);
+      // Clean the URL so refreshing doesn't re-trigger
+      try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+    }
+  }, [initialScanRef, data]);
 
   // Look up full visitor data (with qrPayload) by permit ref or name
   const findFullVisitor = (entry) => {
@@ -3470,14 +3488,16 @@ const SecurityApp = ({ onLogout }) => {
     return null;
   };
 
-  // QR URL helper for security view
-  const getSecQrUrl = (text) => 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(text || 'UNKNOWN');
+  // QR URL for security visitor detail
+  const getSecQrImgUrl = (permit) => {
+    const appUrl = 'https://alexfinance.github.io/VARS/?scan=' + encodeURIComponent(permit || 'UNKNOWN');
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(appUrl);
+  };
 
   useEffect(() => {
     if (viewingVisitor && viewingVisitor.qrPayload && secQrRef.current) {
       const vp = viewingVisitor.qrPayload;
-      const qrText = vp.permit || 'UNKNOWN';
-      secQrRef.current.innerHTML = '<img src="' + getSecQrUrl(qrText) + '" width="280" height="280" style="display:block;margin:0 auto;" />';
+      secQrRef.current.innerHTML = '<img src="' + getSecQrImgUrl(vp.permit) + '" width="280" height="280" style="display:block;margin:0 auto;" crossorigin="anonymous" />';
     }
   }, [viewingVisitor]);
 
@@ -3923,8 +3943,19 @@ const loadPersistedData = () => {
   return initialData;
 };
 
+// ==================== URL SCAN DETECTION ====================
+// Check if opened via QR code scan (URL like ?scan=VPR-2026-1234)
+const getUrlScanParam = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('scan') || null;
+  } catch(e) { return null; }
+};
+const URL_SCAN_REF = getUrlScanParam();
+
 // ==================== MAIN APP ====================
 const App = () => {
+  // QR scan URL only works if already logged in as security — no auto-login
   const [role, setRole] = useState(() => {
     try { return localStorage.getItem('varspm_role') || null; } catch(e) { return null; }
   });
@@ -4040,11 +4071,11 @@ const App = () => {
     setRole(null);
   };
 
-  // If not logged in, show login page
+  // If not logged in, show login page (with scan notice if QR was scanned)
   if (!role) return <LoginPage onLogin={(selectedRole) => {
     try { localStorage.setItem('varspm_role', selectedRole); } catch(e) {}
     setRole(selectedRole);
-  }} syncStatus={syncStatus}/>;
+  }} syncStatus={syncStatus} scanRef={URL_SCAN_REF}/>;
 
   // If logged in as resident, show resident app
   if (role === 'resident') {
@@ -4060,7 +4091,7 @@ const App = () => {
   if (role === 'security') {
     return (
       <AppContext.Provider value={{ data, setData, showToast }}>
-        <SecurityApp onLogout={handleLogout}/>
+        <SecurityApp onLogout={handleLogout} initialScanRef={URL_SCAN_REF}/>
         {toast && <div className="toast">{toast}</div>}
       </AppContext.Provider>
     );
