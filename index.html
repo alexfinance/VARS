@@ -4173,29 +4173,24 @@ const ResidentApp = ({ onLogout }) => {
     <div className="res-app">
       {/* Header — only on home page */}
       {currentPage === 'home' && (
-        <div className="res-header" style={{padding:'14px 16px'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div onClick={() => setCurrentPage('profile')} style={{width:40,height:40,borderRadius:'50%',background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:11,color:'#8a8a8a'}}>Hello,</div>
-                <div style={{fontSize:17,fontWeight:600,color:'#1a1a1a'}}>Rashid</div>
-              </div>
+        <div className="res-header">
+          <div className="res-header-left" style={{display:'flex',alignItems:'center',gap:10}}>
+            <div onClick={() => setCurrentPage('profile')} style={{width:36,height:36,borderRadius:'50%',background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
             </div>
+            <div>
+              <div style={{fontSize:11,color:'#8a8a8a'}}>Hello,</div>
+              <div className="res-header-title" style={{fontSize:17,fontWeight:600}}>Nitin</div>
+              <div className="res-header-unit">B-102, Sky Tower</div>
+            </div>
+          </div>
+          <div className="res-header-right" style={{display:'flex',alignItems:'center',gap:8}}>
             <div onClick={() => setCurrentPage('resAnnouncements')} style={{width:34,height:34,borderRadius:'50%',border:'1px solid #d0d0d0',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',position:'relative',background:'#fff'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               {unreadCount > 0 && (
                 <div style={{position:'absolute',top:-2,right:-2,width:16,height:16,background:'#c62828',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'#fff',fontWeight:700,border:'2px solid #fff'}}>{unreadCount > 9 ? '9+' : unreadCount}</div>
               )}
             </div>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:12,color:'#8a8a8a'}}>B-102, Sky Tower</div>
-            <button onClick={() => setCurrentPage('preapprove')} style={{background:'#1a1a1a',color:'#fff',border:'none',borderRadius:20,padding:'7px 16px',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-              + Pre-approved
-            </button>
           </div>
         </div>
       )}
