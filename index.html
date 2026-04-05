@@ -3728,7 +3728,9 @@ const App = () => {
         }
         if (rows && rows.data && Object.keys(rows.data).length > 0) {
           isSyncingRef.current = true;
-          const merged = { ...initialData, ...rows.data };
+          const cloudData = { ...rows.data };
+          delete cloudData._lastWriter; // strip internal field
+          const merged = { ...initialData, ...cloudData };
           setData(merged);
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
         }
@@ -3747,16 +3749,17 @@ const App = () => {
     const channel = supabaseClient
       .channel('app_state_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' }, (payload) => {
-        // Skip if this update came from our own device
-        const remoteDevice = payload.new && payload.new.writer_device;
-        if (remoteDevice === DEVICE_ID) {
-          console.log('Skipping own write echo');
-          return;
-        }
         if (payload.new && payload.new.data) {
-          console.log('Applying remote update from device:', remoteDevice);
+          // Skip if this update came from our own device (device ID stored inside JSON)
+          if (payload.new.data._lastWriter === DEVICE_ID) {
+            console.log('Skipping own write echo');
+            return;
+          }
+          console.log('Applying remote update from device:', payload.new.data._lastWriter);
           isSyncingRef.current = true;
-          const merged = { ...initialData, ...payload.new.data };
+          const cloudData = { ...payload.new.data };
+          delete cloudData._lastWriter; // strip internal field
+          const merged = { ...initialData, ...cloudData };
           setData(merged);
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
           setSyncStatus('online');
@@ -3776,18 +3779,20 @@ const App = () => {
     if (isSyncingRef.current) { isSyncingRef.current = false; return; }
     // Save to localStorage immediately
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
-    // Write to Supabase with our device ID so other devices can identify the source
+    // Write to Supabase — embed device ID inside JSON so no schema change needed
     if (supabaseReady && supabaseClient) {
       if (writeTimerRef.current) clearTimeout(writeTimerRef.current);
       writeTimerRef.current = setTimeout(async () => {
         try {
+          const payload = { ...data, _lastWriter: DEVICE_ID };
           const { error } = await supabaseClient
             .from('app_state')
-            .upsert({ id: 'main', data: data, writer_device: DEVICE_ID, updated_at: new Date().toISOString() });
+            .upsert({ id: 'main', data: payload, updated_at: new Date().toISOString() });
           if (error) {
             console.log('Supabase write error:', error.message);
             setSyncStatus('offline');
           } else {
+            console.log('Supabase write OK');
             setSyncStatus('online');
           }
         } catch(e) {
