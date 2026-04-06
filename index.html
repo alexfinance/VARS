@@ -1068,20 +1068,175 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
 };
 
 // ==================== TOP BAR ====================
+const ALL_PROPERTIES = [
+  { id: 'pinnacle', name: 'The Pinnacle Residences', location: 'Al Reem Island', towers: 4, units: 1240 },
+  { id: 'marina', name: 'Marina Bay Towers', location: 'Dubai Marina', towers: 2, units: 680 },
+  { id: 'creek', name: 'Creek Heights', location: 'Dubai Creek Harbour', towers: 3, units: 920 },
+  { id: 'palm', name: 'Palm View Residences', location: 'Palm Jumeirah', towers: 1, units: 340 },
+  { id: 'hills', name: 'The Hills Estate', location: 'Dubai Hills', towers: 5, units: 1560 }
+];
+
 const TopBar = ({ onCreateClick, onMenuToggle, onLogout }) => {
+  const { data } = useApp();
   const [showCreate, setShowCreate] = useState(false);
   const [showPmProfile, setShowPmProfile] = useState(false);
+  const [showPropertyDropdown, setShowPropertyDropdown] = useState(false);
+  const [selectedProperties, setSelectedProperties] = useState(['pinnacle']);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  const toggleProperty = (id) => {
+    setSelectedProperties(prev => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev; // must have at least one
+        return prev.filter(p => p !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const propertyLabel = selectedProperties.length === 1
+    ? ALL_PROPERTIES.find(p => p.id === selectedProperties[0])?.name
+    : selectedProperties.length === ALL_PROPERTIES.length
+    ? 'All Properties'
+    : selectedProperties.length + ' Properties Selected';
+
+  // Search results
+  const searchResults = React.useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    const q = searchQuery.toLowerCase();
+    const results = [];
+    // Search visitors
+    (data.visitors || []).forEach(v => {
+      if (v.name?.toLowerCase().includes(q) || v.flat?.toLowerCase().includes(q) || v.resident?.toLowerCase().includes(q) || v.permitRef?.toLowerCase().includes(q)) {
+        results.push({ type: 'Visitor', name: v.name, detail: v.flat + ' · ' + (v.status || ''), icon: 'user' });
+      }
+    });
+    // Search service requests
+    (data.serviceRequests || []).forEach(r => {
+      if (r.id?.toLowerCase().includes(q) || r.type?.toLowerCase().includes(q) || r.flat?.toLowerCase().includes(q) || r.resident?.toLowerCase().includes(q)) {
+        results.push({ type: 'Service Request', name: r.id + ' — ' + r.type, detail: r.flat + ' · ' + r.resident, icon: 'tool' });
+      }
+    });
+    // Search announcements
+    (data.announcements || []).forEach(a => {
+      if (a.title?.toLowerCase().includes(q) || a.body?.toLowerCase().includes(q)) {
+        results.push({ type: 'Announcement', name: a.title, detail: a.status + ' · ' + (a.audience || ''), icon: 'megaphone' });
+      }
+    });
+    // Search guards
+    (data.guards || []).forEach(g => {
+      if (g.name?.toLowerCase().includes(q) || g.shift?.toLowerCase().includes(q)) {
+        results.push({ type: 'Guard', name: g.name, detail: g.shift + ' · ' + (g.status || ''), icon: 'shield' });
+      }
+    });
+    // Search entry log
+    (data.entryLog || []).slice(0, 50).forEach(e => {
+      if (e.visitor?.toLowerCase().includes(q) || e.refId?.toLowerCase().includes(q) || e.flat?.toLowerCase().includes(q)) {
+        results.push({ type: 'Entry Log', name: e.visitor, detail: e.refId + ' · ' + (e.flat || ''), icon: 'log-in' });
+      }
+    });
+    // Search pending approvals
+    (data.pendingApprovals || []).forEach(p => {
+      if (p.name?.toLowerCase().includes(q) || p.flat?.toLowerCase().includes(q)) {
+        results.push({ type: 'Pending Approval', name: p.name, detail: p.flat + ' · ' + (p.type || ''), icon: 'clock' });
+      }
+    });
+    return results.slice(0, 12);
+  }, [searchQuery, data]);
+
   return (
     <div className="topbar">
       <button className="hamburger" onClick={onMenuToggle}><span/><span/><span/></button>
-      <div className="property-select">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-        <span>The Pinnacle Residences</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+
+      {/* Property Multi-Select */}
+      <div style={{position:'relative'}}>
+        <div className="property-select" onClick={() => setShowPropertyDropdown(!showPropertyDropdown)} style={{cursor:'pointer'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+          <span>{propertyLabel}</span>
+          {selectedProperties.length > 1 && selectedProperties.length < ALL_PROPERTIES.length && (
+            <span style={{background:'#1a1a1a',color:'#fff',fontSize:10,padding:'1px 6px',borderRadius:10,fontWeight:600}}>{selectedProperties.length}</span>
+          )}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2" style={{transform: showPropertyDropdown ? 'rotate(180deg)' : 'rotate(0deg)',transition:'transform 0.2s'}}><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+
+        {showPropertyDropdown && (
+          <>
+            <div onClick={() => setShowPropertyDropdown(false)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:997}}/>
+            <div style={{position:'absolute',top:'100%',left:0,marginTop:6,width:320,background:'#fff',borderRadius:8,boxShadow:'0 8px 32px rgba(0,0,0,.15)',border:'1px solid #e8e8e8',zIndex:998,overflow:'hidden'}}>
+              <div style={{padding:'12px 16px',borderBottom:'1px solid #f0f0f0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:12,fontWeight:600,color:'#1a1a1a',letterSpacing:'0.04em'}}>SELECT PROPERTIES</span>
+                <span style={{fontSize:11,color:'#8a8a8a',cursor:'pointer'}} onClick={() => {
+                  setSelectedProperties(selectedProperties.length === ALL_PROPERTIES.length ? ['pinnacle'] : ALL_PROPERTIES.map(p => p.id));
+                }}>{selectedProperties.length === ALL_PROPERTIES.length ? 'Deselect All' : 'Select All'}</span>
+              </div>
+              <div style={{padding:'8px 0',maxHeight:300,overflowY:'auto'}}>
+                {ALL_PROPERTIES.map(p => {
+                  const isSelected = selectedProperties.includes(p.id);
+                  return (
+                    <div key={p.id} onClick={() => toggleProperty(p.id)}
+                      style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',cursor:'pointer',background: isSelected ? '#f8f8f8' : 'transparent',transition:'background 0.15s'}}>
+                      <div style={{width:18,height:18,borderRadius:4,border: isSelected ? 'none' : '1.5px solid #d0d0d0',background: isSelected ? '#1a1a1a' : '#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight: isSelected ? 600 : 400,color:'#1a1a1a'}}>{p.name}</div>
+                        <div style={{fontSize:11,color:'#8a8a8a'}}>{p.location} · {p.towers} towers · {p.units} units</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{padding:'10px 16px',borderTop:'1px solid #f0f0f0',fontSize:11,color:'#8a8a8a'}}>
+                {selectedProperties.length} of {ALL_PROPERTIES.length} properties selected
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      <div className="search-bar">
-        <span className="search-icon"><Icon name="search" size={14}/></span>
-        <input placeholder="Search residents, visitors..."/>
+
+      {/* Search Bar */}
+      <div style={{position:'relative',flex:1,maxWidth:480}}>
+        <div className="search-bar">
+          <span className="search-icon"><Icon name="search" size={14}/></span>
+          <input placeholder="Search residents, visitors..." value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}/>
+          {searchQuery && (
+            <span onClick={() => setSearchQuery('')} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',cursor:'pointer',color:'#8a8a8a',fontSize:16,lineHeight:1}}>×</span>
+          )}
+        </div>
+
+        {/* Search Results Dropdown */}
+        {searchFocused && searchQuery.length >= 2 && (
+          <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'#fff',borderRadius:8,boxShadow:'0 8px 32px rgba(0,0,0,.15)',border:'1px solid #e8e8e8',zIndex:998,maxHeight:400,overflowY:'auto'}}>
+            {searchResults.length === 0 ? (
+              <div style={{padding:'20px 16px',textAlign:'center',color:'#8a8a8a',fontSize:13}}>
+                No results for "{searchQuery}"
+              </div>
+            ) : (
+              <>
+                <div style={{padding:'10px 16px',borderBottom:'1px solid #f0f0f0',fontSize:11,color:'#8a8a8a'}}>
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
+                </div>
+                {searchResults.map((r, i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',borderBottom: i < searchResults.length - 1 ? '1px solid #f5f5f5' : 'none',cursor:'pointer',transition:'background 0.15s'}}
+                    onMouseDown={e => e.preventDefault()}>
+                    <div style={{width:32,height:32,borderRadius:'50%',background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <Icon name={r.icon} size={14}/>
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:500,color:'#1a1a1a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{r.name}</div>
+                      <div style={{fontSize:11,color:'#8a8a8a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{r.detail}</div>
+                    </div>
+                    <span style={{fontSize:10,color:'#8a8a8a',background:'#f5f5f5',padding:'2px 8px',borderRadius:3,flexShrink:0,letterSpacing:'0.02em'}}>{r.type}</span>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
       <div className="topbar-right">
         <div className="dropdown">
@@ -2181,9 +2336,9 @@ const AnnouncementsPage = () => {
   const [composerStep, setComposerStep] = useState(1);
   const [showDelete, setShowDelete] = useState(null);
   const [editingAnn, setEditingAnn] = useState(null);
-  const [annForm, setAnnForm] = useState({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false });
+  const [annForm, setAnnForm] = useState({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '' });
 
-  const resetForm = () => setAnnForm({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false });
+  const resetForm = () => setAnnForm({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '' });
 
   const liveCount = data.announcements.filter(a => a.status === 'Live').length;
   const scheduledCount = data.announcements.filter(a => a.status === 'Scheduled').length;
@@ -2203,7 +2358,8 @@ const AnnouncementsPage = () => {
       setData(prev => ({
         ...prev,
         announcements: prev.announcements.map(a => a.id === editingAnn.id ? {
-          ...a, title: annForm.title, audience: annForm.audience, priority: annForm.priority, ackRequired: annForm.ackRequired, status: status, body: annForm.body
+          ...a, title: annForm.title, audience: annForm.audience, priority: annForm.priority, ackRequired: annForm.ackRequired, status: status, body: annForm.body,
+          scheduleDate: annForm.scheduleDate, scheduleTime: annForm.scheduleTime
         } : a)
       }));
       showToast('Announcement updated');
@@ -2220,10 +2376,12 @@ const AnnouncementsPage = () => {
         ackRequired: annForm.ackRequired,
         delivered: status === 'Live' ? 1240 : 0,
         read: 0,
-        acknowledged: 0
+        acknowledged: 0,
+        scheduleDate: annForm.scheduleDate,
+        scheduleTime: annForm.scheduleTime
       };
       setData(prev => ({ ...prev, announcements: [newAnn, ...prev.announcements] }));
-      showToast('Announcement ' + (status === 'Live' ? 'published' : status === 'Scheduled' ? 'scheduled' : 'saved as draft'));
+      showToast('Announcement ' + (status === 'Live' ? 'published — visible to residents now' : status === 'Scheduled' ? 'scheduled for ' + annForm.scheduleDate + ' ' + annForm.scheduleTime : 'saved as draft'));
     }
     setShowComposer(false);
     setEditingAnn(null);
@@ -2238,10 +2396,15 @@ const AnnouncementsPage = () => {
 
   const handleEdit = (ann) => {
     setEditingAnn(ann);
-    setAnnForm({ title: ann.title, body: ann.body || '', priority: ann.priority, audience: ann.audience, publishMode: ann.status === 'Scheduled' ? 'schedule' : ann.status === 'Draft' ? 'draft' : 'now', ackRequired: ann.ackRequired });
+    setAnnForm({ title: ann.title, body: ann.body || '', priority: ann.priority, audience: ann.audience, publishMode: ann.status === 'Scheduled' ? 'schedule' : ann.status === 'Draft' ? 'draft' : 'now', ackRequired: ann.ackRequired, scheduleDate: ann.scheduleDate || '', scheduleTime: ann.scheduleTime || '' });
     setComposerStep(1);
     setShowComposer(true);
   };
+
+  // Simple toolbar button
+  const ToolBtn = ({ children }) => (
+    <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,border:'1px solid #d0d0d0',borderRadius:4,cursor:'pointer',fontSize:13,fontWeight:600,color:'#1a1a1a',background:'#fff'}}>{children}</span>
+  );
 
   return (
     <div>
@@ -2252,118 +2415,231 @@ const AnnouncementsPage = () => {
       <div className="filter-row">
         {filters.map(f => <span key={f.label} className={`chip ${filter===f.label?'active':''}`} onClick={()=>setFilter(f.label)}>{f.label} {f.count}</span>)}
       </div>
-      {filtered.length === 0 && <div style={{textAlign:'center',color:'#888',padding:40}}>No announcements in this category.</div>}
+      {filtered.length === 0 && <div style={{textAlign:'center',color:'#8a8a8a',padding:40,fontSize:13}}>No announcements in this category.</div>}
       {filtered.map(a => (
         <div key={a.id} className="announcement-card">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-            <div>
+            <div style={{flex:1}}>
               <div className="tags">
                 <StatusBadge status={a.status}/>
-                {a.priority==='High' && <span style={{fontSize:11,color:'#666'}}>△ High Priority</span>}
-                {a.ackRequired && <span style={{fontSize:11,color:'#666'}}>Ack Required</span>}
+                {a.priority==='High' && <span style={{fontSize:11,color:'#666',border:'1px solid #d0d0d0',borderRadius:3,padding:'1px 8px'}}>△ High Priority</span>}
+                {a.ackRequired && <span style={{fontSize:11,color:'#666',border:'1px solid #d0d0d0',borderRadius:3,padding:'1px 8px'}}>Ack Required</span>}
               </div>
-              <h3>{a.title}</h3>
-              {a.body && <p style={{fontSize:13,color:'#555',margin:'4px 0 8px'}}>{a.body}</p>}
+              <h3 style={{fontSize:16,fontWeight:600,marginBottom:6}}>{a.title}</h3>
+              {a.body && <p style={{fontSize:13,color:'#555',margin:'4px 0 8px',lineHeight:1.5}}>{a.body}</p>}
               <div className="meta">Audience: <strong>{a.audience}</strong> &nbsp; By: {a.author} &nbsp; Created: {a.created}</div>
             </div>
-            <div style={{display:'flex',gap:4}}>
-              <button className="btn btn-sm" onClick={()=>handleEdit(a)}><Icon name="edit" size={12}/></button>
-              <button className="btn btn-sm" onClick={()=>setShowDelete(a)}><Icon name="trash" size={12}/></button>
+            <div style={{display:'flex',gap:6,flexShrink:0,marginLeft:16}}>
+              {a.status !== 'Sent' && a.status !== 'Live' && (
+                <button className="btn btn-sm" onClick={()=>handleEdit(a)} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
+                  <Icon name="edit" size={14}/>
+                </button>
+              )}
+              <button className="btn btn-sm" onClick={()=>setShowDelete(a)} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
+                <Icon name="trash" size={14}/>
+              </button>
             </div>
           </div>
           {(a.delivered > 0 || a.read > 0) && (
-            <div style={{display:'flex',gap:24,alignItems:'center',flexWrap:'wrap'}}>
-              <div className="stats"><div><div className="stat-label">Delivered</div><div className="stat-value">{a.delivered.toLocaleString()}</div></div></div>
-              <div className="stats"><div><div className="stat-label">Read</div><div className="stat-value">{a.read.toLocaleString()}</div></div></div>
-              {a.acknowledged > 0 && <div className="stats"><div><div className="stat-label">Acknowledged</div><div className="stat-value">{a.acknowledged.toLocaleString()}</div></div></div>}
+            <div style={{display:'flex',gap:24,alignItems:'center',flexWrap:'wrap',marginTop:16,paddingTop:16,borderTop:'1px solid #f0f0f0'}}>
+              <div><div style={{fontSize:10,color:'#8a8a8a',letterSpacing:'0.04em'}}>Delivered</div><div style={{fontWeight:600,fontSize:14}}>{a.delivered.toLocaleString()}</div></div>
+              <div><div style={{fontSize:10,color:'#8a8a8a',letterSpacing:'0.04em'}}>Read</div><div style={{fontWeight:600,fontSize:14}}>{a.read.toLocaleString()}</div></div>
+              {a.acknowledged > 0 && <div><div style={{fontSize:10,color:'#8a8a8a',letterSpacing:'0.04em'}}>Acknowledged</div><div style={{fontWeight:600,fontSize:14}}>{a.acknowledged.toLocaleString()}</div></div>}
               {a.read > 0 && a.delivered > 0 && <div style={{flex:1,display:'flex',alignItems:'center',gap:8,minWidth:120}}>
                 <div className="progress-bar"><div className="fill" style={{width:`${Math.round(a.read/a.delivered*100)}%`}}/></div>
-                <span style={{fontSize:11,color:'#888'}}>{Math.round(a.read/a.delivered*100)}% read rate</span>
+                <span style={{fontSize:11,color:'#8a8a8a'}}>{Math.round(a.read/a.delivered*100)}% read rate</span>
               </div>}
-              <span style={{fontSize:11,color:'#888'}}>Audit: {a.author} · {a.created}</span>
+              <span style={{fontSize:11,color:'#8a8a8a'}}>Audit: {a.author} · {a.created}</span>
             </div>
           )}
         </div>
       ))}
 
+      {/* API endpoint info */}
+      <div style={{textAlign:'right',fontSize:11,color:'#bbb',marginTop:8,padding:'0 4px'}}>
+        API: /api/announcements · /api/announcements/:id/receipts
+      </div>
+
+      {/* Composer Modal */}
       {showComposer && (
         <div className="modal-overlay" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>
-          <div className="modal modal-wide" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <div><div className="modal-sub">modal/composer · Announcement Composer</div><h2>{editingAnn ? 'Edit Announcement' : 'New Announcement'}</h2></div>
+          <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header" style={{marginBottom:4}}>
+              <div><div className="modal-sub">modal/composer · Announcement Composer</div><h2 style={{fontSize:18}}>{editingAnn ? 'Edit Announcement' : 'New Announcement'}</h2></div>
               <button className="modal-close" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>×</button>
             </div>
-            <div className="wizard-steps">
+
+            {/* Wizard Steps */}
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:24,fontSize:13}}>
               {['Compose','Audience','Schedule','Preview'].map((s,i) => (
                 <React.Fragment key={s}>
-                  {i>0 && <span className="wizard-sep">›</span>}
-                  <span className={`wizard-step ${composerStep===i+1?'active':''} ${composerStep>i+1?'completed':''}`} style={{cursor:'pointer'}} onClick={() => setComposerStep(i+1)}>
-                    {i+1 < composerStep ? '✓' : `${i+1}`} {s}
+                  {i > 0 && <span style={{color:'#d0d0d0'}}>›</span>}
+                  <span onClick={() => { if (i+1 <= composerStep || composerStep > i) setComposerStep(i+1); }}
+                    style={{padding:'6px 14px',borderRadius:20,cursor:'pointer',fontWeight: composerStep === i+1 ? 600 : 400,
+                      background: composerStep === i+1 ? '#1a1a1a' : 'transparent',
+                      color: composerStep === i+1 ? '#fff' : composerStep > i+1 ? '#1a1a1a' : '#8a8a8a',
+                      border: composerStep === i+1 ? 'none' : '1px solid transparent',fontSize:12}}>
+                    {composerStep > i+1 ? '✓ ' : (i+1) + ' '}{s}
                   </span>
                 </React.Fragment>
               ))}
             </div>
+
+            {/* Step 1: Compose */}
             {composerStep===1 && (<div>
-              <div className="form-group"><label>Title *</label><input className="form-input" placeholder="Announcement title" value={annForm.title} onChange={e => setAnnForm(p => ({...p, title: e.target.value}))}/></div>
-              <div className="form-group"><label>Body</label>
-                <textarea className="form-input" rows={4} placeholder="Write your announcement here..." value={annForm.body} onChange={e => setAnnForm(p => ({...p, body: e.target.value}))}/>
+              <div className="form-group">
+                <label style={{fontSize:13,fontWeight:500}}>Title *</label>
+                <input className="form-input" placeholder="Announcement title" value={annForm.title} onChange={e => setAnnForm(p => ({...p, title: e.target.value}))}/>
               </div>
-              <div className="form-group"><label>Priority</label><div className="type-selector">
-                <div className={`type-btn ${annForm.priority==='Normal'?'active':''}`} onClick={() => setAnnForm(p => ({...p, priority:'Normal'}))}>Normal</div>
-                <div className={`type-btn ${annForm.priority==='High'?'active':''}`} onClick={() => setAnnForm(p => ({...p, priority:'High'}))}>△ High</div>
-              </div></div>
-              <div className="form-group"><label>Attachment</label><div className="upload-area">Upload image or document<br/><span style={{fontSize:11}}>JPG, PNG, PDF up to 10MB</span></div></div>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}><span style={{fontSize:13}}>Acknowledgement Required</span><Toggle value={annForm.ackRequired} onChange={() => setAnnForm(p => ({...p, ackRequired: !p.ackRequired}))}/></div>
-              <button className="btn btn-primary" style={{width:'100%'}} onClick={()=>setComposerStep(2)}>Continue to Audience →</button>
-            </div>)}
-            {composerStep===2 && (<div>
-              <p style={{color:'#666',marginBottom:16}}>Select who should receive this announcement.</p>
-              {[{label:'All Residents — 1,240 recipients',val:'All Residents'},{label:'Specific Buildings — Tower A, B, C, D',val:'Specific Buildings'},{label:'Specific Flats — Select individual units',val:'Specific Flats'},{label:'Security Guards — 18 guards on duty',val:'Security Guards'},{label:'Owners Only',val:'Owners Only'}].map((a,i) => (
-                <div key={i} className="personnel-item" style={{marginBottom:8,cursor:'pointer',background:annForm.audience===a.val?'#f0f7ff':'transparent',borderRadius:6,padding:'8px 12px'}} onClick={() => setAnnForm(p => ({...p, audience: a.val}))}>
-                  <div style={{width:32,height:32,background:annForm.audience===a.val?'#1565c0':'#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    <Icon name="user" size={14}/>
+              <div className="form-group">
+                <label style={{fontSize:13,fontWeight:500}}>Body</label>
+                {/* Toolbar */}
+                <div style={{display:'flex',gap:4,marginBottom:8}}>
+                  <ToolBtn>B</ToolBtn>
+                  <ToolBtn><em>I</em></ToolBtn>
+                  <ToolBtn><u>U</u></ToolBtn>
+                  <ToolBtn>• List</ToolBtn>
+                  <ToolBtn>Link</ToolBtn>
+                </div>
+                <textarea className="form-input" rows={5} placeholder="Write your announcement here..." value={annForm.body} onChange={e => setAnnForm(p => ({...p, body: e.target.value}))} style={{resize:'vertical'}}/>
+              </div>
+              <div className="form-group">
+                <label style={{fontSize:13,fontWeight:500}}>Priority</label>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  <div onClick={() => setAnnForm(p => ({...p, priority:'Normal'}))}
+                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='Normal' ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:6,cursor:'pointer',background: annForm.priority==='Normal' ? '#1a1a1a' : '#fff',color: annForm.priority==='Normal' ? '#fff' : '#1a1a1a',fontWeight:600,fontSize:13}}>
+                    Normal
                   </div>
-                  <div style={{flex:1}}>{a.label}</div>
-                  {annForm.audience===a.val && <span style={{color:'#1565c0',fontWeight:600}}>✓</span>}
+                  <div onClick={() => setAnnForm(p => ({...p, priority:'High'}))}
+                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='High' ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:6,cursor:'pointer',background: annForm.priority==='High' ? '#fff' : '#fff',color:'#1a1a1a',fontWeight: annForm.priority==='High' ? 600 : 400,fontSize:13}}>
+                    △ High
+                  </div>
+                </div>
+              </div>
+              <div className="form-group">
+                <label style={{fontSize:13,fontWeight:500}}>Attachment</label>
+                <div className="upload-area" style={{display:'flex',alignItems:'center',gap:8,padding:'14px 16px'}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  <span style={{color:'#8a8a8a',fontSize:12}}>Upload image or document<br/>JPG, PNG, PDF up to 10MB</span>
+                </div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
+                <div>
+                  <span style={{fontSize:13,fontWeight:500}}>Acknowledgement Required</span>
+                  <div style={{fontSize:11,color:'#8a8a8a'}}>Residents must confirm they've read this</div>
+                </div>
+                <Toggle value={annForm.ackRequired} onChange={() => setAnnForm(p => ({...p, ackRequired: !p.ackRequired}))}/>
+              </div>
+              <button className="btn btn-primary" style={{width:'100%',padding:'14px 0',fontSize:14,fontWeight:600}} onClick={()=>setComposerStep(2)}>Continue to Audience →</button>
+            </div>)}
+
+            {/* Step 2: Audience */}
+            {composerStep===2 && (<div>
+              <p style={{color:'#8a8a8a',marginBottom:16,fontSize:13}}>Select who should receive this announcement.</p>
+              {[
+                {label:'All Residents',sub:'1,240 recipients',val:'All Residents'},
+                {label:'All Residents + Guards',sub:'1,258 recipients',val:'All Residents + Guards'},
+                {label:'Specific Buildings',sub:'Tower A, B, C, D',val:'Specific Buildings'},
+                {label:'Specific Flats',sub:'Select individual units',val:'Specific Flats'},
+                {label:'Security Guards',sub:'18 guards on duty',val:'Security Guards'},
+                {label:'Owners Only',sub:'Property owners',val:'Owners Only'}
+              ].map((a,i) => (
+                <div key={i} onClick={() => setAnnForm(p => ({...p, audience: a.val}))}
+                  style={{display:'flex',alignItems:'center',gap:12,marginBottom:8,cursor:'pointer',background: annForm.audience===a.val ? '#f5f5f5' : '#fff',borderRadius:6,padding:'12px 14px',border: annForm.audience===a.val ? '1.5px solid #1a1a1a' : '1px solid #e0e0e0',transition:'all 0.15s'}}>
+                  <div style={{width:34,height:34,background: annForm.audience===a.val ? '#1a1a1a' : '#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={annForm.audience===a.val ? '#fff' : '#8a8a8a'} strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight: annForm.audience===a.val ? 600 : 400,color:'#1a1a1a'}}>{a.label}</div>
+                    <div style={{fontSize:11,color:'#8a8a8a'}}>{a.sub}</div>
+                  </div>
+                  {annForm.audience===a.val && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>}
                 </div>
               ))}
-              <div className="grid-2" style={{marginTop:16}}>
+              <div className="grid-2" style={{marginTop:20}}>
                 <button className="btn" onClick={()=>setComposerStep(1)}>← Back</button>
                 <button className="btn btn-primary" onClick={()=>setComposerStep(3)}>Continue to Schedule →</button>
               </div>
             </div>)}
+
+            {/* Step 3: Schedule */}
             {composerStep===3 && (<div>
-              <p style={{color:'#666',marginBottom:16}}>Choose when to publish this announcement.</p>
+              <p style={{color:'#8a8a8a',marginBottom:16,fontSize:13}}>Choose when to publish this announcement.</p>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:16}}>
-                <div className={`type-btn ${annForm.publishMode==='now'?'active':''}`} style={{padding:16,cursor:'pointer'}} onClick={() => setAnnForm(p => ({...p, publishMode:'now'}))}><strong>Publish Now</strong><br/><span style={{fontSize:12,color:'#888'}}>Send immediately</span></div>
-                <div className={`type-btn ${annForm.publishMode==='schedule'?'active':''}`} style={{padding:16,cursor:'pointer'}} onClick={() => setAnnForm(p => ({...p, publishMode:'schedule'}))}><strong>Schedule</strong><br/><span style={{fontSize:12,color:'#888'}}>Set a future time</span></div>
-                <div className={`type-btn ${annForm.publishMode==='draft'?'active':''}`} style={{padding:16,cursor:'pointer'}} onClick={() => setAnnForm(p => ({...p, publishMode:'draft'}))}><strong>Save Draft</strong><br/><span style={{fontSize:12,color:'#888'}}>Edit later</span></div>
+                {[
+                  {key:'now',label:'Publish Now',sub:'Send immediately'},
+                  {key:'schedule',label:'Schedule',sub:'Set a future time'},
+                  {key:'draft',label:'Save Draft',sub:'Edit later'}
+                ].map(opt => (
+                  <div key={opt.key} onClick={() => setAnnForm(p => ({...p, publishMode: opt.key}))}
+                    style={{padding:'16px 12px',textAlign:'center',border: annForm.publishMode===opt.key ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:6,cursor:'pointer',
+                      background: annForm.publishMode===opt.key ? '#1a1a1a' : '#fff',
+                      color: annForm.publishMode===opt.key ? '#fff' : '#1a1a1a',transition:'all 0.15s'}}>
+                    <div style={{fontWeight:600,fontSize:13,marginBottom:2}}>{opt.label}</div>
+                    <div style={{fontSize:11,opacity:0.7}}>{opt.sub}</div>
+                  </div>
+                ))}
               </div>
+
+              {/* Schedule Date/Time picker — only shown when Schedule is selected */}
+              {annForm.publishMode === 'schedule' && (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16,padding:16,background:'#f5f5f5',borderRadius:6,border:'1px solid #e0e0e0'}}>
+                  <div>
+                    <label style={{fontSize:11,color:'#8a8a8a',letterSpacing:'0.04em',textTransform:'uppercase',display:'block',marginBottom:6}}>Date</label>
+                    <input type="date" value={annForm.scheduleDate} onChange={e => setAnnForm(p => ({...p, scheduleDate: e.target.value}))}
+                      style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d0d0d0',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                  </div>
+                  <div>
+                    <label style={{fontSize:11,color:'#8a8a8a',letterSpacing:'0.04em',textTransform:'uppercase',display:'block',marginBottom:6}}>Time</label>
+                    <input type="time" value={annForm.scheduleTime} onChange={e => setAnnForm(p => ({...p, scheduleTime: e.target.value}))}
+                      style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d0d0d0',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                  </div>
+                </div>
+              )}
+
               <div className="grid-2" style={{marginTop:16}}>
                 <button className="btn" onClick={()=>setComposerStep(2)}>← Back</button>
                 <button className="btn btn-primary" onClick={()=>setComposerStep(4)}>Preview →</button>
               </div>
             </div>)}
+
+            {/* Step 4: Preview */}
             {composerStep===4 && (<div>
-              <div style={{background:'#f9f9f9',borderRadius:8,padding:16,marginBottom:16}}>
-                <div style={{display:'flex',gap:6,marginBottom:4}}>
+              <div style={{background:'#f5f5f5',borderRadius:8,padding:20,marginBottom:20}}>
+                <div style={{display:'flex',gap:6,marginBottom:8}}>
                   <StatusBadge status={annForm.publishMode==='now'?'Live':annForm.publishMode==='schedule'?'Scheduled':'Draft'}/>
-                  {annForm.priority==='High' && <span style={{fontSize:11}}>△ High Priority</span>}
+                  {annForm.priority==='High' && <span style={{fontSize:11,border:'1px solid #d0d0d0',borderRadius:3,padding:'1px 8px',background:'#fff'}}>△ High Priority</span>}
+                  {annForm.ackRequired && <span style={{fontSize:11,border:'1px solid #d0d0d0',borderRadius:3,padding:'1px 8px',background:'#fff'}}>Ack Required</span>}
                 </div>
-                <div style={{fontWeight:600}}>{annForm.title || '[Untitled]'}</div>
-                {annForm.body && <p style={{fontSize:13,color:'#666',margin:'4px 0 0'}}>{annForm.body}</p>}
-                <div style={{fontSize:12,color:'#888',marginTop:4}}>Audience: {annForm.audience} · Publish: {annForm.publishMode==='now'?'Immediately':annForm.publishMode==='schedule'?'Scheduled':'Draft'}</div>
-                {annForm.ackRequired && <div style={{fontSize:12,color:'#888'}}>Acknowledgement required</div>}
+                <div style={{fontWeight:600,fontSize:15,marginBottom:4}}>{annForm.title || '[Untitled]'}</div>
+                {annForm.body && <p style={{fontSize:13,color:'#555',margin:'0 0 8px',lineHeight:1.5}}>{annForm.body}</p>}
+                <div style={{fontSize:12,color:'#8a8a8a'}}>Audience: {annForm.audience}</div>
+                {annForm.publishMode === 'schedule' && annForm.scheduleDate && (
+                  <div style={{fontSize:12,color:'#8a8a8a'}}>Scheduled: {annForm.scheduleDate} at {annForm.scheduleTime || '—'}</div>
+                )}
+                {annForm.ackRequired && <div style={{fontSize:12,color:'#8a8a8a'}}>Acknowledgement required</div>}
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:13,marginBottom:16}}>
-                <div>Audience: <strong>{annForm.audience}</strong></div>
-                <div>Priority: <strong>{annForm.priority}</strong></div>
-                <div>Publish: <strong>{annForm.publishMode==='now'?'Immediately':annForm.publishMode==='schedule'?'Scheduled':'Draft'}</strong></div>
-                <div>Acknowledgement: <strong>{annForm.ackRequired ? 'Required' : 'Not required'}</strong></div>
+
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,fontSize:13,marginBottom:20,background:'#fff',border:'1px solid #e0e0e0',borderRadius:6,padding:16}}>
+                <div><span style={{color:'#8a8a8a'}}>Audience:</span> <strong>{annForm.audience}</strong></div>
+                <div><span style={{color:'#8a8a8a'}}>Priority:</span> <strong>{annForm.priority}</strong></div>
+                <div><span style={{color:'#8a8a8a'}}>Publish:</span> <strong>{annForm.publishMode==='now'?'Immediately':annForm.publishMode==='schedule'?'Scheduled':'Draft'}</strong></div>
+                <div><span style={{color:'#8a8a8a'}}>Acknowledgement:</span> <strong>{annForm.ackRequired ? 'Required' : 'Not required'}</strong></div>
               </div>
+
+              {/* Data persistence notice */}
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',background:'#f5f5f5',borderRadius:6,marginBottom:20,border:'1px solid #e0e0e0'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                <span style={{fontSize:11,color:'#1a1a1a'}}>
+                  {annForm.publishMode === 'now' ? 'Will be saved to database and visible to residents immediately' :
+                   annForm.publishMode === 'schedule' ? 'Will be saved to database and published at scheduled time' :
+                   'Will be saved to database as draft'}
+                </span>
+              </div>
+
               <div className="grid-2">
                 <button className="btn" onClick={()=>setComposerStep(3)}>← Back</button>
-                <button className="btn btn-primary" onClick={handlePublish}>
+                <button className="btn btn-primary" style={{fontWeight:600}} onClick={handlePublish}>
                   {annForm.publishMode==='now' ? 'Publish Now' : annForm.publishMode==='schedule' ? 'Schedule' : 'Save Draft'}
                 </button>
               </div>
@@ -2372,11 +2648,12 @@ const AnnouncementsPage = () => {
         </div>
       )}
 
+      {/* Delete Confirmation */}
       {showDelete && (
         <div className="modal-overlay" onClick={()=>setShowDelete(null)}>
           <div className="modal" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
-            <h2 style={{marginBottom:8}}>Delete Announcement</h2>
-            <p style={{color:'#666',marginBottom:20}}>Are you sure you want to delete "{showDelete.title}"? This action cannot be undone.</p>
+            <h2 style={{marginBottom:8,fontSize:16}}>Delete Announcement</h2>
+            <p style={{color:'#666',marginBottom:20,fontSize:13}}>Are you sure you want to delete "{showDelete.title}"? This action cannot be undone.</p>
             <div className="grid-2">
               <button className="btn btn-primary" onClick={()=>handleDelete(showDelete)}>Delete</button>
               <button className="btn" onClick={()=>setShowDelete(null)}>Cancel</button>
