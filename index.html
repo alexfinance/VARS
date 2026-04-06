@@ -675,14 +675,14 @@ const initialData = {
     { id: 'GRD-005', name: 'Tariq Bin Saeed', shift: 'Afternoon', shiftTime: '14:00–22:00', gate: 'Delivery Gate', company: 'PrimeSecurity Co.', contact: '+971 55 555 6666', status: 'On Duty', verified: true }
   ],
   residents: [
-    { id: 'RES-001', name: 'Mr. Khalid Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Verified', policy: 'Standard', absence: 'None' },
-    { id: 'RES-002', name: 'Ms. Amira Belhasa', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18–25 Apr' },
-    { id: 'RES-003', name: 'Mr. Hassan Al-Farsi', flat: 'C-0501', coResidents: 1, contact: '+971 55 345 6789', status: 'Verified', policy: 'Standard', absence: 'None' },
-    { id: 'RES-004', name: 'Ms. Noor Abdullah', flat: 'A-0202', coResidents: 9, contact: '+971 50 456 7890', status: 'Pending', policy: 'Standard', absence: 'None' },
-    { id: 'RES-005', name: 'Mr. Omar Khouri', flat: 'D-1102', coResidents: 3, contact: '+971 56 567 8901', status: 'Verified', policy: 'Custom', absence: '07–09 Apr' },
-    { id: 'RES-006', name: 'Dr. Fatima Al-Ali', flat: 'B-0405', coResidents: 2, contact: '+971 55 678 9012', status: 'Verified', policy: 'Enhanced', absence: 'None' },
-    { id: 'RES-007', name: 'Mr. Yusuf Al-Breiki', flat: 'C-1001', coResidents: 2, contact: '+971 50 789 0123', status: 'Verified', policy: 'Standard', absence: 'None' },
-    { id: 'RES-008', name: 'Ms. Rania Saab', flat: 'A-0708', coResidents: 5, contact: '+971 55 890 1234', status: 'Verified', policy: 'Standard', absence: 'None' }
+    { id: 'RES-001', name: 'Mr. Khalid Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-002', name: 'Ms. Amira Belhasa', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18–25 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-003', name: 'Mr. Hassan Al-Farsi', flat: 'C-0501', coResidents: 1, contact: '+971 55 345 6789', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-004', name: 'Ms. Noor Abdullah', flat: 'A-0202', coResidents: 9, contact: '+971 50 456 7890', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-005', name: 'Mr. Omar Khouri', flat: 'D-1102', coResidents: 3, contact: '+971 56 567 8901', status: 'Verified', policy: 'Custom', absence: '07–09 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-006', name: 'Dr. Fatima Al-Ali', flat: 'B-0405', coResidents: 2, contact: '+971 55 678 9012', status: 'Verified', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-007', name: 'Mr. Yusuf Al-Breiki', flat: 'C-1001', coResidents: 2, contact: '+971 50 789 0123', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-008', name: 'Ms. Rania Saab', flat: 'A-0708', coResidents: 5, contact: '+971 55 890 1234', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true }
   ],
   escalations: [
     { id: 'ESC-018', type: 'SLA Breach', severity: 'Critical', title: 'SLA Breach — SR-1087 Move-Out', flat: 'A-1204', created: '05 Apr, 13:00', assigned: 'PM Hassan', status: 'Unresolved', sla: '18h overdue' },
@@ -3308,6 +3308,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
 const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const { data, setData, showToast } = useApp();
   const [selectedResident, setSelectedResident] = useState(null);
+  const [editingResident, setEditingResident] = useState(null);
   const [showImport, setShowImport] = useState(false); // false | 'pick' | 'csv' | 'excel' | 'sql'
   const [showExport, setShowExport] = useState(false); // false | 'pick'
   const [showAddResident, setShowAddResident] = useState(false);
@@ -3507,13 +3508,35 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
               <div><div style={{fontSize:11,color:'#888'}}>Scheduled Absence</div><div style={{fontWeight:600}}>{selectedResident.absence}</div></div>
             </div>
             <div style={{fontWeight:600,marginBottom:8}}>Preferences</div>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Package auto-accept (whitelisted)</span><Toggle value={true} onChange={()=>{}}/></div>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Visitor pre-approval required</span><Toggle value={true} onChange={()=>{}}/></div>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Email notifications</span><Toggle value={false} onChange={()=>{}}/></div>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',marginBottom:16}}><span>Push notifications</span><Toggle value={true} onChange={()=>{}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Package auto-accept (whitelisted)</span><Toggle value={selectedResident.packageAutoAccept !== false} onChange={(v)=>{const updated={...selectedResident,packageAutoAccept:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,packageAutoAccept:v}:r)}));showToast('Preference updated','Package auto-accept '+(v?'enabled':'disabled'))}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Visitor pre-approval required</span><Toggle value={selectedResident.visitorPreApproval !== false} onChange={(v)=>{const updated={...selectedResident,visitorPreApproval:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,visitorPreApproval:v}:r)}));showToast('Preference updated','Visitor pre-approval '+(v?'enabled':'disabled'))}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0f0f0'}}><span>Email notifications</span><Toggle value={selectedResident.emailNotifications === true} onChange={(v)=>{const updated={...selectedResident,emailNotifications:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,emailNotifications:v}:r)}));showToast('Preference updated','Email notifications '+(v?'enabled':'disabled'))}}/></div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',marginBottom:16}}><span>Push notifications</span><Toggle value={selectedResident.pushNotifications !== false} onChange={(v)=>{const updated={...selectedResident,pushNotifications:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,pushNotifications:v}:r)}));showToast('Preference updated','Push notifications '+(v?'enabled':'disabled'))}}/></div>
             <div className="grid-2" style={{marginTop:16}}>
-              <button className="btn btn-primary">Edit Profile</button>
+              <button className="btn btn-primary" onClick={()=>setEditingResident({...selectedResident})}>Edit Profile</button>
               <button className="btn" onClick={()=>setSelectedResident(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingResident && (
+        <div className="modal-overlay" onClick={()=>setEditingResident(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <div><div className="modal-sub">form/resident/edit</div><h2>Edit Resident</h2></div>
+              <button className="modal-close" onClick={()=>setEditingResident(null)}>×</button>
+            </div>
+            <div className="form-group"><label>Full Name</label><input className="form-input" value={editingResident.name} onChange={e=>setEditingResident(p=>({...p,name:e.target.value}))}/></div>
+            <div className="form-group"><label>Flat / Unit</label><input className="form-input" value={editingResident.flat} onChange={e=>setEditingResident(p=>({...p,flat:e.target.value}))}/></div>
+            <div className="form-group"><label>Contact</label><input className="form-input" value={editingResident.contact} onChange={e=>setEditingResident(p=>({...p,contact:e.target.value}))}/></div>
+            <div className="form-group"><label>Co-Residents</label><input className="form-input" type="number" value={editingResident.coResidents} onChange={e=>setEditingResident(p=>({...p,coResidents:parseInt(e.target.value)||0}))}/></div>
+            <div className="form-group"><label>Access Policy</label><select className="form-input" value={editingResident.policy} onChange={e=>setEditingResident(p=>({...p,policy:e.target.value}))}><option>Standard</option><option>Enhanced</option><option>Custom</option></select></div>
+            <div className="form-group"><label>Verification Status</label><select className="form-input" value={editingResident.status} onChange={e=>setEditingResident(p=>({...p,status:e.target.value}))}><option>Verified</option><option>Pending</option><option>Suspended</option></select></div>
+            <div className="form-group"><label>Scheduled Absence</label><input className="form-input" placeholder="e.g. 18–25 Apr or None" value={editingResident.absence} onChange={e=>setEditingResident(p=>({...p,absence:e.target.value}))}/></div>
+            <div className="grid-2" style={{marginTop:16}}>
+              <button className="btn btn-primary" onClick={()=>{setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===editingResident.id?editingResident:r)}));setSelectedResident(editingResident);setEditingResident(null);showToast('Profile updated',editingResident.name+' has been updated')}}>Save Changes</button>
+              <button className="btn" onClick={()=>setEditingResident(null)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -3745,61 +3768,157 @@ const EscalationsPage = () => {
 
 // ==================== REPORTS PAGE ====================
 const ReportsPage = () => {
-  const [dateRange, setDateRange] = useState('Last 30 days');
-  const ranges = ['Last 7 days','Last 30 days','Last 90 days','Custom Range'];
+  const { data } = useApp();
+  const slaData = [{m:'Oct',v:84},{m:'Nov',v:88},{m:'Dec',v:82},{m:'Jan',v:79},{m:'Feb',v:83},{m:'Mar',v:80},{m:'Apr',v:76},{m:'May',v:73},{m:'June',v:78}];
+  const slaMax = 100; const slaMin = 60;
+  const slaPoints = slaData.map((d,i) => {
+    const x = 40 + i * (520 / (slaData.length - 1));
+    const y = 20 + ((slaMax - d.v) / (slaMax - slaMin)) * 160;
+    return `${x},${y}`;
+  }).join(' ');
+
+  const resolutionTypes = [
+    {type:'AC Repair',avg:'4.1h',max:'9.2h',sla:82,color:'#1a1a1a'},
+    {type:'Handyman',avg:'5.4h',max:'11.0h',sla:71,color:'#1a1a1a'},
+    {type:'Installation',avg:'3.0h',max:'6.5h',sla:90,color:'#1a1a1a'},
+    {type:'Move-In',avg:'1.8h',max:'3.5h',sla:96,color:'#1a1a1a'},
+    {type:'Pest Control',avg:'6.2h',max:'14.1h',sla:68,color:'#1a1a1a'}
+  ];
+
+  const finData = [
+    {m:'Jan',collected:40,overdue:15,pending:10},
+    {m:'Feb',collected:35,overdue:20,pending:12},
+    {m:'Mar',collected:50,overdue:18,pending:8},
+    {m:'Apr',collected:55,overdue:12,pending:15},
+    {m:'May',collected:65,overdue:10,pending:12},
+    {m:'Jun',collected:60,overdue:14,pending:10},
+    {m:'July',collected:70,overdue:8,pending:14}
+  ];
+  const finMax = 95;
+
+  const occPoints = [60,62,58,65,63,68,70,72,75,78,80,82,85,88,90,92,94,93,91,94];
+  const occMax = 100; const occMin = 50;
+  const occLine = occPoints.map((v,i) => {
+    const x = i * (480 / (occPoints.length - 1));
+    const y = 10 + ((occMax - v) / (occMax - occMin)) * 80;
+    return `${x},${y}`;
+  }).join(' ');
 
   return (
     <div>
       <div className="page-header">
         <div><h1>Reports & KPIs</h1><div className="subtitle">KPI builder · Export /CSV · API: /api/reports/kpi</div></div>
         <div className="btn-group"><button className="btn"><Icon name="download" size={14}/> Export</button><button className="btn btn-primary" onClick={()=>{
-          exportToExcel([{metric:'Total Visitors',value:8740},{metric:'Avg Daily Visitors',value:291},{metric:'Avg Approval Time',value:'9.7 min'},{metric:'Packages Received',value:1843},{metric:'Guard Incidents',value:2}],
+          exportToExcel([{metric:'SLA Compliance',value:'78%'},{metric:'Avg Resolution',value:'4.1h'},{metric:'Occupancy',value:'94%'},{metric:'Vacant Units',value:'18/300'},{metric:'Renewals',value:41}],
           [{header:'Metric',key:'metric'},{header:'Value',key:'value'}], 'VARS_Reports_KPI');
-        }}><Icon name="download" size={14}/> Export Excel</button></div>
+        }}><Icon name="download" size={14}/> Export CSV</button></div>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:20}}>
+      <div className="grid-2">
         <div className="card">
-          <h3 style={{marginBottom:12}}>Date Range</h3>
-          {ranges.map(r => <div key={r} style={{padding:'10px 12px',borderRadius:8,cursor:'pointer',background:dateRange===r?'#1a1a1a':'transparent',color:dateRange===r?'#fff':'#333',fontWeight:dateRange===r?600:400,marginBottom:4}} onClick={()=>setDateRange(r)}>{r}</div>)}
+          <div className="card-header"><h3>SLA compliance rate</h3><span style={{fontSize:12,color:'#888',cursor:'pointer'}}>View all</span></div>
+          <svg viewBox="0 0 580 220" style={{width:'100%',height:200}}>
+            {[100,95,90,85,80,75,70,65,60].map((v,i) => (
+              <React.Fragment key={v}>
+                <line x1="40" y1={20+i*20} x2="560" y2={20+i*20} stroke="#f0f0f0" strokeWidth="1"/>
+                <text x="32" y={24+i*20} textAnchor="end" fontSize="10" fill="#999">{v}%</text>
+              </React.Fragment>
+            ))}
+            <polyline points={slaPoints} fill="none" stroke="#1a1a1a" strokeWidth="2"/>
+            {slaData.map((d,i) => {
+              const x = 40 + i * (520 / (slaData.length - 1));
+              const y = 20 + ((slaMax - d.v) / (slaMax - slaMin)) * 160;
+              return <React.Fragment key={i}><circle cx={x} cy={y} r="4" fill="#fff" stroke="#1a1a1a" strokeWidth="2"/><text x={x} y={210} textAnchor="middle" fontSize="10" fill="#999">{d.m}</text></React.Fragment>;
+            })}
+          </svg>
         </div>
-        <div>
-          <div className="card">
-            <div className="card-header"><h3>Visitors by Type</h3><button className="btn btn-sm"><Icon name="download" size={12}/></button></div>
-            <div style={{fontSize:12,color:'#888',marginBottom:8}}>Last 30 days · Stacked by Guest / Vendor / Contractor</div>
-            <SimpleChart heights={[20,8,12,6,18,22,5]} labels={['Oct','Nov','Dec','Jan','Feb','Mar']}/>
-          </div>
-          <div className="card">
-            <div className="card-header"><h3>Approval Response Time</h3><button className="btn btn-sm"><Icon name="download" size={12}/></button></div>
-            <div style={{fontSize:12,color:'#888',marginBottom:8}}>Last 30 days · Average (min) and P95</div>
-            <div style={{height:120,background:'#fafafa',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',color:'#999'}}>Line chart placeholder</div>
-          </div>
-          <div className="grid-2">
-            <div className="card">
-              <div className="card-header"><h3>Packages Processed</h3><button className="btn btn-sm"><Icon name="download" size={12}/></button></div>
-              <SimpleChart heights={[40,55,60,70,45,30,20]}/>
-            </div>
-            <div className="card">
-              <div className="card-header"><h3>Guard Response Times</h3><button className="btn btn-sm"><Icon name="download" size={12}/></button></div>
-              <div style={{fontSize:12,color:'#888',marginBottom:8}}>Average seconds per QR scan</div>
-              {data.guards.map(g => (
-                <div key={g.id} style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                  <span style={{fontSize:12,minWidth:80,textAlign:'right'}}>{g.name.split(' ').map(n=>n[0]).join('. ')}.</span>
-                  <div style={{flex:1,height:16,background:'#333',borderRadius:2,width:`${50+Math.random()*50}%`}}/>
+
+        <div className="card">
+          <div className="card-header"><h3>Resolution time by type</h3><span style={{fontSize:12,color:'#888',cursor:'pointer'}}>View all</span></div>
+          <div style={{display:'flex',flexDirection:'column',gap:16,marginTop:8}}>
+            {resolutionTypes.map(r => (
+              <div key={r.type}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                  <span style={{fontSize:13,fontWeight:500}}>{r.type} · <span style={{color:'#888',fontWeight:400}}>Avg {r.avg} · {r.max}</span></span>
+                  <span style={{fontSize:13,fontWeight:600,color:r.sla>=90?'#1a1a1a':r.sla>=80?'#666':'#999'}}>{r.sla}% SLA</span>
                 </div>
-              ))}
-            </div>
+                <div style={{height:6,background:'#f0f0f0',borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${r.sla}%`,background:r.color,borderRadius:3}}/>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="card">
-            <h3>Period Summary — Last 30 days</h3>
-            <div className="kpi-row" style={{marginTop:16}}>
-              <div className="kpi-card" style={{textAlign:'center'}}><div className="label">Total Visitors</div><span className="value">8,740</span></div>
-              <div className="kpi-card" style={{textAlign:'center'}}><div className="label">Avg Daily Visitors</div><span className="value">291</span></div>
-              <div className="kpi-card" style={{textAlign:'center'}}><div className="label">Avg Approval Time</div><span className="value">9.7 min</span></div>
-              <div className="kpi-card" style={{textAlign:'center'}}><div className="label">Packages Received</div><span className="value">1,843</span></div>
-              <div className="kpi-card" style={{textAlign:'center'}}><div className="label">Guard Incidents</div><span className="value">2</span></div>
-            </div>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{marginTop:0}}>
+        <div className="card" style={{background:'#fafafa',border:'none'}}>
+          <h4 style={{marginBottom:8}}>AI Insight</h4>
+          <p style={{fontSize:13,color:'#888',lineHeight:1.6}}>SLA compliance is declining over recent months, indicating potential delays in service resolution that need immediate attention.</p>
+        </div>
+        <div className="card" style={{background:'#fafafa',border:'none'}}>
+          <h4 style={{marginBottom:8}}>AI Insight</h4>
+          <p style={{fontSize:13,color:'#888',lineHeight:1.6}}>Handyman and Pest Control services show lower SLA compliance due to higher resolution times, indicating a need for resource or process optimization.</p>
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <div className="card-header"><h3>Financial metrics</h3><span style={{fontSize:12,color:'#888',cursor:'pointer'}}>View all</span></div>
+          <div style={{display:'flex',gap:16,marginBottom:12,justifyContent:'center'}}>
+            <span style={{display:'flex',alignItems:'center',gap:4,fontSize:11,color:'#888'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#d9d9d9',display:'inline-block'}}/> Collected</span>
+            <span style={{display:'flex',alignItems:'center',gap:4,fontSize:11,color:'#888'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#888',display:'inline-block'}}/> Overdue</span>
+            <span style={{display:'flex',alignItems:'center',gap:4,fontSize:11,color:'#888'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#c4c4c4',display:'inline-block'}}/> Pending</span>
           </div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:12,height:160,padding:'0 4px'}}>
+            {finData.map((d,i) => {
+              const total = d.collected + d.overdue + d.pending;
+              return (
+                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                  <div style={{width:'100%',maxWidth:44,height:`${(total/finMax)*140}px`,borderRadius:'4px 4px 0 0',overflow:'hidden',display:'flex',flexDirection:'column-reverse'}}>
+                    <div style={{height:`${(d.collected/total)*100}%`,background:'#d9d9d9'}}/>
+                    <div style={{height:`${(d.overdue/total)*100}%`,background:'#888'}}/>
+                    <div style={{height:`${(d.pending/total)*100}%`,background:'#c4c4c4'}}/>
+                  </div>
+                  <span style={{fontSize:10,color:'#999'}}>{d.m}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header"><h3>Occupancy trend</h3><span style={{fontSize:12,color:'#888',cursor:'pointer'}}>View all</span></div>
+          <div className="grid-2" style={{gap:12,marginBottom:16}}>
+            <div><div style={{fontSize:11,color:'#888'}}>Current occupancy</div><div style={{fontSize:28,fontWeight:700}}>94%</div><div style={{fontSize:11,color:'#22c55e'}}>↑ 1.5% vs last month</div></div>
+            <div><div style={{fontSize:11,color:'#888'}}>Vacant units</div><div style={{fontSize:28,fontWeight:700}}>18 / 300</div><div style={{fontSize:11,color:'#888'}}>3 new vacancies this month</div></div>
+            <div><div style={{fontSize:11,color:'#888'}}>Avg. vacancy duration</div><div style={{fontSize:28,fontWeight:700}}>22d</div><div style={{fontSize:11,color:'#22c55e'}}>↓ 5d vs prior 3-month avg</div></div>
+            <div><div style={{fontSize:11,color:'#888'}}>Renewals this month</div><div style={{fontSize:28,fontWeight:700}}>41</div><div style={{fontSize:11,color:'#888'}}>87% renewal rate</div></div>
+          </div>
+          <svg viewBox="0 0 500 100" style={{width:'100%',height:80}}>
+            <polyline points={occLine} fill="none" stroke="#d9d9d9" strokeWidth="1.5"/>
+            {(() => {
+              const lastDash = occPoints.slice(-4).map((v,i) => {
+                const idx = occPoints.length - 4 + i;
+                const x = idx * (480 / (occPoints.length - 1));
+                const y = 10 + ((occMax - v) / (occMax - occMin)) * 80;
+                return `${x},${y}`;
+              }).join(' ');
+              return <polyline points={lastDash} fill="none" stroke="#1a1a1a" strokeWidth="1.5" strokeDasharray="4,3"/>;
+            })()}
+            <line x1={`${(occPoints.length - 4) * (480 / (occPoints.length - 1))}`} y1="0" x2={`${(occPoints.length - 4) * (480 / (occPoints.length - 1))}`} y2="100" stroke="#e0e0e0" strokeWidth="1" strokeDasharray="3,3"/>
+          </svg>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{marginTop:0}}>
+        <div className="card" style={{background:'#fafafa',border:'none'}}>
+          <h4 style={{marginBottom:8}}>AI Insight</h4>
+          <p style={{fontSize:13,color:'#888',lineHeight:1.6}}>Pending and overdue payments are increasing despite stable collections, indicating a need to improve follow-ups and payment recovery efficiency.</p>
+        </div>
+        <div className="card" style={{background:'#fafafa',border:'none'}}>
+          <h4 style={{marginBottom:8}}>AI Insight</h4>
+          <p style={{fontSize:13,color:'#888',lineHeight:1.6}}>Occupancy is improving with strong renewal rates, but rising new vacancies may require proactive tenant retention efforts.</p>
         </div>
       </div>
     </div>
@@ -3808,9 +3927,10 @@ const ReportsPage = () => {
 
 // ==================== SETTINGS PAGE ====================
 const SettingsPage = () => {
-  const { data } = useApp();
+  const { data, setData, showToast } = useApp();
   const [activeTab, setActiveTab] = useState('PMs Profile');
-  const tabs = ['PMs Profile','Notifications','Access Policy','Package Preferences','Property Settings','General / App','VARS subscription'];
+  const tabIcons = {'PMs Profile':'user','Notifications':'announcements','Access Policy':'security','Package Preferences':'packages','Property Settings':'properties','General / App':'settings'};
+  const tabs = ['PMs Profile','Notifications','Access Policy','Package Preferences','Property Settings','General / App'];
 
   const contacts = [
     { role: 'Property Manager', name: 'Hassan Al-PM', phone: '+971 50 999 0001' },
@@ -3824,7 +3944,7 @@ const SettingsPage = () => {
       <div className="settings-layout">
         <div>
           <div className="settings-nav">
-            {tabs.map(t => <div key={t} className={`settings-nav-item ${activeTab===t?'active':''}`} onClick={()=>setActiveTab(t)}>{t} ›</div>)}
+            {tabs.map(t => <div key={t} className={`settings-nav-item ${activeTab===t?'active':''}`} onClick={()=>setActiveTab(t)} style={{display:'flex',alignItems:'center',gap:8}}><Icon name={tabIcons[t]||'settings'} size={16}/>{t} <span style={{marginLeft:'auto'}}>›</span></div>)}
           </div>
           <div className="settings-contacts">
             <h4>PMC Contacts</h4>
@@ -3834,20 +3954,38 @@ const SettingsPage = () => {
         <div className="card">
           {activeTab === 'PMs Profile' && (<div>
             <h3 style={{marginBottom:20}}>PMs Profile</h3>
-            <div className="grid-2" style={{marginBottom:16}}>
-              <div className="form-group" style={{gridColumn:'span 2'}}><label>Full Name</label><input className="form-input" defaultValue="Hassan Al-Manageeri"/></div>
-              <div className="form-group"><label>Email</label><input className="form-input" defaultValue="hassan@pinnaclepm.ae"/></div>
-              <div className="form-group"><label>Mobile</label><input className="form-input" defaultValue="+971 50 999 0001"/></div>
+            <div style={{display:'flex',gap:16,marginBottom:20}}>
+              <div style={{width:56,height:56,background:'#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="user" size={24}/></div>
+              <div style={{flex:1}}>
+                <div className="form-group"><label>Full Name</label><input className="form-input" defaultValue="Hassan Al-Manageeri"/></div>
+                <div className="grid-2">
+                  <div className="form-group"><label>Email</label><input className="form-input" defaultValue="hassan@pinnaclepm.ae"/></div>
+                  <div className="form-group"><label>Mobile</label><input className="form-input" defaultValue="+971 50 999 0001"/></div>
+                </div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:16,marginBottom:20}}>
+              <div style={{width:56,height:56,background:'#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Icon name="user" size={24}/></div>
+              <div style={{flex:1}}>
+                <div className="form-group"><label>Full Name</label><input className="form-input" defaultValue="Hassan Al-Manageeri"/></div>
+                <div className="grid-2">
+                  <div className="form-group"><label>Email</label><input className="form-input" defaultValue="hassan@pinnaclepm.ae"/></div>
+                  <div className="form-group"><label>Mobile</label><input className="form-input" defaultValue="+971 50 999 0001"/></div>
+                </div>
+              </div>
             </div>
             <h4 style={{marginBottom:12}}>Permissions & Access</h4>
             <div className="grid-2" style={{marginBottom:16}}>
               {['Visitor management','Guard management','Property configuration','Announcement creation','Report export','System admin'].map((p,i) => (
                 <div key={p} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-                  <input type="checkbox" checked={i<5} readOnly/><span style={{fontSize:13}}>{p}</span>
+                  <div style={{width:18,height:18,borderRadius:4,border:i<5?'none':'1.5px solid #ccc',background:i<5?'#1a1a1a':'transparent',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    {i<5 && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                  <span style={{fontSize:13,color:i<5?'#333':'#999'}}>{p}</span>
                 </div>
               ))}
             </div>
-            <button className="btn btn-primary">💾 Save Changes</button>
+            <button className="btn btn-primary" onClick={()=>showToast('Profile saved','Settings have been updated')}><Icon name="download" size={14}/> Save Changes</button>
             <div style={{marginTop:32}}>
               <h3 style={{marginBottom:20}}>Change Password</h3>
               <div className="grid-2">
@@ -3855,7 +3993,7 @@ const SettingsPage = () => {
                 <div className="form-group"><label>New Password</label><input className="form-input" type="password" defaultValue="********"/></div>
               </div>
               <div className="form-group" style={{maxWidth:'50%'}}><label>Confirm New Password</label><input className="form-input" type="password" defaultValue="********"/></div>
-              <button className="btn">🔒 Update Password</button>
+              <button className="btn" onClick={()=>showToast('Password updated','Your password has been changed')}><Icon name="security" size={14}/> Update Password</button>
             </div>
           </div>)}
 
@@ -3933,7 +4071,6 @@ const SettingsPage = () => {
             <button className="btn btn-primary">💾 Save Changes</button>
           </div>)}
 
-          {activeTab === 'VARS subscription' && (<div><h3>VARS subscription</h3><p style={{color:'#888',marginTop:12}}>Subscription management coming soon.</p></div>)}
         </div>
       </div>
     </div>
