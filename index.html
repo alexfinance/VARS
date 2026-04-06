@@ -767,8 +767,18 @@ const initialData = {
   documents: [
     { id: 'DOC-001', name: 'Ahmed Khalil — National ID', type: 'pdf', owner: 'GRD-001', ownerName: 'Ahmed Khalil', category: 'guard', size: '1.2 MB', uploadedAt: '01 Mar 2026', status: 'verified' },
     { id: 'DOC-002', name: 'Ahmed Khalil — Guard Licence', type: 'pdf', owner: 'GRD-001', ownerName: 'Ahmed Khalil', category: 'guard', size: '0.8 MB', uploadedAt: '01 Mar 2026', status: 'verified' },
-    { id: 'DOC-003', name: 'Mohammed Al-Said — Work Permit', type: 'pdf', owner: 'GRD-002', ownerName: 'Mohammed Al-Said', category: 'guard', size: '0.5 MB', uploadedAt: '02 Mar 2026', status: 'verified' },
-    { id: 'DOC-004', name: 'Youssef Al-Qasim — National ID', type: 'pdf', owner: 'GRD-004', ownerName: 'Youssef Al-Qasim', category: 'guard', size: '1.1 MB', uploadedAt: '05 Mar 2026', status: 'pending' }
+    { id: 'DOC-003', name: 'Ahmed Khalil — Work Permit', type: 'pdf', owner: 'GRD-001', ownerName: 'Ahmed Khalil', category: 'guard', size: '0.6 MB', uploadedAt: '01 Mar 2026', status: 'verified' },
+    { id: 'DOC-004', name: 'Mohammed Al-Said — National ID', type: 'pdf', owner: 'GRD-002', ownerName: 'Mohammed Al-Said', category: 'guard', size: '1.0 MB', uploadedAt: '02 Mar 2026', status: 'verified' },
+    { id: 'DOC-005', name: 'Mohammed Al-Said — Work Permit', type: 'pdf', owner: 'GRD-002', ownerName: 'Mohammed Al-Said', category: 'guard', size: '0.5 MB', uploadedAt: '02 Mar 2026', status: 'verified' },
+    { id: 'DOC-006', name: 'Mohammed Al-Said — Guard Licence', type: 'pdf', owner: 'GRD-002', ownerName: 'Mohammed Al-Said', category: 'guard', size: '0.7 MB', uploadedAt: '02 Mar 2026', status: 'verified' },
+    { id: 'DOC-007', name: 'Ibrahim Hassan — National ID', type: 'pdf', owner: 'GRD-003', ownerName: 'Ibrahim Hassan', category: 'guard', size: '1.3 MB', uploadedAt: '03 Mar 2026', status: 'verified' },
+    { id: 'DOC-008', name: 'Ibrahim Hassan — Guard Licence', type: 'pdf', owner: 'GRD-003', ownerName: 'Ibrahim Hassan', category: 'guard', size: '0.9 MB', uploadedAt: '03 Mar 2026', status: 'verified' },
+    { id: 'DOC-009', name: 'Ibrahim Hassan — Work Permit', type: 'pdf', owner: 'GRD-003', ownerName: 'Ibrahim Hassan', category: 'guard', size: '0.4 MB', uploadedAt: '04 Mar 2026', status: 'verified' },
+    { id: 'DOC-010', name: 'Youssef Al-Qasim — National ID', type: 'pdf', owner: 'GRD-004', ownerName: 'Youssef Al-Qasim', category: 'guard', size: '1.1 MB', uploadedAt: '05 Mar 2026', status: 'pending' },
+    { id: 'DOC-011', name: 'Youssef Al-Qasim — Guard Licence', type: 'pdf', owner: 'GRD-004', ownerName: 'Youssef Al-Qasim', category: 'guard', size: '0.6 MB', uploadedAt: '05 Mar 2026', status: 'pending' },
+    { id: 'DOC-012', name: 'Tariq Bin Saeed — National ID', type: 'pdf', owner: 'GRD-005', ownerName: 'Tariq Bin Saeed', category: 'guard', size: '1.0 MB', uploadedAt: '06 Mar 2026', status: 'verified' },
+    { id: 'DOC-013', name: 'Tariq Bin Saeed — Guard Licence', type: 'pdf', owner: 'GRD-005', ownerName: 'Tariq Bin Saeed', category: 'guard', size: '0.8 MB', uploadedAt: '06 Mar 2026', status: 'verified' },
+    { id: 'DOC-014', name: 'Tariq Bin Saeed — Work Permit', type: 'pdf', owner: 'GRD-005', ownerName: 'Tariq Bin Saeed', category: 'guard', size: '0.5 MB', uploadedAt: '07 Mar 2026', status: 'verified' }
   ]
 };
 
@@ -2700,9 +2710,11 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [chatInput, setChatInput] = useState('');
   const [showDocViewer, setShowDocViewer] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingGuard, setEditingGuard] = useState(null); // holds editable copy
   const pageSize = 10;
   const fileInputRef = useRef(null);
   const dropZoneRef = useRef(null);
+  const profileUploadRef = useRef(null);
 
   // Add Guard form state — documents now store {name, size, type, dataUrl}
   const [addGuardForm, setAddGuardForm] = useState({
@@ -2733,6 +2745,46 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
   const handleRemoveDoc = (idx) => {
     setAddGuardForm(prev => ({ ...prev, documents: prev.documents.filter((_, i) => i !== idx) }));
+  };
+
+  const handleStartEdit = () => {
+    setEditingGuard({ ...selectedGuard });
+  };
+
+  const handleSaveEdit = () => {
+    setData(prev => ({ ...prev, guards: prev.guards.map(g => g.id === editingGuard.id ? editingGuard : g) }));
+    setSelectedGuard(editingGuard);
+    setEditingGuard(null);
+    showToast('Guard profile updated!');
+  };
+
+  const handleProfileDocUpload = (files) => {
+    if (!selectedGuard) return;
+    const fileArray = Array.from(files);
+    const readers = fileArray.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve({
+            id: `DOC-${String(data.documents.length + Math.random() * 1000 | 0).padStart(3, '0')}`,
+            name: `${selectedGuard.name} — ${file.name}`,
+            type: file.name.split('.').pop().toLowerCase(),
+            owner: selectedGuard.id,
+            ownerName: selectedGuard.name,
+            category: 'guard',
+            size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
+            uploadedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            status: 'pending',
+            dataUrl: e.target.result
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    Promise.all(readers).then(newDocs => {
+      setData(prev => ({ ...prev, documents: [...prev.documents, ...newDocs] }));
+      showToast(`${newDocs.length} document${newDocs.length > 1 ? 's' : ''} uploaded!`);
+    });
   };
 
   // Open guard profile from search
@@ -2922,59 +2974,119 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
       {/* Guard Profile Modal */}
       {selectedGuard && (
-        <div className="modal-overlay" onClick={() => { setSelectedGuard(null); setShowChatPanel(false); }}>
+        <div className="modal-overlay" onClick={() => { setSelectedGuard(null); setShowChatPanel(false); setEditingGuard(null); }}>
           <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div><div className="modal-sub">modal/guard/profile · Guard Tablet Profile</div><h2>Guard Profile</h2></div>
-              <button className="modal-close" onClick={() => { setSelectedGuard(null); setShowChatPanel(false); }}>×</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {!editingGuard && !showChatPanel && <button className="btn btn-sm" onClick={handleStartEdit}><Icon name="edit" size={12} /> Edit</button>}
+                <button className="modal-close" onClick={() => { setSelectedGuard(null); setShowChatPanel(false); setEditingGuard(null); }}>×</button>
+              </div>
             </div>
             <div className="wizard-steps"><span className="wizard-step">① Compose</span><span className="wizard-sep">›</span><span className="wizard-step">② Audience</span><span className="wizard-sep">›</span><span className="wizard-step">③ Schedule</span><span className="wizard-sep">›</span><span className="wizard-step active">④ Preview</span></div>
+
+            <input type="file" ref={profileUploadRef} multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }}
+              onChange={(e) => { if (e.target.files.length > 0) handleProfileDocUpload(e.target.files); e.target.value = ''; }} />
 
             {!showChatPanel ? (
               <div>
                 {/* Guard Info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-                  <div style={{ width: 48, height: 48, background: '#f0f0f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="user" size={20} /></div>
-                  <div><div style={{ fontWeight: 600, fontSize: 16 }}>{selectedGuard.name}</div><div style={{ fontSize: 12, color: '#888' }}>{selectedGuard.id} · {selectedGuard.company}</div><StatusBadge status={selectedGuard.status} /></div>
-                </div>
-
-                {/* Grid Info */}
-                <div className="grid-2" style={{ marginBottom: 16 }}>
-                  <div><div style={{ fontSize: 11, color: '#888' }}>Shift</div><div style={{ fontWeight: 600 }}>{selectedGuard.shift} {selectedGuard.shiftTime}</div></div>
-                  <div><div style={{ fontSize: 11, color: '#888' }}>Gate / Post</div><div style={{ fontWeight: 600 }}>{selectedGuard.gate}</div></div>
-                  <div><div style={{ fontSize: 11, color: '#888' }}>Contact</div><div style={{ fontWeight: 600 }}>{selectedGuard.contact}</div></div>
-                  <div><div style={{ fontSize: 11, color: '#888' }}>Verification</div><div style={{ fontWeight: 600 }}>{selectedGuard.verified ? 'Verified ✓' : 'Pending'}</div></div>
-                </div>
+                {editingGuard ? (
+                  <div style={{ marginBottom: 20 }}>
+                    <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Full Name</label><input className="form-input" value={editingGuard.name} onChange={e => setEditingGuard({ ...editingGuard, name: e.target.value })} /></div>
+                    <div className="grid-2" style={{ gap: 10 }}>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Company</label><input className="form-input" value={editingGuard.company} onChange={e => setEditingGuard({ ...editingGuard, company: e.target.value })} /></div>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Contact</label><input className="form-input" value={editingGuard.contact} onChange={e => setEditingGuard({ ...editingGuard, contact: e.target.value })} /></div>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Gate / Post</label><input className="form-input" value={editingGuard.gate} onChange={e => setEditingGuard({ ...editingGuard, gate: e.target.value })} /></div>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Shift</label>
+                        <select className="form-input" value={editingGuard.shift} onChange={e => setEditingGuard({ ...editingGuard, shift: e.target.value, shiftTime: e.target.value === 'Morning' ? '06:00–14:00' : e.target.value === 'Afternoon' ? '14:00–22:00' : '22:00–06:00' })}>
+                          <option value="Morning">Morning</option><option value="Afternoon">Afternoon</option><option value="Night">Night</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Status</label>
+                        <select className="form-input" value={editingGuard.status} onChange={e => setEditingGuard({ ...editingGuard, status: e.target.value })}>
+                          <option value="On Duty">On Duty</option><option value="Off Duty">Off Duty</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 10 }}><label style={{ fontSize: 11, color: '#888' }}>Verified</label>
+                        <select className="form-input" value={editingGuard.verified ? 'yes' : 'no'} onChange={e => setEditingGuard({ ...editingGuard, verified: e.target.value === 'yes' })}>
+                          <option value="yes">Verified</option><option value="no">Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSaveEdit}>Save Changes</button>
+                      <button className="btn" style={{ flex: 1 }} onClick={() => setEditingGuard(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                      <div style={{ width: 48, height: 48, background: '#f0f0f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="user" size={20} /></div>
+                      <div><div style={{ fontWeight: 600, fontSize: 16 }}>{selectedGuard.name}</div><div style={{ fontSize: 12, color: '#888' }}>{selectedGuard.id} · {selectedGuard.company}</div><StatusBadge status={selectedGuard.status} /></div>
+                    </div>
+                    <div className="grid-2" style={{ marginBottom: 16 }}>
+                      <div><div style={{ fontSize: 11, color: '#888' }}>Shift</div><div style={{ fontWeight: 600 }}>{selectedGuard.shift} {selectedGuard.shiftTime}</div></div>
+                      <div><div style={{ fontSize: 11, color: '#888' }}>Gate / Post</div><div style={{ fontWeight: 600 }}>{selectedGuard.gate}</div></div>
+                      <div><div style={{ fontSize: 11, color: '#888' }}>Contact</div><div style={{ fontWeight: 600 }}>{selectedGuard.contact}</div></div>
+                      <div><div style={{ fontSize: 11, color: '#888' }}>Verification</div><div style={{ fontWeight: 600 }}>{selectedGuard.verified ? 'Verified ✓' : 'Pending'}</div></div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Security Documents */}
-                <div style={{ marginBottom: 16 }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Security Documents</h4>
-                  {guardDocuments.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {guardDocuments.map(doc => (
-                        <div key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: '#f9f9f9', borderRadius: 6, fontSize: 12 }}>
-                          <div>
-                            <div style={{ fontWeight: 500 }}>{doc.name}</div>
-                            <div style={{ color: '#888', fontSize: 10 }}>{doc.type.toUpperCase()} · {doc.size} · {doc.uploadedAt}</div>
-                          </div>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button className="btn btn-sm" onClick={() => setShowDocViewer(doc)}>View</button>
-                            <button className="btn btn-sm" onClick={() => showToast('Document downloaded!')}>Download</button>
-                          </div>
-                        </div>
-                      ))}
+                {!editingGuard && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <h4 style={{ fontSize: 13, fontWeight: 600 }}>Security Documents</h4>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-sm" onClick={() => profileUploadRef.current && profileUploadRef.current.click()}><Icon name="upload" size={10} /> Upload</button>
+                        {guardDocuments.length > 1 && (
+                          <button className="btn btn-sm" onClick={() => {
+                            guardDocuments.forEach(doc => {
+                              if (doc.dataUrl) {
+                                const a = document.createElement('a'); a.href = doc.dataUrl; a.download = doc.name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                              }
+                            });
+                            showToast(`Downloading ${guardDocuments.length} documents...`);
+                          }}><Icon name="download" size={10} /> All</button>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div style={{ background: '#f9f9f9', borderRadius: 8, padding: 24, textAlign: 'center', color: '#999', fontSize: 12 }}>No documents uploaded<br /><a href="#" style={{ color: '#1a1a1a', cursor: 'pointer' }}>Browse Files</a></div>
-                  )}
-                </div>
+                    {guardDocuments.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
+                        {guardDocuments.map(doc => (
+                          <div key={doc.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#f9f9f9', borderRadius: 6, fontSize: 12 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.name}</div>
+                              <div style={{ color: '#888', fontSize: 10 }}>{doc.type.toUpperCase()} · {doc.size} · {doc.uploadedAt}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                              <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => setShowDocViewer(doc)}>View</button>
+                              <button className="btn btn-sm" style={{ fontSize: 10, padding: '3px 8px' }} onClick={() => {
+                                if (doc.dataUrl) {
+                                  const a = document.createElement('a'); a.href = doc.dataUrl; a.download = doc.name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                                  showToast('Download started!');
+                                } else { showToast('Sample entry — no file data'); }
+                              }}>Download</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div onClick={() => profileUploadRef.current && profileUploadRef.current.click()} style={{ background: '#f9f9f9', borderRadius: 8, padding: 24, textAlign: 'center', color: '#999', fontSize: 12, cursor: 'pointer', border: '2px dashed #e0e0e0' }}>No documents uploaded<br /><span style={{ color: '#1a1a1a', fontWeight: 600 }}>Click to upload files</span></div>
+                    )}
+                  </div>
+                )}
 
                 {/* Action Buttons */}
-                <div className="grid-3">
-                  <button className="btn" onClick={() => setShowCallPopup(selectedGuard)}><Icon name="phone" size={14} /> Call</button>
-                  <button className="btn" onClick={() => setShowChatPanel(true)}>💬 Message</button>
-                  <button className="btn btn-danger" onClick={() => setShowDeactivate(selectedGuard)}>Deactivate</button>
-                </div>
+                {!editingGuard && (
+                  <div className="grid-3">
+                    <button className="btn" onClick={() => setShowCallPopup(selectedGuard)}><Icon name="phone" size={14} /> Call</button>
+                    <button className="btn" onClick={() => setShowChatPanel(true)}>💬 Message</button>
+                    <button className="btn btn-danger" onClick={() => setShowDeactivate(selectedGuard)}>Deactivate</button>
+                  </div>
+                )}
               </div>
             ) : (
               /* Chat Panel */
@@ -3150,7 +3262,20 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 ['jpg','jpeg','png','gif','webp'].includes(showDocViewer.type) ? (
                   <img src={showDocViewer.dataUrl} alt={showDocViewer.name} style={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain' }} />
                 ) : showDocViewer.type === 'pdf' ? (
-                  <iframe src={showDocViewer.dataUrl} style={{ width: '100%', height: 400, border: 'none' }} title={showDocViewer.name} />
+                  (() => {
+                    // Convert base64 data URL to blob URL for iframe rendering
+                    try {
+                      const base64 = showDocViewer.dataUrl.split(',')[1];
+                      const binary = atob(base64);
+                      const bytes = new Uint8Array(binary.length);
+                      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                      const blob = new Blob([bytes], { type: 'application/pdf' });
+                      const blobUrl = URL.createObjectURL(blob);
+                      return <iframe src={blobUrl} style={{ width: '100%', height: 400, border: 'none' }} title={showDocViewer.name} />;
+                    } catch (e) {
+                      return <div style={{ padding: 40, textAlign: 'center', color: '#888', fontSize: 12 }}><Icon name="eye" size={32} /><div style={{ marginTop: 8 }}>PDF preview failed</div><div style={{ fontSize: 11, marginTop: 4 }}>Use Download to open this file</div></div>;
+                    }
+                  })()
                 ) : (
                   <div style={{ padding: 40, textAlign: 'center', color: '#888', fontSize: 12 }}><Icon name="eye" size={32} /><div style={{ marginTop: 8 }}>Preview not available for .{showDocViewer.type} files</div><div style={{ fontSize: 11, marginTop: 4 }}>Use Download to open this file</div></div>
                 )
@@ -3183,10 +3308,13 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
 const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const { data, setData, showToast } = useApp();
   const [selectedResident, setSelectedResident] = useState(null);
-  const [showImport, setShowImport] = useState(false);
+  const [showImport, setShowImport] = useState(false); // false | 'pick' | 'csv' | 'excel' | 'sql'
+  const [showExport, setShowExport] = useState(false); // false | 'pick'
   const [showAddResident, setShowAddResident] = useState(false);
   const [newRes, setNewRes] = useState({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
   const [resSearch, setResSearch] = useState('');
+  const [importFile, setImportFile] = useState(null);
+  const importFileRef = useRef(null);
 
   // Open resident detail from search
   useEffect(() => {
@@ -3206,13 +3334,100 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
     showToast('Resident added successfully!');
   };
 
-  const handleExportResidents = () => {
-    exportToExcel(filteredResidents, [
-      {header:'ID', key:'id'}, {header:'Name', key:'name'}, {header:'Flat', key:'flat'},
-      {header:'Co-Residents', key:'coResidents'}, {header:'Contact', key:'contact'},
-      {header:'Status', key:'status'}, {header:'Policy', key:'policy'}, {header:'Scheduled Absence', key:'absence'}
-    ], 'VARS_Residents_Export');
-    showToast('Residents exported to Excel!');
+  const RESIDENT_COLUMNS = [
+    {header:'ID', key:'id'}, {header:'Name', key:'name'}, {header:'Flat', key:'flat'},
+    {header:'Co-Residents', key:'coResidents'}, {header:'Contact', key:'contact'},
+    {header:'Status', key:'status'}, {header:'Policy', key:'policy'}, {header:'Scheduled Absence', key:'absence'}
+  ];
+
+  const handleExportResidents = (format) => {
+    if (format === 'excel') {
+      exportToExcel(filteredResidents, RESIDENT_COLUMNS, 'VARS_Residents_Export');
+      showToast('Exported as Excel (.xlsx)');
+    } else if (format === 'csv') {
+      const header = RESIDENT_COLUMNS.map(c => c.header).join(',');
+      const rows = filteredResidents.map(r => RESIDENT_COLUMNS.map(c => '"' + (r[c.key] !== undefined ? r[c.key] : '') + '"').join(','));
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'VARS_Residents_Export.csv'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported as CSV');
+    } else if (format === 'sql') {
+      const lines = filteredResidents.map(r => {
+        const vals = RESIDENT_COLUMNS.map(c => "'" + (r[c.key] !== undefined ? String(r[c.key]).replace(/'/g, "''") : '') + "'").join(', ');
+        return `INSERT INTO residents (${RESIDENT_COLUMNS.map(c => c.key).join(', ')}) VALUES (${vals});`;
+      });
+      const sql = lines.join('\n');
+      const blob = new Blob([sql], { type: 'text/sql' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'VARS_Residents_Export.sql'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported as SQL');
+    }
+    setShowExport(false);
+  };
+
+  const handleDownloadTemplate = (format) => {
+    const sampleRow = { id: 'RES-001', name: 'John Smith', flat: 'A-101', coResidents: 2, contact: '+971 50 000 0000', status: 'Verified', policy: 'Standard', absence: 'None' };
+    if (format === 'csv') {
+      const header = RESIDENT_COLUMNS.map(c => c.header).join(',');
+      const row = RESIDENT_COLUMNS.map(c => '"' + sampleRow[c.key] + '"').join(',');
+      const csv = header + '\n' + row;
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'VARS_Residents_Template.csv'; a.click(); URL.revokeObjectURL(url);
+    } else if (format === 'excel') {
+      exportToExcel([sampleRow], RESIDENT_COLUMNS, 'VARS_Residents_Template');
+    } else if (format === 'sql') {
+      const cols = RESIDENT_COLUMNS.map(c => c.key).join(', ');
+      const vals = RESIDENT_COLUMNS.map(c => "'" + sampleRow[c.key] + "'").join(', ');
+      const sql = `-- Template: Residents table\nCREATE TABLE IF NOT EXISTS residents (\n${RESIDENT_COLUMNS.map(c => '  ' + c.key + ' TEXT').join(',\n')}\n);\n\n-- Sample row:\nINSERT INTO residents (${cols}) VALUES (${vals});`;
+      const blob = new Blob([sql], { type: 'text/sql' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'VARS_Residents_Template.sql'; a.click(); URL.revokeObjectURL(url);
+    }
+    showToast('Template downloaded!');
+  };
+
+  const handleImportFile = (file, format) => {
+    if (!file) { showToast('Please select a file first'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        let rows = [];
+        if (format === 'csv') {
+          const text = e.target.result;
+          const lines = text.split('\n').filter(l => l.trim());
+          if (lines.length < 2) { showToast('CSV file is empty or has no data rows'); return; }
+          const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+          for (let i = 1; i < lines.length; i++) {
+            const vals = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+            const obj = {};
+            headers.forEach((h, idx) => { const col = RESIDENT_COLUMNS.find(c => c.header.toLowerCase() === h.toLowerCase() || c.key.toLowerCase() === h.toLowerCase()); if (col) obj[col.key] = vals[idx] || ''; });
+            if (obj.name && obj.flat) rows.push(obj);
+          }
+        } else if (format === 'excel') {
+          const wb = XLSX.read(e.target.result, { type: 'binary' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(ws);
+          jsonData.forEach(row => {
+            const obj = {};
+            RESIDENT_COLUMNS.forEach(c => { const val = row[c.header] || row[c.key]; if (val !== undefined) obj[c.key] = val; });
+            if (obj.name && obj.flat) rows.push(obj);
+          });
+        }
+        if (rows.length === 0) { showToast('No valid rows found in file'); return; }
+        const newResidents = rows.map((r, idx) => ({
+          id: r.id || `RES-${String(data.residents.length + idx + 1).padStart(3, '0')}`,
+          name: r.name, flat: r.flat, contact: r.contact || '', coResidents: parseInt(r.coResidents) || 1,
+          status: r.status || 'Pending', policy: r.policy || 'Standard', absence: r.absence || 'None'
+        }));
+        setData(prev => ({ ...prev, residents: [...prev.residents, ...newResidents] }));
+        showToast(`${newResidents.length} resident${newResidents.length !== 1 ? 's' : ''} imported!`);
+        setShowImport(false); setImportFile(null);
+      } catch (err) { showToast('Error reading file: ' + err.message); }
+    };
+    if (format === 'csv' || format === 'sql') reader.readAsText(file);
+    else reader.readAsBinaryString(file);
   };
 
   const filteredResidents = data.residents.filter(r => {
@@ -3226,8 +3441,8 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         <div><h1>Properties & Residents (PMC)</h1><div className="subtitle">{data.towers.length} properties · {data.towers.reduce((a,t)=>a+t.totalFlats,0).toLocaleString()} flats · {data.towers.reduce((a,t)=>a+t.occupied,0).toLocaleString()} occupied</div></div>
         <div className="btn-group">
           <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}>+ Add Resident</button>
-          <button className="btn" onClick={()=>setShowImport(true)}>↑ Import CSV</button>
-          <button className="btn" onClick={handleExportResidents}>↓ Export Excel</button>
+          <button className="btn" onClick={()=>setShowImport('pick')}><Icon name="upload" size={12}/> Import</button>
+          <button className="btn" onClick={()=>setShowExport('pick')}><Icon name="download" size={12}/> Export</button>
         </div>
       </div>
 
@@ -3339,24 +3554,112 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         </div>
       )}
 
+      {/* Import Modal */}
       {showImport && (
-        <div className="modal-overlay" onClick={()=>setShowImport(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null)}}>
+          <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <div><div className="modal-sub">modal/import/csv</div><h2>Import Properties via CSV</h2></div>
-              <button className="modal-close" onClick={()=>setShowImport(false)}>×</button>
+              <div><div className="modal-sub">modal/import · Resident Data Import</div><h2 style={{fontSize:16}}>{showImport === 'pick' ? 'Import Residents' : 'Import via ' + showImport.toUpperCase()}</h2></div>
+              <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null)}}>×</button>
             </div>
-            <div style={{background:'#f9f9f9',borderRadius:8,padding:12,marginBottom:16}}>
-              <div style={{fontSize:12,color:'#666',marginBottom:8}}>Required CSV Columns:</div>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                {['flat_number','resident_name','mobile','email','tower','floor','owner_verified'].map(c => <span key={c} style={{background:'#e8e8e8',padding:'2px 8px',borderRadius:4,fontSize:12}}>{c}</span>)}
+
+            {showImport === 'pick' && (
+              <div>
+                <p style={{fontSize:13,color:'#666',marginBottom:16}}>Choose the format of your data source.</p>
+                {[
+                  {key:'csv', label:'CSV File', sub:'Comma-separated values (.csv)', icon:'📄'},
+                  {key:'excel', label:'Excel Spreadsheet', sub:'Microsoft Excel (.xlsx, .xls)', icon:'📊'},
+                  {key:'sql', label:'SQL Database', sub:'SQL insert statements (.sql)', icon:'🗄️'}
+                ].map(opt => (
+                  <div key={opt.key} onClick={()=>setShowImport(opt.key)}
+                    style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #e0e0e0',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                    <span style={{fontSize:24}}>{opt.icon}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                      <div style={{fontSize:11,color:'#888'}}>{opt.sub}</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                ))}
               </div>
+            )}
+
+            {(showImport === 'csv' || showImport === 'excel' || showImport === 'sql') && (
+              <div>
+                {/* Step 1: Template */}
+                <div style={{background:'#f5f5f5',borderRadius:8,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>1. Download Template</div>
+                  <p style={{fontSize:11,color:'#666',marginBottom:10}}>Use this template to prepare your data. It contains the required columns and a sample row.</p>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+                    {RESIDENT_COLUMNS.map(c => <span key={c.key} style={{background:'#e8e8e8',padding:'2px 8px',borderRadius:4,fontSize:10,fontWeight:600}}>{c.header}</span>)}
+                  </div>
+                  <button className="btn btn-sm" onClick={()=>handleDownloadTemplate(showImport)}><Icon name="download" size={12}/> Download {showImport.toUpperCase()} Template</button>
+                </div>
+
+                {/* Step 2: Upload */}
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>2. Upload Your File</div>
+                  <input type="file" ref={importFileRef} style={{display:'none'}}
+                    accept={showImport === 'csv' ? '.csv' : showImport === 'excel' ? '.xlsx,.xls' : '.sql'}
+                    onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
+                  <div onClick={()=>importFileRef.current && importFileRef.current.click()}
+                    onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
+                    onDragLeave={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0'}}
+                    onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0';if(e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0])}}
+                    style={{padding:24,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#f9f9f9',transition:'all 0.2s'}}>
+                    {importFile ? (
+                      <div>
+                        <div style={{fontWeight:600,fontSize:13}}>{importFile.name}</div>
+                        <div style={{fontSize:11,color:'#888',marginTop:4}}>{(importFile.size/1024).toFixed(1)} KB · Click to change</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <Icon name="upload" size={20}/>
+                        <div style={{fontSize:12,marginTop:6}}>Drag & drop or <span style={{fontWeight:600,textDecoration:'underline'}}>Browse Files</span></div>
+                        <div style={{fontSize:10,color:'#888',marginTop:4}}>{showImport === 'csv' ? '.csv files' : showImport === 'excel' ? '.xlsx, .xls files' : '.sql files'}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{display:'flex',gap:8}}>
+                  <button className="btn" style={{flex:1}} onClick={()=>{setShowImport('pick');setImportFile(null)}}>← Back</button>
+                  <button className="btn btn-primary" style={{flex:1}} onClick={()=>handleImportFile(importFile, showImport)}>Import Data</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExport && (
+        <div className="modal-overlay" onClick={()=>setShowExport(false)}>
+          <div className="modal" style={{maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <div><div className="modal-sub">modal/export · Resident Data Export</div><h2 style={{fontSize:16}}>Export Residents</h2></div>
+              <button className="modal-close" onClick={()=>setShowExport(false)}>×</button>
             </div>
-            <div className="upload-area" style={{marginBottom:16}}>Drop CSV file here<br/><button className="btn btn-sm" style={{marginTop:8}}>Browse Files</button></div>
-            <div className="grid-2">
-              <button className="btn btn-primary" onClick={()=>setShowImport(false)}>Import</button>
-              <button className="btn" onClick={()=>setShowImport(false)}>Cancel</button>
-            </div>
+            <p style={{fontSize:13,color:'#666',marginBottom:16}}>Export {filteredResidents.length} resident{filteredResidents.length !== 1 ? 's' : ''} in your preferred format.</p>
+            {[
+              {key:'csv', label:'CSV File', sub:'Universal format, works everywhere', icon:'📄'},
+              {key:'excel', label:'Excel Spreadsheet', sub:'Formatted .xlsx with auto-width columns', icon:'📊'},
+              {key:'sql', label:'SQL Statements', sub:'INSERT statements for database import', icon:'🗄️'}
+            ].map(opt => (
+              <div key={opt.key} onClick={()=>handleExportResidents(opt.key)}
+                style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #e0e0e0',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                <span style={{fontSize:24}}>{opt.icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                  <div style={{fontSize:11,color:'#888'}}>{opt.sub}</div>
+                </div>
+                <Icon name="download" size={14}/>
+              </div>
+            ))}
           </div>
         </div>
       )}
