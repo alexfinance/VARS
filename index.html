@@ -5803,13 +5803,13 @@ const ResidentApp = ({ onLogout }) => {
           <div className="res-content" style={{padding:'12px 16px',paddingBottom:80}}>
             <div style={{fontSize:20,fontWeight:600,color:'#1a1a1a',marginBottom:20}}>Book Amenities & Services</div>
 
-            {/* Book Services */}
+            {/* Book Amenities */}
             <div style={{marginBottom:24}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-                <span style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>Book Services</span>
+                <span style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>Book Amenities</span>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                {bookServices.map((svc, i) => (
+                {bookAmenities.map((svc, i) => (
                   <div key={i} onClick={() => {setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
@@ -5820,13 +5820,13 @@ const ResidentApp = ({ onLogout }) => {
               </div>
             </div>
 
-            {/* Book Amenities */}
+            {/* Book Services */}
             <div style={{marginBottom:24}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-                <span style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>Book Amenities</span>
+                <span style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>Book Services</span>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                {bookAmenities.map((svc, i) => (
+                {bookServices.map((svc, i) => (
                   <div key={i} onClick={() => {setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
