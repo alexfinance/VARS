@@ -6277,7 +6277,7 @@ const ResidentApp = ({ onLogout }) => {
                   );
                 });
               })()}
-              <button onClick={() => setCurrentPage('book')} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
+              <button onClick={() => {setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
             </div>
 
             {/* Upcoming Service — booked separately */}
@@ -7069,8 +7069,22 @@ const ResidentApp = ({ onLogout }) => {
               <button onClick={() => setShowServiceBookingModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
             </div>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Service Type</label>
-              <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Amenity Type</label>
+              {serviceBooking.type ? (
+                <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
+              ) : (
+                <select value={serviceBooking.type} onChange={e => setServiceBooking(f => ({...f, type: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                  <option value="">Select amenity</option>
+                  <option value="Swimming Pool">Swimming Pool</option>
+                  <option value="Table Tennis">Table Tennis</option>
+                  <option value="Squash">Squash</option>
+                  <option value="Gym">Gym</option>
+                  <option value="Sauna">Sauna</option>
+                  <option value="BBQ Area">BBQ Area</option>
+                  <option value="Kids Area">Kids Area</option>
+                  <option value="Yoga Room">Yoga Room</option>
+                </select>
+              )}
             </div>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
@@ -7106,7 +7120,7 @@ const ResidentApp = ({ onLogout }) => {
                 <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
               </div>
             </div>
-            <button onClick={() => {if (!serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;} const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: serviceBooking.location, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, status:'Confirmed'}; setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]})); showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time); setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});}} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>Book Amenity</button>
+            <button onClick={() => {if (!serviceBooking.type || !serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;} const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: serviceBooking.location, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, status:'Confirmed'}; setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]})); showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time); setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});}} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>Book Amenity</button>
             <button onClick={() => setShowServiceBookingModal(false)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
           </div>
         </div>
