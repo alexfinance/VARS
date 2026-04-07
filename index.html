@@ -639,6 +639,46 @@ body{font-family:'Helvetica Now Text','Inter',-apple-system,BlinkMacSystemFont,'
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
 
+// ==================== DATE FORMATTING HELPERS ====================
+const formatDate = (date) => {
+  if (!date) return '';
+  if (typeof date === 'string' && !date.includes('-') && !date.includes('/')) return date;
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Dubai' });
+};
+
+const formatDateShort = (date) => {
+  if (!date) return '';
+  if (typeof date === 'string' && !date.includes('-') && !date.includes('/')) return date;
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'Asia/Dubai' });
+};
+
+const formatDateTime = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  const datePart = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Dubai' });
+  const timePart = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Dubai' });
+  return datePart + ', ' + timePart;
+};
+
+const formatTime24 = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Dubai' });
+};
+
+const formatTime12 = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d)) return date;
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Dubai' });
+};
+
 // ==================== DATA STORE ====================
 const initialData = {
   currentUser: { name: 'Hassan Al-PM', email: 'hassan@pinnaclepm.ae', phone: '+971 50 999 0001', role: 'Property Manager' },
@@ -703,15 +743,58 @@ const initialData = {
     { id: 'GRD-005', name: 'Tariq Bin Saeed', shift: 'Afternoon', shiftTime: '14:00–22:00', gate: 'Delivery Gate', company: 'PrimeSecurity Co.', contact: '+971 55 555 6666', status: 'On Duty', verified: true }
   ],
   residents: [
-    { id: 'RES-001', name: 'Mr. Khalid Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
-    { id: 'RES-002', name: 'Ms. Amira Belhasa', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18–25 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
-    { id: 'RES-003', name: 'Mr. Hassan Al-Farsi', flat: 'C-0501', coResidents: 1, contact: '+971 55 345 6789', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
-    { id: 'RES-004', name: 'Ms. Noor Abdullah', flat: 'A-0202', coResidents: 9, contact: '+971 50 456 7890', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
-    { id: 'RES-005', name: 'Mr. Omar Khouri', flat: 'D-1102', coResidents: 3, contact: '+971 56 567 8901', status: 'Verified', policy: 'Custom', absence: '07–09 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
-    { id: 'RES-006', name: 'Dr. Fatima Al-Ali', flat: 'B-0405', coResidents: 2, contact: '+971 55 678 9012', status: 'Verified', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
-    { id: 'RES-007', name: 'Mr. Yusuf Al-Breiki', flat: 'C-1001', coResidents: 2, contact: '+971 50 789 0123', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
-    { id: 'RES-008', name: 'Ms. Rania Saab', flat: 'A-0708', coResidents: 5, contact: '+971 55 890 1234', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true }
+    { id: 'RES-001', name: 'Mr. Ahmed Al-Mansoori', flat: 'A-0101', coResidents: 7, contact: '+971 56 979401611', moveInDate: '6 Mar 2024', status: 'Pending', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-002', name: 'Ms. Fatima Al-Neyadi', flat: 'A-0102', coResidents: 4, contact: '+971 56 297418057', moveInDate: '19 Feb 2024', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-003', name: 'Mr. Hassan Al-Mazrouei', flat: 'A-0103', coResidents: 8, contact: '+971 52 256331366', moveInDate: '10 Feb 2025', status: 'Verified', policy: 'Standard', absence: '9–25 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-004', name: 'Ms. Noor Al-Remeithi', flat: 'A-0104', coResidents: 4, contact: '+971 51 309531932', moveInDate: '7 Jun 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-005', name: 'Mr. Saif Al-Dhaheri', flat: 'A-0105', coResidents: 6, contact: '+971 55 595276311', moveInDate: '9 Dec 2023', status: 'Active', policy: 'Custom', absence: '13–30 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-006', name: 'Dr. Amira Al-Bloushi', flat: 'A-0201', coResidents: 6, contact: '+971 51 207949054', moveInDate: '25 Feb 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-007', name: 'Mr. Tariq Al-Zaabi', flat: 'A-0202', coResidents: 8, contact: '+971 55 614610722', moveInDate: '24 Dec 2024', status: 'Verified', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-008', name: 'Ms. Rania Al-Ameri', flat: 'A-0203', coResidents: 4, contact: '+971 51 399203528', moveInDate: '3 Dec 2024', status: 'Pending', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: false },
+    { id: 'RES-009', name: 'Mr. Youssef Al-Kaabi', flat: 'A-0204', coResidents: 9, contact: '+971 52 191170768', moveInDate: '24 May 2024', status: 'Verified', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-010', name: 'Ms. Hana Al-Nuaimi', flat: 'A-0205', coResidents: 2, contact: '+971 51 597789502', moveInDate: '3 Sep 2024', status: 'Active', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-011', name: 'Mr. Khaled Al-Qasimi', flat: 'A-0301', coResidents: 5, contact: '+971 54 476071813', moveInDate: '4 Jan 2023', status: 'Pending', policy: 'Standard', absence: '11–21 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-012', name: 'Ms. Dina Al-Farsi', flat: 'A-0302', coResidents: 6, contact: '+971 55 630535717', moveInDate: '10 Jun 2024', status: 'Active', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-013', name: 'Mr. Omar Al-Muraikhi', flat: 'A-0303', coResidents: 6, contact: '+971 55 327811066', moveInDate: '16 Jul 2023', status: 'Active', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-014', name: 'Dr. Leila Al-Hosani', flat: 'A-0304', coResidents: 7, contact: '+971 56 402307612', moveInDate: '27 May 2023', status: 'Verified', policy: 'Enhanced', absence: '6–29 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-015', name: 'Mr. Ibrahim Al-Suwaidi', flat: 'A-0305', coResidents: 1, contact: '+971 56 172716180', moveInDate: '14 Jun 2024', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-016', name: 'Ms. Zainab Al-Maktoumi', flat: 'A-0401', coResidents: 6, contact: '+971 51 622962438', moveInDate: '23 Jul 2024', status: 'Verified', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-017', name: 'Mr. Rashid Al-Ketbi', flat: 'A-0402', coResidents: 3, contact: '+971 55 645531495', moveInDate: '25 Feb 2023', status: 'Verified', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-018', name: 'Ms. Maha Al-Mazrouei', flat: 'A-0403', coResidents: 9, contact: '+971 54 173657021', moveInDate: '22 Jun 2024', status: 'Pending', policy: 'Enhanced', absence: '6–30 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-019', name: 'Mr. Faisal Al-Mansoori', flat: 'A-0404', coResidents: 2, contact: '+971 54 610789079', moveInDate: '9 Aug 2024', status: 'Verified', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: false },
+    { id: 'RES-020', name: 'Dr. Huda Al-Breiki', flat: 'A-0405', coResidents: 5, contact: '+971 52 489598122', moveInDate: '6 Jan 2023', status: 'Pending', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-021', name: 'Mr. Abdullah Al-Shamsi', flat: 'A-0501', coResidents: 4, contact: '+971 52 545303516', moveInDate: '3 May 2023', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-022', name: 'Ms. Noura Al-Hamairi', flat: 'A-0502', coResidents: 3, contact: '+971 51 610306437', moveInDate: '4 Nov 2023', status: 'Active', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-023', name: 'Mr. Saeed Al-Neyadi', flat: 'A-0503', coResidents: 1, contact: '+971 54 324560358', moveInDate: '11 May 2023', status: 'Active', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-024', name: 'Ms. Azza Al-Zaabi', flat: 'A-0504', coResidents: 6, contact: '+971 50 428051013', moveInDate: '3 Jan 2024', status: 'Pending', policy: 'Standard', absence: '2–30 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: false },
+    { id: 'RES-025', name: 'Mr. Mohammed Al-Kaabi', flat: 'A-0505', coResidents: 2, contact: '+971 50 174443493', moveInDate: '6 Jan 2024', status: 'Active', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-026', name: 'Dr. Samira Al-Bloushi', flat: 'A-0601', coResidents: 1, contact: '+971 50 720809810', moveInDate: '26 Jul 2024', status: 'Verified', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-027', name: 'Mr. Jamal Al-Ketbi', flat: 'A-0602', coResidents: 9, contact: '+971 54 349538886', moveInDate: '16 Jul 2024', status: 'Active', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-028', name: 'Ms. Mariam Al-Nuaimi', flat: 'A-0603', coResidents: 5, contact: '+971 55 458047215', moveInDate: '4 Aug 2024', status: 'Verified', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: false, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-029', name: 'Mr. Karim Al-Qasimi', flat: 'A-0604', coResidents: 7, contact: '+971 53 231822996', moveInDate: '1 Jul 2023', status: 'Active', policy: 'Standard', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-030', name: 'Ms. Layla Al-Hosani', flat: 'A-0605', coResidents: 7, contact: '+971 53 811017597', moveInDate: '24 Oct 2023', status: 'Active', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-031', name: 'Mr. Hamad Al-Suwaidi', flat: 'A-0701', coResidents: 5, contact: '+971 53 588171895', moveInDate: '26 Nov 2023', status: 'Verified', policy: 'Custom', absence: '1–24 Apr', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-032', name: 'Ms. Reem Al-Maktoumi', flat: 'A-0702', coResidents: 2, contact: '+971 51 757985492', moveInDate: '18 May 2024', status: 'Pending', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-033', name: 'Mr. Nasser Al-Falasi', flat: 'A-0703', coResidents: 1, contact: '+971 52 394512554', moveInDate: '22 Jul 2024', status: 'Pending', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-034', name: 'Dr. Aisha Al-Mansoori', flat: 'A-0704', coResidents: 4, contact: '+971 53 185916505', moveInDate: '4 May 2023', status: 'Pending', policy: 'Standard', absence: '13–24 Apr', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-035', name: 'Mr. Suhail Al-Muraikhi', flat: 'A-0705', coResidents: 9, contact: '+971 52 899405314', moveInDate: '10 Dec 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: false },
+    { id: 'RES-036', name: 'Ms. Nawal Al-Farsi', flat: 'A-0801', coResidents: 6, contact: '+971 50 203436723', moveInDate: '4 Oct 2023', status: 'Active', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-037', name: 'Mr. Adel Al-Shams', flat: 'A-0802', coResidents: 3, contact: '+971 51 296421664', moveInDate: '19 Jul 2024', status: 'Verified', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-038', name: 'Ms. Salma Al-Dhaheri', flat: 'A-0803', coResidents: 5, contact: '+971 50 702690673', moveInDate: '22 Oct 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-039', name: 'Mr. Jassim Al-Ameri', flat: 'A-0804', coResidents: 4, contact: '+971 56 814433659', moveInDate: '11 Jan 2024', status: 'Verified', policy: 'Enhanced', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: false },
+    { id: 'RES-040', name: 'Dr. Haya Al-Breiki', flat: 'A-0805', coResidents: 5, contact: '+971 56 288184410', moveInDate: '12 Dec 2024', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-041', name: 'Mr. Waleed Al-Kaabi', flat: 'A-0901', coResidents: 2, contact: '+971 50 356728043', moveInDate: '17 Nov 2024', status: 'Active', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-042', name: 'Ms. Nuha Al-Hosani', flat: 'A-0902', coResidents: 7, contact: '+971 50 795690106', moveInDate: '20 Aug 2024', status: 'Active', policy: 'Enhanced', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-043', name: 'Mr. Majed Al-Neyadi', flat: 'A-0903', coResidents: 5, contact: '+971 55 861654138', moveInDate: '1 Dec 2024', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: false, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-044', name: 'Ms. Amina Al-Bloushi', flat: 'A-0904', coResidents: 4, contact: '+971 54 916011366', moveInDate: '13 Oct 2023', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-045', name: 'Mr. Younis Al-Ketbi', flat: 'A-0905', coResidents: 5, contact: '+971 54 505393406', moveInDate: '2 Nov 2023', status: 'Active', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-046', name: 'Ms. Habiba Al-Zaabi', flat: 'A-1001', coResidents: 6, contact: '+971 53 637001298', moveInDate: '20 Sep 2024', status: 'Pending', policy: 'Standard', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: false },
+    { id: 'RES-047', name: 'Mr. Ramzi Al-Muraikhi', flat: 'A-1002', coResidents: 2, contact: '+971 51 216263616', moveInDate: '5 Sep 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: true, pushNotifications: true },
+    { id: 'RES-048', name: 'Dr. Silma Al-Qasimi', flat: 'A-1003', coResidents: 5, contact: '+971 53 971520185', moveInDate: '6 May 2024', status: 'Pending', policy: 'Custom', absence: 'None', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-049', name: 'Mr. Amin Al-Farsi', flat: 'A-1004', coResidents: 7, contact: '+971 52 836173322', moveInDate: '10 Jul 2024', status: 'Verified', policy: 'Custom', absence: '12–23 Apr', packageAutoAccept: false, visitorPreApproval: true, emailNotifications: false, pushNotifications: true },
+    { id: 'RES-050', name: 'Ms. Wafa Al-Remeithi', flat: 'A-1005', coResidents: 2, contact: '+971 50 780739538', moveInDate: '28 Apr 2024', status: 'Verified', policy: 'Enhanced', absence: '1–26 Apr', packageAutoAccept: true, visitorPreApproval: true, emailNotifications: true, pushNotifications: false }
   ],
+
   escalations: [
     { id: 'ESC-018', type: 'SLA Breach', severity: 'Critical', title: 'SLA Breach — SR-1087 Move-Out', flat: 'A-1204', created: '05 Apr, 13:00', assigned: 'PM Hassan', status: 'Unresolved', sla: '18h overdue' },
     { id: 'ESC-017', type: 'Compliance', severity: 'High', title: 'Expired Compliance — Guard GRD-004', flat: '', created: '05 Apr, 08:00', assigned: 'Security Admin', status: 'In Review', sla: '2h remaining' },
@@ -791,7 +874,18 @@ const initialData = {
     { id: 5, refId: 'VIS-005', visitor: 'Ahmed Al-Mansoori', phone: '+971 55 555 5555', initials: 'AM', type: 'Guest', flat: 'B-102', host: 'Nitin Sharma', purpose: 'Business', timeIn: '07:00', timeOut: '08:45', duration: '1h 45m', idDoc: 'EMIRATES ID', status: 'APPROVED' },
     { id: 6, refId: 'VIS-006', visitor: 'Youssef Contractor', phone: '+971 50 666 6666', initials: 'YC', type: 'Contractor', flat: 'B-102', host: 'Facility Mgr', purpose: 'Maintenance', timeIn: '11:00', timeOut: '12:30', duration: '1h 30m', idDoc: 'ID CARD', status: 'APPROVED' }
   ],
-  chatMessages: [],
+  chatRooms: [
+    { id: 'pm-guard-001', participants: [{ id: 'pm-1', name: 'Hassan Al-PM', role: 'Property Manager' }, { id: 'guard-001', name: 'Ahmed Khalil', role: 'Security Guard' }], lastMessage: 'Check visitor at main gate', lastMessageTime: '14:32', unreadCount: 0 },
+    { id: 'pm-res-001', participants: [{ id: 'pm-1', name: 'Hassan Al-PM', role: 'Property Manager' }, { id: 'res-001', name: 'Mr. Khalid Al-Mansoori', role: 'Resident' }], lastMessage: 'Service request approved', lastMessageTime: '13:45', unreadCount: 0 },
+    { id: 'guard-res-001', participants: [{ id: 'guard-001', name: 'Ahmed Khalil', role: 'Security Guard' }, { id: 'res-001', name: 'Mr. Khalid Al-Mansoori', role: 'Resident' }], lastMessage: 'Your guest has been cleared', lastMessageTime: '12:15', unreadCount: 0 }
+  ],
+  chatMessages: [
+    { id: 1, roomId: 'pm-guard-001', senderId: 'pm-1', senderName: 'Hassan Al-PM', senderRole: 'Property Manager', text: 'Can you check the visitor at main gate?', timestamp: '14:30', read: true },
+    { id: 2, roomId: 'pm-guard-001', senderId: 'guard-001', senderName: 'Ahmed Khalil', senderRole: 'Security Guard', text: 'On it, checking credentials now', timestamp: '14:31', read: true },
+    { id: 3, roomId: 'pm-guard-001', senderId: 'guard-001', senderName: 'Ahmed Khalil', senderRole: 'Security Guard', text: 'Check visitor at main gate', timestamp: '14:32', read: true },
+    { id: 4, roomId: 'pm-res-001', senderId: 'pm-1', senderName: 'Hassan Al-PM', senderRole: 'Property Manager', text: 'Hi Mr. Al-Mansoori, your service request has been approved', timestamp: '13:45', read: true },
+    { id: 5, roomId: 'guard-res-001', senderId: 'guard-001', senderName: 'Ahmed Khalil', senderRole: 'Security Guard', text: 'Your guest has been cleared', timestamp: '12:15', read: true }
+  ],
   documents: [
     { id: 'DOC-001', name: 'Ahmed Khalil — National ID', type: 'pdf', owner: 'GRD-001', ownerName: 'Ahmed Khalil', category: 'guard', size: '1.2 MB', uploadedAt: '01 Mar 2026', status: 'verified' },
     { id: 'DOC-002', name: 'Ahmed Khalil — Guard Licence', type: 'pdf', owner: 'GRD-001', ownerName: 'Ahmed Khalil', category: 'guard', size: '0.8 MB', uploadedAt: '01 Mar 2026', status: 'verified' },
@@ -816,16 +910,24 @@ const useApp = () => useContext(AppContext);
 
 // ==================== EXCEL EXPORT HELPER ====================
 const exportToExcel = (data, columns, filename) => {
-  const ws_data = [columns.map(c => c.header)];
-  data.forEach(row => {
-    ws_data.push(columns.map(c => row[c.key] !== undefined ? row[c.key] : ''));
-  });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  // Auto-width columns
-  ws['!cols'] = columns.map(c => ({ wch: Math.max(c.header.length, 15) }));
-  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  XLSX.writeFile(wb, filename + '.xlsx');
+  try {
+    const ws_data = [columns.map(c => c.header)];
+    data.forEach(row => {
+      ws_data.push(columns.map(c => row[c.key] !== undefined ? row[c.key] : ''));
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    // Auto-width columns
+    ws['!cols'] = columns.map(c => ({ wch: Math.max(c.header.length, 15) }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    // Use setTimeout to prevent screen freezing
+    setTimeout(() => {
+      XLSX.writeFile(wb, filename + '.xlsx');
+      showToast('File downloaded successfully');
+    }, 100);
+  } catch (error) {
+    showToast('Error exporting Excel: ' + (error.message || 'Please try again'));
+  }
 };
 
 // ==================== ICONS (SVG inline) ====================
@@ -836,6 +938,7 @@ const Icon = ({ name, size = 16 }) => {
     visitors: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
     service: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>,
     announcements: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 006 0h8a3 3 0 006 0z"/><path d="M11.38.66a1 1 0 01.24 0l9 3.5a1 1 0 01.62.94V11a1 1 0 01-.62.94l-9 3.5a1 1 0 01-.76 0l-9-3.5A1 1 0 011.24 11V5.1a1 1 0 01.62-.94l9-3.5z"/></svg>,
+    chat: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
     guards: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
     properties: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
     escalations: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
@@ -916,21 +1019,6 @@ const MiniCalendar = ({ month = 'April 2026' }) => {
     </div>
   );
 };
-
-const SimpleChart = ({ heights = [15,25,20,30,35,20,10], labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] }) => (
-  <div style={{display:'flex',flexDirection:'column',gap:8}}>
-    <div style={{display:'flex',alignItems:'flex-end',gap:8,height:160,padding:'0 8px'}}>
-      {heights.map((h,i) => (
-        <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-          <div style={{width:'100%',maxWidth:40,height:`${h*2}px`,background:'#a89a92',borderRadius:'4px 4px 0 0'}}/>
-        </div>
-      ))}
-    </div>
-    <div style={{display:'flex',gap:8,padding:'0 8px'}}>
-      {labels.map((l,i) => <div key={i} style={{flex:1,textAlign:'center',fontSize:11,color:'#a89a92'}}>{l}</div>)}
-    </div>
-  </div>
-);
 
 // ==================== LOGIN PAGE ====================
 const LoginPage = ({ onLogin, syncStatus }) => {
@@ -1058,12 +1146,326 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         </div>
 
         <div style={{marginTop:12,textAlign:'center'}}>
-          <p style={{fontSize:10,color:'#c4b8b0',letterSpacing:'0.04em'}}>Abu Dhabi · GST+4 · VARS v1.0 · {new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Dubai'})+', '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Dubai'})+' GST'}</p>
+          <p style={{fontSize:10,color:'#c4b8b0',letterSpacing:'0.04em'}}>Abu Dhabi · GST+4 · VARS v1.0 · {formatDateTime(new Date()) + ' GST'}</p>
         </div>
       </div>
     </div>
   );
 };
+// ==================== CHAT PANEL ====================
+const ChatPanel = ({ currentUser, onClose, isMinimized, setIsMinimized }) => {
+  const { data, setData, showToast } = useApp();
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [messageText, setMessageText] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [data.chatMessages, selectedRoomId]);
+
+  const currentRoom = data.chatRooms?.find(r => r.id === selectedRoomId);
+  const currentRoomMessages = data.chatMessages?.filter(m => m.roomId === selectedRoomId) || [];
+
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedRoomId) return;
+
+    const newMessage = {
+      id: Date.now(),
+      roomId: selectedRoomId,
+      senderId: currentUser.id || 'user-' + currentUser.name,
+      senderName: currentUser.name,
+      senderRole: currentUser.role,
+      text: messageText,
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' }),
+      read: false
+    };
+
+    setData(prev => ({
+      ...prev,
+      chatMessages: [...prev.chatMessages, newMessage],
+      chatRooms: prev.chatRooms.map(room =>
+        room.id === selectedRoomId
+          ? { ...room, lastMessage: messageText, lastMessageTime: newMessage.timestamp, unreadCount: 0 }
+          : room
+      )
+    }));
+
+    setMessageText('');
+  };
+
+  const unreadCount = data.chatRooms?.reduce((sum, room) => sum + (room.unreadCount || 0), 0) || 0;
+
+  if (isMinimized) {
+    return (
+      <div style={{position:'fixed',bottom:20,right:20,zIndex:500,background:'var(--bg-warm)',borderRadius:'50%',width:56,height:56,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
+        <button onClick={() => setIsMinimized(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:24,color:'#fff'}}>
+          💬
+        </button>
+        {unreadCount > 0 && (
+          <div style={{position:'absolute',top:0,right:0,background:'#8b4a42',color:'#fff',borderRadius:'50%',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:'700'}}>{unreadCount > 9 ? '9+' : unreadCount}</div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{position:'fixed',bottom:0,right:0,width:360,height:600,background:'var(--bg-surface)',borderRadius:'14px 14px 0 0',boxShadow:'0 -4px 24px rgba(0,0,0,0.15)',display:'flex',flexDirection:'column',zIndex:500}}>
+      {/* Header */}
+      <div style={{padding:'16px',borderBottom:'1px solid var(--border-light)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--bg-card)'}}>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--text-dark)'}}>Messages</div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={() => setIsMinimized(true)} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-muted)',padding:0}}>−</button>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-muted)',padding:0}}>×</button>
+        </div>
+      </div>
+
+      {/* Room list / Chat view */}
+      {!selectedRoomId ? (
+        <div style={{flex:1,overflowY:'auto'}}>
+          {(data.chatRooms || []).length === 0 ? (
+            <div style={{padding:24,textAlign:'center',color:'var(--text-muted)',fontSize:13}}>
+              No conversations yet. Start chatting!
+            </div>
+          ) : (
+            (data.chatRooms || []).map(room => (
+              <div key={room.id} onClick={() => setSelectedRoomId(room.id)} style={{padding:'12px 16px',borderBottom:'1px solid var(--border-light)',cursor:'pointer',background:'#fff',transition:'background 0.2s'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                  <div style={{fontSize:13,fontWeight:500,color:'var(--text-dark)'}}>
+                    {room.participants.filter(p => p.name !== currentUser.name).map(p => p.name).join(', ')}
+                  </div>
+                  <div style={{fontSize:11,color:'var(--text-muted)'}}>{room.lastMessageTime}</div>
+                </div>
+                <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{room.lastMessage}</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{fontSize:10,color:'var(--text-muted)'}}>
+                    {room.participants.filter(p => p.name !== currentUser.name).map(p => p.role).join(', ')}
+                  </div>
+                  {room.unreadCount > 0 && (
+                    <div style={{background:'var(--bg-warm-dark)',color:'#fff',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:'600'}}>{room.unreadCount}</div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Chat messages */}
+          <div style={{flex:1,overflowY:'auto',padding:'16px',background:'#fafafa',display:'flex',flexDirection:'column'}}>
+            <div style={{fontSize:12,fontWeight:500,color:'var(--text-muted)',textAlign:'center',marginBottom:16}}>
+              {currentRoom?.participants.filter(p => p.name !== currentUser.name).map(p => `${p.name} (${p.role})`).join(', ')}
+            </div>
+            {currentRoomMessages.length === 0 ? (
+              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)',fontSize:13}}>
+                No messages yet. Start the conversation!
+              </div>
+            ) : (
+              currentRoomMessages.map(msg => (
+                <div key={msg.id} style={{marginBottom:12,display:'flex',justifyContent:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'flex-end' : 'flex-start'}}>
+                  <div style={{maxWidth:'80%',padding:'10px 12px',borderRadius:'12px',background:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'var(--bg-warm-light)' : '#fff',border:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'none' : '1px solid var(--border-light)',boxShadow:'0 1px 3px rgba(0,0,0,0.08)'}}>
+                    <div style={{fontSize:11,fontWeight:500,color:'var(--text-secondary)',marginBottom:4}}>{msg.senderName}</div>
+                    <div style={{fontSize:13,color:'var(--text-dark)',marginBottom:4,wordWrap:'break-word'}}>{msg.text}</div>
+                    <div style={{fontSize:10,color:'var(--text-muted)',textAlign:'right'}}>
+                      {msg.timestamp} {msg.read && '✓'}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{padding:'12px 16px',borderTop:'1px solid var(--border-light)',background:'var(--bg-card)',display:'flex',gap:8}}>
+            <input
+              type="text"
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Type a message..."
+              style={{flex:1,padding:'10px 12px',border:'1px solid var(--border-light)',borderRadius:'20px',fontSize:12,fontFamily:'inherit',outline:'none',background:'#fff'}}
+            />
+            <button onClick={handleSendMessage} style={{background:'var(--bg-warm-dark)',color:'#fff',border:'none',borderRadius:'50%',width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:14}}>
+              →
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Back button when viewing chat */}
+      {selectedRoomId && (
+        <div style={{position:'absolute',top:16,left:16}}>
+          <button onClick={() => setSelectedRoomId(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:20,color:'var(--text-dark)'}}>
+            ‹
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== CHAT PANEL ====================
+const ChatPanel = ({ currentUser, onClose, isMinimized, setIsMinimized }) => {
+  const { data, setData, showToast } = useApp();
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [messageText, setMessageText] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [data.chatMessages, selectedRoomId]);
+
+  const currentRoom = data.chatRooms?.find(r => r.id === selectedRoomId);
+  const currentRoomMessages = data.chatMessages?.filter(m => m.roomId === selectedRoomId) || [];
+
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedRoomId) return;
+
+    const newMessage = {
+      id: Date.now(),
+      roomId: selectedRoomId,
+      senderId: currentUser.id || 'user-' + currentUser.name,
+      senderName: currentUser.name,
+      senderRole: currentUser.role,
+      text: messageText,
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' }),
+      read: false
+    };
+
+    setData(prev => ({
+      ...prev,
+      chatMessages: [...prev.chatMessages, newMessage],
+      chatRooms: prev.chatRooms.map(room =>
+        room.id === selectedRoomId
+          ? { ...room, lastMessage: messageText, lastMessageTime: newMessage.timestamp, unreadCount: 0 }
+          : room
+      )
+    }));
+
+    setMessageText('');
+  };
+
+  const unreadCount = data.chatRooms?.reduce((sum, room) => sum + (room.unreadCount || 0), 0) || 0;
+
+  if (isMinimized) {
+    return (
+      <div style={{position:'fixed',bottom:20,right:20,zIndex:500,background:'var(--bg-warm)',borderRadius:'50%',width:56,height:56,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 12px rgba(0,0,0,0.15)'}}>
+        <button onClick={() => setIsMinimized(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:24,color:'#fff'}}>
+          💬
+        </button>
+        {unreadCount > 0 && (
+          <div style={{position:'absolute',top:0,right:0,background:'#8b4a42',color:'#fff',borderRadius:'50%',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:'700'}}>{unreadCount > 9 ? '9+' : unreadCount}</div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{position:'fixed',bottom:0,right:0,width:360,height:600,background:'var(--bg-surface)',borderRadius:'14px 14px 0 0',boxShadow:'0 -4px 24px rgba(0,0,0,0.15)',display:'flex',flexDirection:'column',zIndex:500}}>
+      {/* Header */}
+      <div style={{padding:'16px',borderBottom:'1px solid var(--border-light)',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--bg-card)'}}>
+        <div style={{fontSize:14,fontWeight:600,color:'var(--text-dark)'}}>Messages</div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={() => setIsMinimized(true)} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-muted)',padding:0}}>−</button>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-muted)',padding:0}}>×</button>
+        </div>
+      </div>
+
+      {/* Room list / Chat view */}
+      {!selectedRoomId ? (
+        <div style={{flex:1,overflowY:'auto'}}>
+          {(data.chatRooms || []).length === 0 ? (
+            <div style={{padding:24,textAlign:'center',color:'var(--text-muted)',fontSize:13}}>
+              No conversations yet. Start chatting!
+            </div>
+          ) : (
+            (data.chatRooms || []).map(room => (
+              <div key={room.id} onClick={() => setSelectedRoomId(room.id)} style={{padding:'12px 16px',borderBottom:'1px solid var(--border-light)',cursor:'pointer',background:'#fff',transition:'background 0.2s'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                  <div style={{fontSize:13,fontWeight:500,color:'var(--text-dark)'}}>
+                    {room.participants.filter(p => p.name !== currentUser.name).map(p => p.name).join(', ')}
+                  </div>
+                  <div style={{fontSize:11,color:'var(--text-muted)'}}>{room.lastMessageTime}</div>
+                </div>
+                <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{room.lastMessage}</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{fontSize:10,color:'var(--text-muted)'}}>
+                    {room.participants.filter(p => p.name !== currentUser.name).map(p => p.role).join(', ')}
+                  </div>
+                  {room.unreadCount > 0 && (
+                    <div style={{background:'var(--bg-warm-dark)',color:'#fff',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:'600'}}>{room.unreadCount}</div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Chat messages */}
+          <div style={{flex:1,overflowY:'auto',padding:'16px',background:'#fafafa',display:'flex',flexDirection:'column'}}>
+            <div style={{fontSize:12,fontWeight:500,color:'var(--text-muted)',textAlign:'center',marginBottom:16}}>
+              {currentRoom?.participants.filter(p => p.name !== currentUser.name).map(p => `${p.name} (${p.role})`).join(', ')}
+            </div>
+            {currentRoomMessages.length === 0 ? (
+              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)',fontSize:13}}>
+                No messages yet. Start the conversation!
+              </div>
+            ) : (
+              currentRoomMessages.map(msg => (
+                <div key={msg.id} style={{marginBottom:12,display:'flex',justifyContent:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'flex-end' : 'flex-start'}}>
+                  <div style={{maxWidth:'80%',padding:'10px 12px',borderRadius:'12px',background:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'var(--bg-warm-light)' : '#fff',border:msg.senderId === (currentUser.id || 'user-' + currentUser.name) ? 'none' : '1px solid var(--border-light)',boxShadow:'0 1px 3px rgba(0,0,0,0.08)'}}>
+                    <div style={{fontSize:11,fontWeight:500,color:'var(--text-secondary)',marginBottom:4}}>{msg.senderName}</div>
+                    <div style={{fontSize:13,color:'var(--text-dark)',marginBottom:4,wordWrap:'break-word'}}>{msg.text}</div>
+                    <div style={{fontSize:10,color:'var(--text-muted)',textAlign:'right'}}>
+                      {msg.timestamp} {msg.read && '✓'}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{padding:'12px 16px',borderTop:'1px solid var(--border-light)',background:'var(--bg-card)',display:'flex',gap:8}}>
+            <input
+              type="text"
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Type a message..."
+              style={{flex:1,padding:'10px 12px',border:'1px solid var(--border-light)',borderRadius:'20px',fontSize:12,fontFamily:'inherit',outline:'none',background:'#fff'}}
+            />
+            <button onClick={handleSendMessage} style={{background:'var(--bg-warm-dark)',color:'#fff',border:'none',borderRadius:'50%',width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:14}}>
+              →
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Back button when viewing chat */}
+      {selectedRoomId && (
+        <div style={{position:'absolute',top:16,left:16}}>
+          <button onClick={() => setSelectedRoomId(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:20,color:'var(--text-dark)'}}>
+            ‹
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+
 
 // ==================== SIDEBAR ====================
 const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
@@ -1074,6 +1476,8 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
     { id: 'service', label: 'Service Requests', icon: 'service', badge: 15 },
     { id: 'packages', label: 'Packages', icon: 'packages', badge: 4 },
     { id: 'announcements', label: 'Announcements', icon: 'announcements' },
+    { id: 'chat', label: 'Chat', icon: 'chat', badge: 0 },
+    { id: 'chat', label: 'Chat', icon: 'chat', badge: 0 },
     { id: 'guards', label: 'Guards', icon: 'guards' },
     { id: 'properties', label: 'Properties', icon: 'properties' },
     { id: 'escalations', label: 'Escalations', icon: 'escalations', badge: 3 },
@@ -1091,7 +1495,6 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
       <div className="sidebar-header">
         <div className="v-badge">V</div>
         <span>VARS</span>
-        {onClose && <button className="sidebar-close-btn" onClick={onClose} style={{marginLeft:'auto',background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#8a7f76'}}>✕</button>}
       </div>
       <nav className="sidebar-nav">
         {items.map(item => (
@@ -1102,13 +1505,6 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
           </div>
         ))}
       </nav>
-      <div className="sidebar-bottom">
-        <a href="#" onClick={(e) => { e.preventDefault(); }} style={{display:'flex',alignItems:'center',gap:8,color:'#a89a92',fontSize:12,textDecoration:'none'}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Guard Tablet
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginLeft:'auto'}}><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-        </a>
-      </div>
     </div>
   );
 };
@@ -1225,16 +1621,18 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
               <div style={{padding:'8px 0',maxHeight:300,overflowY:'auto'}}>
                 {ALL_PROPERTIES.map(p => {
                   const isSelected = selectedProperties.includes(p.id);
+                  const isComingSoon = p.id !== 'pinnacle';
                   return (
-                    <div key={p.id} onClick={() => toggleProperty(p.id)}
-                      style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',cursor:'pointer',background: isSelected ? '#f8f8f8' : 'transparent',transition:'background 0.15s'}}>
-                      <div style={{width:18,height:18,borderRadius:4,border: isSelected ? 'none' : '1.5px solid #d0d0d0',background: isSelected ? '#1a1a1a' : '#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <div key={p.id} onClick={() => !isComingSoon && toggleProperty(p.id)}
+                      style={{display:'flex',alignItems:'center',gap:12,padding:'10px 16px',cursor: isComingSoon ? 'default' : 'pointer',background: isSelected ? '#f8f8f8' : 'transparent',transition:'background 0.15s',opacity: isComingSoon ? 0.5 : 1}}>
+                      <div style={{width:18,height:18,borderRadius:4,border: isSelected ? 'none' : '1.5px solid #d0d0d0',background: isSelected ? '#1a1a1a' : '#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,visibility: isComingSoon ? 'hidden' : 'visible'}}>
                         {isSelected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
                       </div>
                       <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight: isSelected ? 600 : 400,color:'#1a1a1a'}}>{p.name}</div>
-                        <div style={{fontSize:11,color:'#a89a92'}}>{p.location} · {p.towers} towers · {p.units} units</div>
+                        <div style={{fontSize:13,fontWeight: isSelected ? 600 : 400,color: isComingSoon ? '#c0c0c0' : '#1a1a1a'}}>{p.name}</div>
+                        <div style={{fontSize:11,color: isComingSoon ? '#d0d0d0' : '#a89a92'}}>{p.location} · {p.towers} towers · {p.units} units</div>
                       </div>
+                      {isComingSoon && <span style={{fontSize:10,fontWeight:600,color:'#fff',background:'#c0c0c0',padding:'3px 10px',borderRadius:12,whiteSpace:'nowrap'}}>Coming Soon</span>}
                     </div>
                   );
                 })}
@@ -1310,6 +1708,7 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
         <div className="topbar-icon" style={{borderRadius:'50%',width:34,height:34}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
         </div>
+        <div style={{fontSize:10,fontWeight:600,color:"#a89a92",background:"#f2efec",padding:"4px 8px",borderRadius:4,whiteSpace:"nowrap"}}>{data.currentUser.role}</div>
         <div style={{position:'relative'}}>
           <div className="avatar" onClick={()=>setShowPmProfile(!showPmProfile)} style={{width:34,height:34,borderRadius:'50%',background:'#e8e3de',cursor:'pointer'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
@@ -1327,7 +1726,7 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
               </div>
               <div style={{padding:'8px 12px'}}>
                 {[{label:'My Profile',icon:'user'},{label:'Settings',icon:'settings'}].map((item,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 4px',borderBottom:i<1?'1px solid #f0f0f0':'none',cursor:'pointer',fontSize:13,color:'#1a1a1a'}}>
+                  <div key={i} onClick={item.label==='Settings'?()=>{setShowPmProfile(false);onCreateClick?.('settings')}:()=>{}} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 4px',borderBottom:i<1?'1px solid #f0f0f0':'none',cursor:'pointer',fontSize:13,color:'#1a1a1a'}}>
                     <div style={{width:30,height:30,borderRadius:'50%',background:'#f2efec',display:'flex',alignItems:'center',justifyContent:'center'}}><Icon name={item.icon} size={14}/></div>
                     {item.label}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" style={{marginLeft:'auto'}}><polyline points="9 18 15 12 9 6"/></svg>
@@ -1358,8 +1757,8 @@ const OverviewPage = ({ setPage }) => {
   const [ovSelectedVisitor, setOvSelectedVisitor] = useState(null);
   const ovQrRef = React.useRef(null);
   useEffect(() => { const t = setInterval(() => setPmNow(new Date()), 60000); return () => clearInterval(t); }, []);
-  const pmTime = pmNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Dubai' });
-  const pmDate = pmNow.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Dubai' });
+  const pmTime = formatTime12(pmNow);
+  const pmDate = formatDate(pmNow);
   const insideCount = data.visitors.filter(v => v.status === 'Inside').length;
   const scheduledCount = data.visitors.filter(v => v.status === 'Scheduled').length;
   const pendingCount = data.visitors.filter(v => v.status === 'Pending').length;
@@ -1573,7 +1972,7 @@ const OverviewPage = ({ setPage }) => {
           <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:520}}>
             <div className="modal-header" style={{marginBottom:16}}>
               <div>
-                <div className="modal-sub" style={{fontSize:11,color:'#a89a92'}}>modal/detail · Visitor Detail</div>
+                <div className="modal-sub" style={{fontSize:11,color:'#a89a92'}}>Visitor Detail</div>
                 <h2 style={{margin:0}}>Visitor Detail</h2>
               </div>
               <button className="modal-close" onClick={()=>setOvSelectedVisitor(null)}>×</button>
@@ -1646,6 +2045,8 @@ const VisitorsPage = () => {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [search, setSearch] = useState('');
   const [pmcFormStep, setPmcFormStep] = useState('form');
+  const [formErrors, setFormErrors] = useState({});
+  const [isCreatingVisitor, setIsCreatingVisitor] = useState(false);
   const [newVisitor, setNewVisitor] = useState({
     visitorType: 'Resident Guest',
     entryType: 'Walk-in',
@@ -1671,6 +2072,12 @@ const VisitorsPage = () => {
     if (statusFilter !== 'All' && v.status !== statusFilter) return false;
     if (search && !v.name.toLowerCase().includes(search.toLowerCase()) && !v.flat.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
+  }).sort((a, b) => {
+    // Sort by date in descending order (newest first)
+    // Parse dates like "10 Mar" to compare
+    const dateA = new Date(a.date + ' 2026');
+    const dateB = new Date(b.date + ' 2026');
+    return dateB - dateA;
   });
 
   const resetPmcVisitorForm = () => {
@@ -1683,21 +2090,33 @@ const VisitorsPage = () => {
   };
 
   const validatePmcVisitorForm = () => {
-    if (!newVisitor.fullName.trim()) { showToast('Please enter visitor name'); return; }
-    if (!newVisitor.mobile.trim()) { showToast('Please enter mobile number'); return; }
-    if (!newVisitor.flat.trim()) { showToast('Please enter flat/unit number'); return; }
-    if (newVisitor.visitorType !== 'Resident Guest' && !newVisitor.idDocType) { showToast('ID document required for non-guest visitors'); return; }
+    const errors = {};
+    if (!newVisitor.fullName.trim()) { errors.fullName = 'Visitor name is required'; }
+    else if (!/^[a-zA-Z\s]+$/.test(newVisitor.fullName)) { errors.fullName = 'Name must contain only letters and spaces'; }
+    if (!newVisitor.mobile.trim()) { errors.mobile = 'Mobile number is required'; }
+    if (!newVisitor.flat.trim()) { errors.flat = 'Flat/unit number is required'; }
+    if (newVisitor.visitorType !== 'Resident Guest' && !newVisitor.idDocType) { errors.idDocType = 'ID document is required'; }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      showToast('Please fill in all required fields');
+      setIsSubmitting(false); return;
+    }
+    setFormErrors({});
+    setIsCreatingVisitor(true);
     setPmcFormStep('review');
   };
 
   const handleCreateVisitor = () => {
     const timeNow = new Date();
-    const timeStr = timeNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Dubai' });
-    const dateStr = timeNow.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'Asia/Dubai' });
-    const id = data.visitors.length + 1;
-    const permitRef = 'VIS-' + timeNow.getFullYear() + '-' + String(id).padStart(4,'0');
+    const timeStr = formatTime12(timeNow);
+    const dateStr = formatDateShort(timeNow);
+    const id = 'VIS-' + timeNow.getTime() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const permitRef = 'VIS-' + timeNow.getFullYear() + '-' + String(Date.now() % 10000).padStart(4,'0');
     const idDocFull = newVisitor.idDocType ? (newVisitor.idDocType + (newVisitor.idDocNumber ? ': ' + newVisitor.idDocNumber : '')) : '';
-    const validUntil = newVisitor.repeater === 'Single Visit' ? (dateStr + ' 23:59') : 'Until cancelled';
+    // For single-visit QR: set validity to end of current day (23:59:59 Dubai time)
+    // For multiple-visit QR: set validity to "Until Cancelled" (no auto-expiry)
+    const validUntil = newVisitor.repeater === 'Single Visit' ? (dateStr + ' 23:59:59') : 'Until Cancelled';
 
     const entry = {
       id, name: newVisitor.fullName.trim(), resident: newVisitor.host.trim() || 'Pending Assignment',
@@ -1712,12 +2131,48 @@ const VisitorsPage = () => {
     setData(prev => ({...prev, visitors: [entry, ...prev.visitors]}));
     resetPmcVisitorForm();
     setShowManualEntry(false);
+    setIsCreatingVisitor(false);
     showToast('Visitor entry created successfully!');
   };
 
   const handleApprove = (v) => {
-    setData(prev => ({...prev, visitors: prev.visitors.map(vis => vis.id === v.id ? {...vis, status:'Inside'} : vis)}));
-    showToast(`${v.name} approved and checked in`);
+    setData(prev => ({
+      ...prev,
+      visitors: prev.visitors.map(vis => vis.id === v.id ? {...vis, status:'Passed Security'} : vis),
+      notifications: [...(prev.notifications || []), {
+        id: 'notif-' + Date.now(),
+        type: 'visitor_approved',
+        title: v.name + ' approved',
+        message: v.name + ' has been approved to enter. Status: Passed Security',
+        time: formatTime12(new Date()),
+        timestamp: new Date().toISOString(),
+        read: false,
+        visitorId: v.id,
+        visitorName: v.name,
+        flat: v.flat
+      }]
+    }));
+    showToast(`${v.name} approved - Passed Security`);
+  };
+
+  const handleReject = (v) => {
+    setData(prev => ({
+      ...prev,
+      visitors: prev.visitors.map(vis => vis.id === v.id ? {...vis, status:'Denied Entry'} : vis),
+      notifications: [...(prev.notifications || []), {
+        id: 'notif-' + Date.now(),
+        type: 'visitor_rejected',
+        title: v.name + ' rejected',
+        message: v.name + ' has been denied entry',
+        time: formatTime12(new Date()),
+        timestamp: new Date().toISOString(),
+        read: false,
+        visitorId: v.id,
+        visitorName: v.name,
+        flat: v.flat
+      }]
+    }));
+    showToast(`${v.name} rejected - Denied Entry`);
   };
 
   const handleExportExcel = () => {
@@ -1792,7 +2247,7 @@ const VisitorsPage = () => {
         <div className="modal-overlay" onClick={()=>setSelectedVisitor(null)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <div><div className="modal-sub">modal/detail · Visitor Detail</div><h2>Visitor Detail</h2></div>
+              <div><div className="modal-sub">Visitor Detail</div><h2>Visitor Detail</h2></div>
               <button className="modal-close" onClick={()=>setSelectedVisitor(null)}>×</button>
             </div>
             <div style={{display:'flex',gap:16,marginBottom:20}}>
@@ -1819,15 +2274,15 @@ const VisitorsPage = () => {
             </div>
             <div className="grid-2">
               <button className="btn btn-primary"><Icon name="phone" size={14}/> Call Resident</button>
-              <button className="btn">Reject</button>
+              <button className="btn" onClick={()=>{handleReject(selectedVisitor);setSelectedVisitor(null);}}>Reject</button>
             </div>
           </div>
         </div>
       )}
 
       {showManualEntry && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#f2efec',zIndex:1000,overflowY:'auto'}}>
-          <div style={{maxWidth:900,margin:'0 auto',padding:20}}>
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#f2efec',zIndex:1000,overflowY:'auto'}} onClick={() => {resetPmcVisitorForm(); setShowManualEntry(false);}}>
+          <div style={{maxWidth:900,margin:'0 auto',padding:20}} onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
               <div>
@@ -1883,7 +2338,8 @@ const VisitorsPage = () => {
                       <label style={{fontSize:10,color:'#a89a92',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:6}}>Full Name *</label>
                       <input value={newVisitor.fullName} onChange={e => setNewVisitor({...newVisitor, fullName: e.target.value})}
                         placeholder="Enter visitor's full name..."
-                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:formErrors.fullName ? '2px solid #d32f2f' : '1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                      {formErrors.fullName && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{formErrors.fullName}</div>}
                     </div>
 
                     {/* Mobile Number */}
@@ -1891,7 +2347,8 @@ const VisitorsPage = () => {
                       <label style={{fontSize:10,color:'#a89a92',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:6}}>Mobile Number *</label>
                       <input value={newVisitor.mobile} onChange={e => setNewVisitor({...newVisitor, mobile: e.target.value})}
                         placeholder="+971 XX XXX XXXX"
-                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:formErrors.mobile ? '2px solid #d32f2f' : '1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                      {formErrors.mobile && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{formErrors.mobile}</div>}
                     </div>
 
                     {/* ID Document Type */}
@@ -1941,7 +2398,8 @@ const VisitorsPage = () => {
                         <label style={{fontSize:10,color:'#a89a92',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:6}}>Flat / Unit No. *</label>
                         <input value={newVisitor.flat} onChange={e => setNewVisitor({...newVisitor, flat: e.target.value})}
                           placeholder="Select unit..."
-                          style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                          style={{width:'100%',padding:'10px 12px',background:'#fff',border:formErrors.flat ? '2px solid #d32f2f' : '1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                        {formErrors.flat && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{formErrors.flat}</div>}
                         <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
                           {['A-101','A-202','B-102','B-803','C-501','D-1102'].map(u => (
                             <span key={u} onClick={() => setNewVisitor({...newVisitor, flat: u})}
@@ -1963,7 +2421,8 @@ const VisitorsPage = () => {
                       <label style={{fontSize:10,color:'#a89a92',letterSpacing:'0.06em',textTransform:'uppercase',display:'block',marginBottom:6}}>Host / Resident Name *</label>
                       <input value={newVisitor.host} onChange={e => setNewVisitor({...newVisitor, host: e.target.value})}
                         placeholder="Auto-populated on unit selection..."
-                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                        style={{width:'100%',padding:'10px 12px',background:'#fff',border:formErrors.host ? '2px solid #d32f2f' : '1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:13,boxSizing:'border-box',outline:'none'}}/>
+                      {formErrors.host && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{formErrors.host}</div>}
                     </div>
 
                     {/* Visit Frequency */}
@@ -2015,9 +2474,9 @@ const VisitorsPage = () => {
                 </div>
 
                 {/* Review Button */}
-                <button onClick={validatePmcVisitorForm}
-                  style={{width:'100%',padding:16,background:'#928989',color:'#fff',border:'none',borderRadius:4,fontSize:15,fontWeight:700,cursor:'pointer',marginTop:20,letterSpacing:'0.04em'}}>
-                  Review Visitor Entry
+                <button onClick={validatePmcVisitorForm} disabled={isCreatingVisitor}
+                  style={{width:'100%',padding:16,background:isCreatingVisitor ? '#a89a92' : '#928989',color:'#fff',border:'none',borderRadius:4,fontSize:15,fontWeight:700,cursor:isCreatingVisitor ? 'not-allowed' : 'pointer',marginTop:20,letterSpacing:'0.04em',opacity:isCreatingVisitor ? 0.7 : 1}}>
+                  {isCreatingVisitor ? 'Validating...' : 'Review Visitor Entry'}
                 </button>
               </>
             ) : (
@@ -2090,6 +2549,7 @@ const ServiceRequestsPage = () => {
   const [srPageSize, setSrPageSize] = useState(10);
   const [selectedPersonnel, setSelectedPersonnel] = useState(null);
   const [newSR, setNewSR] = useState({ flat:'', type:'', resident:'', dateTime:'', sla:'', notes:'' });
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Enrich SR data with SLA
   const srWithSLA = data.serviceRequests.map(r => ({
@@ -2121,8 +2581,10 @@ const ServiceRequestsPage = () => {
     showToast('Service requests exported to Excel!');
   };
 
-  const selectedDate = '10 Mar';
-  const dayRequests = srWithSLA.filter(r => r.date === '10 Mar' || r.date === selectedDate);
+  const dayRequests = srWithSLA.filter(r => {
+    const dateStr = formatDateShort(selectedDate);
+    return r.date === dateStr || r.date === selectedDate;
+  });
 
   // Pagination
   const totalSR = srWithSLA.length;
@@ -2179,7 +2641,10 @@ const ServiceRequestsPage = () => {
         <div>
           <div className="card">
             <div className="card-header">
-              <h3>10 March 2026 — {dayRequests.length} request(s)</h3>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <h3>{formatDate(selectedDate)} — {dayRequests.length} request(s)</h3>
+                <input type="date" value={new Date(selectedDate).toISOString().split('T')[0]} onChange={e=>setSelectedDate(e.target.value)} style={{padding:'6px 12px',border:'1px solid #d5cfc8',borderRadius:6,fontSize:13}}/>
+              </div>
               <button className="btn btn-sm" style={{display:'flex',alignItems:'center',gap:4}}><Icon name="filter" size={12}/> Filter</button>
             </div>
 
@@ -2308,7 +2773,7 @@ const ServiceRequestsPage = () => {
                   </span>
                 ))}
               </div>
-              <span>{srStart}–{srEnd} of {totalSR} · API: /api/service-requests</span>
+              <span>{srStart}–{srEnd} of {totalSR}</span>
             </div>
           </div>
         </div>
@@ -2405,8 +2870,8 @@ const AnnouncementsPage = () => {
   const handlePublish = () => {
     if (!annForm.title.trim()) { showToast('Title is required'); return; }
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Dubai' });
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'Asia/Dubai' });
+    const timeStr = formatTime24(now);
+    const dateStr = formatDateShort(now);
     const status = annForm.publishMode === 'now' ? 'Live' : annForm.publishMode === 'schedule' ? 'Scheduled' : 'Draft';
 
     if (editingAnn) {
@@ -2424,7 +2889,7 @@ const AnnouncementsPage = () => {
         title: annForm.title,
         body: annForm.body,
         audience: annForm.audience,
-        author: 'Hassan Al-PM',
+        author: data.currentUser.name,
         created: dateStr + ', ' + timeStr,
         status: status,
         priority: annForm.priority,
@@ -2444,7 +2909,7 @@ const AnnouncementsPage = () => {
   };
 
   const handleDelete = (ann) => {
-    setData(prev => ({ ...prev, announcements: prev.announcements.filter(a => a.id !== ann.id) }));
+    if (window.confirm('Delete this announcement? This action cannot be undone.')) { setData(prev => ({ ...prev, announcements: prev.announcements.filter(a => a.id !== ann.id) })); }
     setShowDelete(null);
     showToast('Announcement deleted');
   };
@@ -2508,11 +2973,6 @@ const AnnouncementsPage = () => {
             </div>
           )}
         </div>
-      ))}
-
-      {/* API endpoint info */}
-      <div style={{textAlign:'right',fontSize:11,color:'#c4b8b0',marginTop:8,padding:'0 4px'}}>
-        API: /api/announcements · /api/announcements/:id/receipts
       </div>
 
       {/* Composer Modal */}
@@ -2520,7 +2980,7 @@ const AnnouncementsPage = () => {
         <div className="modal-overlay" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>
           <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
             <div className="modal-header" style={{marginBottom:4}}>
-              <div><div className="modal-sub">modal/composer · Announcement Composer</div><h2 style={{fontSize:18}}>{editingAnn ? 'Edit Announcement' : 'New Announcement'}</h2></div>
+              <div><div className="modal-sub">Announcement Composer</div><h2 style={{fontSize:18}}>{editingAnn ? 'Edit Announcement' : 'New Announcement'}</h2></div>
               <button className="modal-close" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>×</button>
             </div>
 
@@ -2727,6 +3187,217 @@ const AnnouncementsPage = () => {
 };
 
 // ==================== GUARDS PAGE ====================
+
+// ==================== CHAT PAGE ====================
+const ChatPage = () => {
+  const { data, setData, showToast } = useApp();
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [messageText, setMessageText] = useState('');
+  const [newChatWith, setNewChatWith] = useState('');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const currentUser = data.currentUser;
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [data.chatMessages, selectedRoomId]);
+
+  const currentRoom = data.chatRooms?.find(r => r.id === selectedRoomId);
+  const currentRoomMessages = data.chatMessages?.filter(m => m.roomId === selectedRoomId) || [];
+
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedRoomId) return;
+
+    const newMessage = {
+      id: Date.now(),
+      roomId: selectedRoomId,
+      senderId: currentUser.id || 'pm-1',
+      senderName: currentUser.name,
+      senderRole: currentUser.role,
+      text: messageText,
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' }),
+      read: false
+    };
+
+    setData(prev => ({
+      ...prev,
+      chatMessages: [...prev.chatMessages, newMessage],
+      chatRooms: prev.chatRooms.map(room =>
+        room.id === selectedRoomId
+          ? { ...room, lastMessage: messageText, lastMessageTime: newMessage.timestamp, unreadCount: 0 }
+          : room
+      )
+    }));
+
+    setMessageText('');
+  };
+
+  const handleCreateNewChat = () => {
+    if (!newChatWith.trim()) return;
+    // Parse the format "User Name (Role)"
+    const match = newChatWith.match(/^(.+?)\s*\(([^)]+)\)$/);
+    if (!match) {
+      showToast('Please enter in format: Name (Role)');
+      return;
+    }
+    const [, name, role] = match;
+    const roomId = 'new-' + Date.now();
+    const newRoom = {
+      id: roomId,
+      participants: [
+        { id: currentUser.id || 'pm-1', name: currentUser.name, role: currentUser.role },
+        { id: 'user-' + Date.now(), name: name.trim(), role: role.trim() }
+      ],
+      lastMessage: '',
+      lastMessageTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      unreadCount: 0
+    };
+    setData(prev => ({
+      ...prev,
+      chatRooms: [...prev.chatRooms, newRoom]
+    }));
+    setSelectedRoomId(roomId);
+    setNewChatWith('');
+    setShowNewChatModal(false);
+    showToast('Chat room created');
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1>Messages</h1>
+          <div className="subtitle">Real-time chat across all roles</div>
+        </div>
+        <button className="btn btn-primary" onClick={() => setShowNewChatModal(true)}>+ New Chat</button>
+      </div>
+
+      {!selectedRoomId ? (
+        <div className="card">
+          {(data.chatRooms || []).length === 0 ? (
+            <div style={{padding:40,textAlign:'center',color:'var(--text-muted)'}}>
+              <div style={{fontSize:14,marginBottom:16}}>No conversations yet</div>
+              <button className="btn btn-primary" onClick={() => setShowNewChatModal(true)}>Start a New Chat</button>
+            </div>
+          ) : (
+            <div className="data-table" style={{width:'100%'}}>
+              <table style={{width:'100%'}}>
+                <thead>
+                  <tr>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Last Message</th>
+                    <th>Time</th>
+                    <th style={{textAlign:'right'}}>Unread</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data.chatRooms || []).map(room => {
+                    const otherParticipants = room.participants.filter(p => p.name !== currentUser.name);
+                    return (
+                      <tr key={room.id} onClick={() => setSelectedRoomId(room.id)} style={{cursor:'pointer'}}>
+                        <td className="name-cell">{otherParticipants.map(p => p.name).join(', ')}</td>
+                        <td>{otherParticipants.map(p => p.role).join(', ')}</td>
+                        <td style={{maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{room.lastMessage || '—'}</td>
+                        <td>{room.lastMessageTime}</td>
+                        <td style={{textAlign:'right'}}>
+                          {room.unreadCount > 0 && (
+                            <div style={{background:'var(--bg-warm-dark)',color:'#fff',borderRadius:'50%',width:24,height:24,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:'600'}}>{room.unreadCount}</div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="card" style={{display:'flex',flexDirection:'column',height:'calc(100vh - 200px)',maxHeight:800}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--border-light)'}}>
+            <div>
+              <h2 style={{fontSize:16,fontWeight:600,marginBottom:4}}>
+                {currentRoom?.participants.filter(p => p.name !== currentUser.name).map(p => p.name).join(', ')}
+              </h2>
+              <div style={{fontSize:12,color:'var(--text-muted)'}}>
+                {currentRoom?.participants.filter(p => p.name !== currentUser.name).map(p => p.role).join(', ')}
+              </div>
+            </div>
+            <button onClick={() => setSelectedRoomId(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:20,color:'var(--text-muted)'}}>×</button>
+          </div>
+
+          <div style={{flex:1,overflowY:'auto',marginBottom:16,paddingBottom:16,background:'#fafafa',borderRadius:8,padding:16,display:'flex',flexDirection:'column'}}>
+            {currentRoomMessages.length === 0 ? (
+              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-muted)',fontSize:13}}>
+                No messages yet. Start the conversation!
+              </div>
+            ) : (
+              currentRoomMessages.map(msg => (
+                <div key={msg.id} style={{marginBottom:12,display:'flex',justifyContent:msg.senderId === (currentUser.id || 'pm-1') ? 'flex-end' : 'flex-start'}}>
+                  <div style={{maxWidth:'70%',padding:'12px 14px',borderRadius:12,background:msg.senderId === (currentUser.id || 'pm-1') ? 'var(--bg-warm-light)' : '#fff',border:msg.senderId === (currentUser.id || 'pm-1') ? 'none' : '1px solid var(--border-light)',boxShadow:'0 1px 3px rgba(0,0,0,0.08)'}}>
+                    <div style={{fontSize:11,fontWeight:500,color:'var(--text-secondary)',marginBottom:4}}>{msg.senderName}</div>
+                    <div style={{fontSize:13,color:'var(--text-dark)',marginBottom:6,wordWrap:'break-word',lineHeight:1.4}}>{msg.text}</div>
+                    <div style={{fontSize:10,color:'var(--text-muted)',textAlign:'right',display:'flex',justifyContent:'flex-end',gap:4,alignItems:'center'}}>
+                      {msg.timestamp} {msg.read && <span>✓</span>}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div style={{display:'flex',gap:8}}>
+            <input
+              type="text"
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Type a message..."
+              style={{flex:1,padding:'12px 14px',border:'1px solid var(--border-light)',borderRadius:8,fontSize:13,fontFamily:'inherit',outline:'none',background:'#fff'}}
+            />
+            <button onClick={handleSendMessage} className="btn btn-primary">Send</button>
+          </div>
+        </div>
+      )}
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div className="modal-overlay" onClick={() => setShowNewChatModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Start New Chat</h2>
+              <button className="modal-close" onClick={() => setShowNewChatModal(false)}>×</button>
+            </div>
+            <div className="form-group">
+              <label>Contact (Name and Role)</label>
+              <input
+                type="text"
+                value={newChatWith}
+                onChange={e => setNewChatWith(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleCreateNewChat()}
+                placeholder="e.g., Ahmed Khalil (Security Guard)"
+                className="form-input"
+              />
+              <div style={{fontSize:11,color:'var(--text-muted)',marginTop:8}}>Enter the contact name and their role in parentheses</div>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:24}}>
+              <button className="btn" onClick={() => setShowNewChatModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleCreateNewChat}>Create Chat</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const { data, setData, showToast } = useApp();
   const [selectedGuard, setSelectedGuard] = useState(null);
@@ -2801,7 +3472,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
             ownerName: selectedGuard.name,
             category: 'guard',
             size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
-            uploadedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            uploadedAt: formatDate(new Date()),
             status: 'pending',
             dataUrl: e.target.result
           });
@@ -2886,7 +3557,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
       verified: false
     };
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const dateStr = formatDate(now);
     const newDocs = addGuardForm.documents.map((doc, idx) => ({
       id: `DOC-${String(data.documents.length + idx + 1).padStart(3, '0')}`,
       name: `${addGuardForm.fullName} — ${doc.name}`,
@@ -3126,7 +3797,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
                       <div key={msg.id} style={{ marginBottom: 12, display: 'flex', justifyContent: msg.from === 'PMC' ? 'flex-end' : 'flex-start' }}>
                         <div style={{ maxWidth: '75%', background: msg.from === 'PMC' ? '#1a1a1a' : '#e8e8e8', color: msg.from === 'PMC' ? '#fff' : '#1a1a1a', padding: '8px 12px', borderRadius: 6, fontSize: 12 }}>
                           {msg.text}
-                          <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>{new Date(msg.timestamp).toLocaleTimeString()}</div>
+                          <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>{formatTime24(new Date(msg.timestamp))}</div>
                         </div>
                       </div>
                     ))
@@ -3344,6 +4015,34 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [resSearch, setResSearch] = useState('');
   const [importFile, setImportFile] = useState(null);
   const importFileRef = useRef(null);
+  const [activePropertyTab, setActivePropertyTab] = useState('overview');
+
+  // Sample building data
+  const buildingSampleData = {
+    name: 'The Pinnacle Residences - Tower A',
+    totalUnits: 50,
+    occupiedUnits: 38,
+    facilities: ['Gym', 'Swimming Pool', 'Spa', 'Concierge', 'Parking'],
+    units: Array.from({length:50}, (_, i) => {
+      const floor = Math.floor(i/5) + 1;
+      const unitNum = (i % 5) + 1;
+      const unitId = String.fromCharCode(65 + (i % 3)) + '-' + String(floor).padStart(2,'0') + String(unitNum).padStart(2,'0');
+      const isOccupied = Math.random() > 0.24;
+      return {
+        id: unitId, floor, type: ['Studio', '1-Bed', '2-Bed', '3-Bed'][i % 4], status: isOccupied ? 'Occupied' : 'Vacant', sqft: 450 + i * 15
+      };
+    }),
+    residents: [
+      { id: 'RES-001', name: 'Mr. Ahmed Al-Mansouri', unitId: 'A-0101', contact: '+971 50 123 4567', moveInDate: '15 Jan 2024' },
+      { id: 'RES-002', name: 'Ms. Fatima Al-Naqbi', unitId: 'B-0203', contact: '+971 50 234 5678', moveInDate: '22 Feb 2024' },
+      { id: 'RES-003', name: 'Mr. Hassan Al-Shehhi', unitId: 'C-0305', contact: '+971 50 345 6789', moveInDate: '08 Mar 2024' },
+      { id: 'RES-004', name: 'Ms. Layla Al-Kaabi', unitId: 'A-0407', contact: '+971 50 456 7890', moveInDate: '19 Jan 2024' },
+      { id: 'RES-005', name: 'Mr. Omar Al-Mazrouei', unitId: 'B-0508', contact: '+971 50 567 8901', moveInDate: '10 Feb 2024' },
+      { id: 'RES-006', name: 'Ms. Zainab Al-Falahi', unitId: 'C-0610', contact: '+971 50 678 9012', moveInDate: '25 Mar 2024' },
+      { id: 'RES-007', name: 'Mr. Ibrahim Al-Suwaidi', unitId: 'A-0712', contact: '+971 50 789 0123', moveInDate: '05 Apr 2024' },
+      { id: 'RES-008', name: 'Ms. Hana Al-Qubaisi', unitId: 'B-0813', contact: '+971 50 890 1234', moveInDate: '12 Apr 2024' }
+    ]
+  };
 
   // Open resident detail from search
   useEffect(() => {
@@ -3453,7 +4152,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         setData(prev => ({ ...prev, residents: [...prev.residents, ...newResidents] }));
         showToast(`${newResidents.length} resident${newResidents.length !== 1 ? 's' : ''} imported!`);
         setShowImport(false); setImportFile(null);
-      } catch (err) { showToast('Error reading file: ' + err.message); }
+      } catch (err) { showToast('File upload error: ' + (err.message || 'Invalid file format. Please upload an Excel file (.xlsx or .xls) or CSV file.')); }
     };
     if (format === 'csv' || format === 'sql') reader.readAsText(file);
     else reader.readAsBinaryString(file);
@@ -3835,7 +4534,7 @@ const ReportsPage = () => {
   return (
     <div>
       <div className="page-header">
-        <div><h1>Reports & KPIs</h1><div className="subtitle">KPI builder · Export /CSV · API: /api/reports/kpi</div></div>
+        <div><h1>Reports & KPIs</h1><div className="subtitle">Performance metrics and analytics</div></div>
         <div className="btn-group"><button className="btn"><Icon name="download" size={14}/> Export</button><button className="btn btn-primary" onClick={()=>{
           exportToExcel([{metric:'SLA Compliance',value:'78%'},{metric:'Avg Resolution',value:'4.1h'},{metric:'Occupancy',value:'94%'},{metric:'Vacant Units',value:'18/300'},{metric:'Renewals',value:41}],
           [{header:'Metric',key:'metric'},{header:'Value',key:'value'}], 'VARS_Reports_KPI');
@@ -3958,12 +4657,12 @@ const SettingsPage = () => {
   const { data, setData, showToast } = useApp();
   const [activeTab, setActiveTab] = useState('PMs Profile');
   const tabIcons = {'PMs Profile':'user','Notifications':'announcements','Access Policy':'security','Package Preferences':'packages','Property Settings':'properties','General / App':'settings'};
-  const tabs = ['PMs Profile','Notifications','Access Policy','Package Preferences','Property Settings','General / App'];
+  const tabs = ['PMs Profile','Notifications','Access Policy','Package Preferences','Property Settings','Guard Roster','General / App'];
 
   const contacts = [
     { role: 'Property Manager', name: 'Hassan Al-PM', phone: '+971 50 999 0001' },
     { role: 'Maintenance Head', name: 'Tariq Facilities', phone: '+971 55 999 0002' },
-    { role: 'Security Head', name: 'Karim SecOps', phone: '+971 50 999 0003' }
+    { role: 'Head of Security', name: 'Karim SecOps', phone: '+971 50 999 0003' }
   ];
 
   return (
@@ -4053,7 +4752,7 @@ const SettingsPage = () => {
             <h3 style={{marginBottom:20}}>Access Policy</h3>
             {[
               {label:'Visitor pre-approval required by default',desc:'All new visitors must be approved by resident before entry',value:true},
-              {label:'All user to set timing and pre approval',desc:'All new visitors must be approved by resident before entry',value:true},
+              {label:'Allow users to set timing and pre-approval',desc:'All new visitors must be approved by resident before entry',value:true},
               {label:'Resident Override',desc:'All new visitors must be approved by resident before entry',value:true},
               {label:'Additional notification/reminder and other capabilities',desc:'All new visitors must be approved by resident before entry',value:true},
               {label:'Allow guard override without resident response',desc:'Guard can override after 60s no-response timeout',value:true},
@@ -4084,17 +4783,49 @@ const SettingsPage = () => {
             <h3 style={{marginBottom:20}}>Property Settings</h3>
             <div className="form-group"><label>Property Name</label><input className="form-input" defaultValue="The Pinnacle Residences" style={{maxWidth:400}}/></div>
             <div className="form-group"><label>Location</label><input className="form-input" defaultValue="Al Reem Island, Abu Dhabi" style={{maxWidth:400}}/></div>
-            <div className="form-group"><label>Timezone</label><input className="form-input" defaultValue="Asia/Dubai (GMT+4)" style={{maxWidth:400}}/></div>
+            <div className="form-group"><label>Time Zone</label><input className="form-input" defaultValue="Asia/Dubai (GMT+4)" style={{maxWidth:400}}/></div>
             <div className="form-group"><label>Total Towers</label><input className="form-input" defaultValue="4" style={{maxWidth:400}}/></div>
             <button className="btn btn-primary">Save Changes</button>
           </div>)}
+
+          {activeTab === 'Guard Roster' && (<div>
+            <h3 style={{marginBottom:20}}>Security Guard Management</h3>
+            <h4 style={{marginBottom:16}}>Active Guards</h4>
+            {data.guards && data.guards.map(guard => (
+              <div key={guard.id} style={{border:'1px solid #e0e0e0', borderRadius:8, padding:16, marginBottom:12}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14, fontWeight:600, marginBottom:4}}>{guard.name}</div>
+                    <div style={{fontSize:12, color:'#666', marginBottom:8}}>ID: {guard.id}</div>
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, fontSize:12}}>
+                      <div><span style={{color:'#999'}}>Shift:</span> {guard.shift} ({guard.shiftTime})</div>
+                      <div><span style={{color:'#999'}}>Gate:</span> {guard.gate}</div>
+                      <div><span style={{color:'#999'}}>Company:</span> {guard.company}</div>
+                      <div><span style={{color:'#999'}}>Contact:</span> {guard.contact}</div>
+                      <div><span style={{color:'#999'}}>Status:</span> <span style={{color:guard.status==='On Duty'?'#2d6a4f':'#666'}}>{guard.status}</span></div>
+                      <div><span style={{color:'#999'}}>Verified:</span> {guard.verified ? '✓ Yes' : 'Pending'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <h4 style={{marginBottom:16, marginTop:24}}>Security Company Information</h4>
+            <div style={{border:'1px solid #e0e0e0', borderRadius:8, padding:16}}>
+              <div className="grid-2" style={{marginBottom:16}}>
+                <div className="form-group"><label>Primary Security Company</label><input className="form-input" defaultValue="SecureGuard LLC" /></div>
+                <div className="form-group"><label>Emergency Contact</label><input className="form-input" defaultValue="+971 4 000 0000" /></div>
+              </div>
+              <div className="form-group"><label>Contract Valid Until</label><input className="form-input" defaultValue="31 Dec 2026" /></div>
+              <button className="btn btn-primary" onClick={()=>showToast('Security settings saved','Guard management settings have been updated')}>Save Security Settings</button>
+            </div>
+          </div>)}}
 
           {activeTab === 'General / App' && (<div>
             <h3 style={{marginBottom:20}}>General Settings</h3>
             <div className="form-group"><label>Language</label><input className="form-input" defaultValue="English" style={{maxWidth:400}}/></div>
             <div className="form-group"><label>Date Format</label><input className="form-input" defaultValue="DD/MM/YYYY" style={{maxWidth:400}}/></div>
             <div className="form-group"><label>Time Format</label><input className="form-input" defaultValue="24-hour" style={{maxWidth:400}}/></div>
-            <div className="form-group"><label>Time zone</label><input className="form-input" defaultValue="UTC+04:00" style={{maxWidth:400}}/></div>
+            <div className="form-group"><label>Time Zone</label><input className="form-input" defaultValue="UTC+04:00" style={{maxWidth:400}}/></div>
             <div className="form-group"><label>Default Table Page Size</label><input className="form-input" defaultValue="10 rows" style={{maxWidth:400}}/></div>
             <button className="btn btn-primary">Save Changes</button>
           </div>)}
@@ -4156,6 +4887,8 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
   const [visitTime, setVisitTime] = useState('');
   const [repeater, setRepeater] = useState('Single Visit');
   const [qrData, setQrData] = useState(null);
+  const [preApproveErrors, setPreApproveErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const qrRef = useRef(null);
   const qrInstance = useRef(null);
 
@@ -4165,8 +4898,9 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
     return 'VPR-' + d.getFullYear() + '-' + num;
   };
 
-  const handleSubmit = () => {
-    if (!fullName.trim()) { showToast('Please enter visitor name'); return; }
+  const handleSubmit = async () => {
+    if (!fullName.trim()) { showToast('Visitor name is required'); return; }
+    if (!/^[a-zA-Z\s]+$/.test(fullName)) { showToast('Visitor name must contain only letters and spaces'); return; }
     if (!mobile.trim()) { showToast('Please enter mobile number'); return; }
 
     const permitRef = generatePermitRef();
@@ -4201,7 +4935,7 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
     };
 
     setQrData(qrPayload);
-    setStep('review');
+    setStep('review'); setIsSubmitting(false);
     // Visitor is NOT saved to the system yet — only saved when resident clicks "Pre-Approve" on the review page
   };
 
@@ -4260,7 +4994,11 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
 
   useEffect(() => {
     if (step === 'qr' && qrData && qrRef.current) {
-      qrRef.current.innerHTML = '<img src="' + getQrImgUrl(qrData.permit) + '" width="280" height="280" style="display:block;margin:0 auto;" crossorigin="anonymous" />';
+      try {
+        qrRef.current.innerHTML = '<img src="' + getQrImgUrl(qrData.permit) + '" width="280" height="280" style="display:block;margin:0 auto;" crossorigin="anonymous" />';
+      } catch (error) {
+        qrRef.current.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#8b4a42;font-size:13px;background:#fff5f5;border-radius:6px;">QR code could not be generated. Please check your connection and try again.</div>';
+      }
     }
   }, [step, qrData]);
 
@@ -4335,11 +5073,19 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
 
   const sharePass = async () => {
     const file = await getPassFile();
-    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (!navigator.share || !navigator.canShare) {
+      showToast('Sharing is not supported on this device. You can download the QR code instead.');
+      await savePassImage();
+      return;
+    }
+    if (file && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file] });
         return;
-      } catch (err) { if (err.name === 'AbortError') return; }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        showToast('Could not share. Please try downloading instead.');
+      }
     }
     // Fallback: save image so user can attach it manually
     await savePassImage();
@@ -4348,11 +5094,20 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
 
   const shareToWhatsApp = async () => {
     const file = await getPassFile();
-    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (!navigator.share || !navigator.canShare) {
+      await savePassImage();
+      window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent('Here is your visitor pass for ' + (qrData ? qrData.property : 'Sky Tower') + '. Please show the attached QR image at the gate.'), '_blank');
+      showToast('Image saved — attach it in the WhatsApp chat');
+      return;
+    }
+    if (file && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file] });
         return;
-      } catch (err) { if (err.name === 'AbortError') return; }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        showToast('Could not share. Please try downloading instead.');
+      }
     }
     // Fallback: save + open WhatsApp so user can attach
     await savePassImage();
@@ -4362,11 +5117,18 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
 
   const shareToTelegram = async () => {
     const file = await getPassFile();
-    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (!navigator.share || !navigator.canShare) {
+      await savePassImage();
+      return;
+    }
+    if (file && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file] });
         return;
-      } catch (err) { if (err.name === 'AbortError') return; }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        showToast('Could not share. Please try downloading instead.');
+      }
     }
     await savePassImage();
     window.open('https://t.me/share/url?url=' + encodeURIComponent('VARS Visitor Pass') + '&text=' + encodeURIComponent('Here is your visitor pass. Please show the attached QR image at the gate.'), '_blank');
@@ -4507,17 +5269,20 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
       {/* Visitor Identity */}
       <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:6,padding:20,marginBottom:12}}>
         <div style={{fontSize:11,color:'#a89a92',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:14,fontWeight:600}}>Visitor Identity</div>
+        <div style={{fontSize:10,color:'#a89a92',marginBottom:14,fontStyle:'italic'}}>Fields marked with * are required</div>
 
         <div style={{marginBottom:14}}>
           <label style={{fontSize:12,color:'#6b5d52',fontWeight:500,marginBottom:4,display:'block'}}>Full Name *</label>
           <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Enter visitor full name..."
-            style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:14,outline:'none',boxSizing:'border-box'}} />
+            style={{width:'100%',padding:12,border:preApproveErrors.fullName ? '2px solid #d32f2f' : '1px solid #ebe7e3',borderRadius:6,fontSize:14,outline:'none',boxSizing:'border-box'}} />
+          {preApproveErrors.fullName && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{preApproveErrors.fullName}</div>}
         </div>
 
         <div style={{marginBottom:14}}>
           <label style={{fontSize:12,color:'#6b5d52',fontWeight:500,marginBottom:4,display:'block'}}>Mobile Number *</label>
           <input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="+971 XX XXX XXXX" type="tel"
-            style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:14,outline:'none',boxSizing:'border-box'}} />
+            style={{width:'100%',padding:12,border:preApproveErrors.mobile ? '2px solid #d32f2f' : '1px solid #ebe7e3',borderRadius:6,fontSize:14,outline:'none',boxSizing:'border-box'}} />
+          {preApproveErrors.mobile && <div style={{fontSize:11,color:'#d32f2f',marginTop:4}}>{preApproveErrors.mobile}</div>}
         </div>
 
         {/* ID Document fields removed — collected by Security at the gate for non-Guest visitors */}
@@ -4584,10 +5349,10 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
         </div>
       </div>
 
-      <button onClick={handleSubmit}
-        style={{width:'100%',padding:16,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:15,fontWeight:600,cursor:'pointer',letterSpacing:'0.04em',marginTop:4}}>
-        Create Pre-Approved Request
-      </button>
+      <button onClick={handleSubmit} disabled={isSubmitting}
+        style={{width:'100%',padding:16,background:isSubmitting ? '#a89a92' : '#928989',color:'#fff',border:'none',borderRadius:6,fontSize:15,fontWeight:600,cursor:isSubmitting ? 'not-allowed' : 'pointer',letterSpacing:'0.04em',marginTop:4,opacity:isSubmitting ? 0.7 : 1}}>
+        {isSubmitting ? 'Creating...' : 'Create Pre-Approved Request'}
+        </button>
     </div>
   );
 };
@@ -4615,6 +5380,8 @@ const ResidentApp = ({ onLogout }) => {
   const [resVisFilter, setResVisFilter] = useState('All');
   const [resVisDateFilter, setResVisDateFilter] = useState('All');
   const [resVisFilterOpen, setResVisFilterOpen] = useState(false);
+  const [showServiceBookingModal, setShowServiceBookingModal] = useState(false);
+  const [serviceBooking, setServiceBooking] = useState({ type:'', location:'', date:'', time:'', duration:'1 hour', guests:1 });
   const prevVisitorStatesRef = React.useRef({});
 
   // Track visitor status changes for live notifications
@@ -4850,6 +5617,7 @@ const ResidentApp = ({ onLogout }) => {
         };
 
         const deleteVisitor = () => {
+          if (!window.confirm('Delete this visitor pass? This action cannot be undone.')) return;
           setData(prev => ({
             ...prev,
             visitors: prev.visitors.filter(v => !((v.permitRef && v.permitRef === selectedVisitor.permitRef) || v.id === selectedVisitor.id)),
@@ -5132,7 +5900,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {popularServices.map((svc, i) => (
-                  <div key={i} onClick={() => showToast('Request for ' + svc.label + ' submitted')} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'#f2efec',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid #ebe7e3'}}>
                       {svc.icon}
                     </div>
@@ -5341,7 +6109,7 @@ const ResidentApp = ({ onLogout }) => {
                             <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>{v.name}</div>
                             {vStatusBadge(v.status)}
                           </div>
-                          <div style={{fontSize:12,color:'#8a7f76',marginBottom:3}}>{v.type || 'Guest'} — Personal visit</div>
+                          <div style={{fontSize:12,color:'#8a7f76',marginBottom:3}}>{v.type || 'Guest'} — {v.purpose || 'Visit'}</div>
                           <div style={{fontSize:11,color:'#a89a92',marginBottom:3}}>{v.date} at {v.time}</div>
                           <div style={{fontSize:11,color:'#a89a92'}}>
                             {v.status === 'Scheduled' ? 'Pre-Approved by: ' + (v.resident || 'Resident') :
@@ -5524,7 +6292,7 @@ const ResidentApp = ({ onLogout }) => {
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                 <div onClick={() => setHelpModal('security')} style={{cursor:'pointer',border:'1px solid #ebe7e3',borderRadius:8,padding:14,textAlign:'center',background:'#faf8f6'}}>
                   <div style={{marginBottom:6}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
-                  <div style={{fontSize:10,color:'#7a6f66',fontWeight:500,lineHeight:'1.3'}}>Contact<br/>Security Head</div>
+                  <div style={{fontSize:10,color:'#7a6f66',fontWeight:500,lineHeight:'1.3'}}>Contact<br/>Head of Security</div>
                 </div>
                 <div onClick={() => setHelpModal('pm')} style={{cursor:'pointer',border:'1px solid #ebe7e3',borderRadius:8,padding:14,textAlign:'center',background:'#faf8f6'}}>
                   <div style={{marginBottom:6}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg></div>
@@ -5578,6 +6346,8 @@ const ResidentApp = ({ onLogout }) => {
             ))}
           </div>
         );
+      case 'chat':
+        return <ChatPage />;
       case 'household':
         const [hhTab, setHhTab] = [resHhTab, setResHhTab];
         const [hhShowCreate, setHhShowCreate] = [resHhShowCreate, setResHhShowCreate];
@@ -6016,6 +6786,10 @@ const ResidentApp = ({ onLogout }) => {
           <span>Payments</span>
         </div>
         <div className={`res-nav-item ${currentPage==='household'?'active':''}`} onClick={() => setCurrentPage('household')}>
+        <div className={`res-nav-item ${currentPage==='chat'?'active':''}`} onClick={() => setCurrentPage('chat')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={currentPage==='chat'?'#1a1a1a':'#888'} strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span>Chat</span>
+        </div>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={currentPage==='household'?'#1a1a1a':'#888'} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           <span>My Household</span>
         </div>
@@ -6045,12 +6819,12 @@ const ResidentApp = ({ onLogout }) => {
         </div>
       )}
 
-      {/* Contact Security Head Modal */}
+      {/* Contact Head of Security Modal */}
       {helpModal === 'security' && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setHelpModal(null)}>
           <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:380,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Security Head</h3>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Head of Security</h3>
               <button onClick={() => setHelpModal(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
@@ -6160,6 +6934,56 @@ const ResidentApp = ({ onLogout }) => {
             <button onClick={() => setHelpModal(null)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>
               Cancel
             </button>
+      {/* Service Booking Modal */}
+      {showServiceBookingModal           </div>          </div> (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowServiceBookingModal(false)}>
+          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:420,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Book {serviceBooking.type}</h3>
+              <button onClick={() => setShowServiceBookingModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>          </div>times;</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Service Type</label>
+              <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
+              <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                <option value="">Select location</option>
+                <option value="Kitchen">Kitchen</option>
+                <option value="Bathroom">Bathroom</option>
+                <option value="Bedroom">Bedroom</option>
+                <option value="Living Room">Living Room</option>
+                <option value="Common Area">Common Area</option>
+              </select>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+              <div>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Date</label>
+                <input type="date" value={serviceBooking.date} onChange={e => setServiceBooking(f => ({...f, date: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+              </div>
+              <div>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Time</label>
+                <input type="time" value={serviceBooking.time} onChange={e => setServiceBooking(f => ({...f, time: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+              <div>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Duration</label>
+                <select value={serviceBooking.duration} onChange={e => setServiceBooking(f => ({...f, duration: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                  <option value="1 hour">1 hour</option><option value="2 hours">2 hours</option><option value="3 hours">3 hours</option><option value="4 hours">4 hours</option><option value="Half day">Half day</option><option value="Full day">Full day</option>
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Number of People</label>
+                <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+              </div>
+            </div>
+            <button onClick={() => {if (!serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;} const booking = {id: 'BK-'+Date.now(), title: serviceBooking.type + ' booking', detail: `${serviceBooking.date} at ${serviceBooking.time}`, status:'Approved'}; setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, booking]})); showToast('Service booking confirmed! ' + serviceBooking.type + ' scheduled for ' + serviceBooking.date); setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});}} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>Book Service</button>
+            <button onClick={() => setShowServiceBookingModal(false)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>
+      )}
           </div>
         </div>
       )}
@@ -6167,6 +6991,43 @@ const ResidentApp = ({ onLogout }) => {
   );
 };
 
+
+      {/* Service Booking Modal */}
+      {showServiceBookingModal && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowServiceBookingModal(false)}>
+          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:420,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Book {serviceBooking.type}</h3>
+              <button onClick={() => setShowServiceBookingModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Service Type</label>
+              <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
+              <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                <option value="">Select location</option>
+                <option value="Kitchen">Kitchen</option>
+                <option value="Bathroom">Bathroom</option>
+                <option value="Bedroom">Bedroom</option>
+                <option value="Living Room">Living Room</option>
+                <option value="Common Area">Common Area</option>
+              </select>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+              <div><label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Date</label><input type="date" value={serviceBooking.date} onChange={e => setServiceBooking(f => ({...f, date: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/></div>
+              <div><label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Time</label><input type="time" value={serviceBooking.time} onChange={e => setServiceBooking(f => ({...f, time: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/></div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+              <div><label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Duration</label><select value={serviceBooking.duration} onChange={e => setServiceBooking(f => ({...f, duration: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}><option value="1 hour">1 hour</option><option value="2 hours">2 hours</option><option value="3 hours">3 hours</option><option value="4 hours">4 hours</option><option value="Half day">Half day</option><option value="Full day">Full day</option></select></div>
+              <div><label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>People</label><input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/></div>
+            </div>
+            <button onClick={() => {if (!serviceBooking.location || !serviceBooking.date || !serviceBooking.time) { showToast('Please fill in required fields'); return; } const b = {id:'BK-'+Date.now(), title:serviceBooking.type, detail:`${serviceBooking.date} ${serviceBooking.time}`, status:'Approved'}; setData(prev => ({...prev, serviceRequests: [...(prev.serviceRequests||[]), b]})); showToast('Booking confirmed!'); setShowServiceBookingModal(false); setServiceBooking({type:'',location:'',date:'',time:'',duration:'1 hour',guests:1});}} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>Book Service</button>
+            <button onClick={() => setShowServiceBookingModal(false)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>
+      )}
 // ==================== SECURITY APP COMPONENTS ====================
 // ==================== QR SCANNER COMPONENT ====================
 const QrScannerModal = ({ onClose, onScanned }) => {
@@ -6193,8 +7054,12 @@ const QrScannerModal = ({ onClose, onScanned }) => {
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
             if (!mounted) return;
-            try { html5QrCode.stop().catch(() => {}); } catch(e) {}
-            onScanned(decodedText);
+            // Create scan log entry with timestamp
+            const scanTimestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'Asia/Dubai' });
+            const scanEntry = { timestamp: scanTimestamp, data: decodedText, type: 'QR_SCAN' };
+            // Allow multiple scans - do NOT stop the scanner, just log the scan
+            onScanned(decodedText, scanEntry);
+            // Continue scanning for more entries (removed html5QrCode.stop())
           },
           () => {}
         );
@@ -6365,11 +7230,15 @@ const ScannedVisitorForm = ({ scannedData, onClose, onSave }) => {
   const isExpired = React.useMemo(() => {
     if (!parsed['valid until']) return false;
     try {
-      const parts = parsed['valid until'].split('/');
-      if (parts.length === 3) {
-        const expiry = new Date(parts[2], parts[1]-1, parts[0], 23, 59, 59);
-        return expiry < new Date();
-      }
+      const validStr = parsed['valid until'];
+      // Handle format: "DD Mon YYYY HH:MM:SS" or "DD Mon YYYY HH:MM" or "Until Cancelled"
+      if (validStr === 'Until Cancelled') return false; // Multi-visit passes don't expire
+      
+      // Use proper Date parsing for Dubai timezone
+      const expiryStr = validStr.replace(/HH:MM:SS|HH:MM/, '');
+      const expiryDate = new Date(expiryStr);
+      const nowDubai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+      return expiryDate < nowDubai;
     } catch(e) {}
     return false;
   }, [parsed]);
@@ -6691,9 +7560,11 @@ const SecurityApp = ({ onLogout }) => {
     const dateStr = timeNow.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'Asia/Dubai' });
     const permitRef = 'SEC-' + timeNow.getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
     const idDocFull = newVisitorData.idDocType ? (newVisitorData.idDocType + (newVisitorData.idDocNumber ? ': ' + newVisitorData.idDocNumber : '')) : '';
+    // For single-visit QR: set validity to end of current day (23:59:59 Dubai time)
+    // For multiple-visit QR: set validity to "Until Cancelled" (no auto-expiry)
     const validUntil = newVisitorData.repeater === 'Single Visit'
-      ? (dateStr + ' 23:59')
-      : 'Until cancelled';
+      ? (dateStr + ' 23:59:59')
+      : 'Until Cancelled';
 
     // Create pending approval for resident
     const pendingEntry = {
@@ -6711,7 +7582,7 @@ const SecurityApp = ({ onLogout }) => {
       vehicle: newVisitorData.vehicle.trim(),
       additionalVisitors: newVisitorData.additionalVisitors,
       guardNotes: newVisitorData.guardNotes.trim(),
-      purpose: newVisitorData.purpose.trim() || newVisitorData.visitorType + ' visit',
+      purpose: newVisitorData.purpose.trim() || ('Visitor visit'),
       host: newVisitorData.host.trim() || 'Resident',
       repeater: newVisitorData.repeater,
       validUntil: validUntil,
@@ -6767,7 +7638,7 @@ const SecurityApp = ({ onLogout }) => {
       type: newVisitorData.visitorType,
       flat: newVisitorData.flat.trim(),
       host: newVisitorData.host.trim() || 'Resident',
-      purpose: newVisitorData.purpose.trim() || newVisitorData.visitorType + ' visit',
+      purpose: newVisitorData.purpose.trim() || ('Visitor visit'),
       timeIn: timeStr,
       timeOut: '',
       duration: '—',
@@ -6839,12 +7710,12 @@ const SecurityApp = ({ onLogout }) => {
 
   const handleVisitorSave = (info) => {
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const statusMap = { admit: 'PASSED SECURITY', hold: 'ON HOLD', reject: 'REJECTED' };
+    const timeStr = formatTime12(now);
+    const statusMap = { admit: 'Passed Security', hold: 'On Hold', reject: 'Denied Entry' };
     const newStatus = statusMap[info.action] || 'CLEARED';
 
     const logEntry = {
-      id: data.entryLog.length + 1,
+      id: 'LOG-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
       refId: info.permit,
       visitor: info.visitor,
       phone: info.phone,
@@ -6871,16 +7742,17 @@ const SecurityApp = ({ onLogout }) => {
       type: info.type,
       inTime: timeStr,
       duration: 'Just now',
-      host: info.host
+      host: info.host,
+      scanLog: [{timestamp: timeStr, action: 'entry_scan', status: 'Passed Security'}]
     } : null;
 
     // Update matching visitor status in visitors list + record security action time
     const updatedVisitors = data.visitors.map(v => {
       if (v.permitRef === info.permit) {
         const updates = {
-          status: info.action === 'admit' ? 'Inside' : (info.action === 'hold' ? 'On Hold' : 'Rejected'),
+          status: info.action === 'admit' ? 'Passed Security' : (info.action === 'hold' ? 'On Hold' : 'Denied Entry'),
           securityActionTime: timeStr,
-          securityActionDate: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'Asia/Dubai' })
+          securityActionDate: formatDateShort(now)
         };
         if (info.action === 'admit') updates.securityPassedTime = timeStr;
         if (info.action === 'hold') updates.securityHoldTime = timeStr;
@@ -6934,7 +7806,7 @@ const SecurityApp = ({ onLogout }) => {
           <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:8,padding:20,textAlign:'center',marginBottom:16}}>
             <div style={{background: viewingVisitor.status === 'Inside' ? '#1b5e20' : viewingVisitor.status === 'Rejected' ? '#b71c1c' : '#8a8a8a',
               color:'#fff',padding:'6px 16px',borderRadius:4,display:'inline-block',fontSize:12,fontWeight:600,letterSpacing:'0.04em',marginBottom:16}}>
-              {viewingVisitor.status === 'Inside' ? '✓ PASSED SECURITY' : viewingVisitor.status === 'Scheduled' ? '⏳ PRE-APPROVED' : viewingVisitor.status === 'Rejected' ? '✕ REJECTED' : viewingVisitor.status === 'On Hold' ? '⏸ ON HOLD' : viewingVisitor.status.toUpperCase()}
+              {viewingVisitor.status === 'Passed Security' ? '✓ Passed Security' : viewingVisitor.status === 'Scheduled' ? '⏳ Pre-Approved' : viewingVisitor.status === 'Denied Entry' ? '✕ Denied' : viewingVisitor.status === 'On Hold' ? '⏸ On Hold' : viewingVisitor.status}
             </div>
             {vp ? (
               <div ref={secQrRef} style={{display:'flex',justifyContent:'center',marginBottom:12}}></div>
@@ -6978,35 +7850,41 @@ const SecurityApp = ({ onLogout }) => {
 
   // Full database export to Excel
   const handleExportFullDatabase = () => {
-    const wb = XLSX.utils.book_new();
-    const today = new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
-    const logCols = ['Ref ID','Visitor','Phone','Type','Unit','Host','Purpose','Time In','Check Out Time','Duration','Gate','ID Doc','Status'];
-    const logRows = data.entryLog.map(e => [e.refId||'',e.visitor||'',e.phone||'',e.type||'',e.flat||'',e.host||'',e.purpose||'',e.timeIn||'',e.timeOut||'',e.duration||'',e.gateUsed||'Main Gate',e.idDoc||'',e.status||'']);
-    const wsLog = XLSX.utils.aoa_to_sheet([logCols,...logRows]);
-    wsLog['!cols'] = logCols.map(h => ({wch:Math.max(h.length+2,16)}));
-    XLSX.utils.book_append_sheet(wb, wsLog, 'Entry Log');
-    const visCols = ['Permit Ref','Name','Phone','Type','Unit','Host','Purpose','Status','Entry Date','Visit Date','Repeater'];
-    const visRows = data.visitors.map(v => [v.permitRef||v.id||'',v.name||'',v.phone||'',v.type||'',v.flat||v.unit||'',v.host||'',v.purpose||'',v.status||'',v.registeredDate||'',v.visitDate||'',v.repeater||'']);
-    const wsVis = XLSX.utils.aoa_to_sheet([visCols,...visRows]);
-    wsVis['!cols'] = visCols.map(h => ({wch:Math.max(h.length+2,16)}));
-    XLSX.utils.book_append_sheet(wb, wsVis, 'All Visitors');
-    const pendCols = ['ID','Visitor','Unit','Host','Type','Purpose','Status','Requested At','Source'];
-    const pendRows = (data.pendingApprovals||[]).map(p => [p.id||'',p.visitorName||p.name||'',p.flat||p.unit||'',p.host||'',p.type||'',p.purpose||'',p.status||'',p.requestedAt||'',p.source||'resident']);
-    const wsPend = XLSX.utils.aoa_to_sheet([pendCols,...pendRows]);
-    wsPend['!cols'] = pendCols.map(h => ({wch:Math.max(h.length+2,16)}));
-    XLSX.utils.book_append_sheet(wb, wsPend, 'Pending Approvals');
-    const inCols = ['ID','Name','Type','Unit','Host','Time In','Duration'];
-    const inRows = (data.insideVisitors||[]).map(v => [v.id||'',v.name||'',v.type||'',v.flat||v.unit||'',v.host||'',v.inTime||'',v.duration||'']);
-    const wsIn = XLSX.utils.aoa_to_sheet([inCols,...inRows]);
-    wsIn['!cols'] = inCols.map(h => ({wch:Math.max(h.length+2,16)}));
-    XLSX.utils.book_append_sheet(wb, wsIn, 'Inside Now');
-    XLSX.writeFile(wb, 'VARS_SecurityLog_' + today + '.xlsx');
-    showToast('Database exported to Excel');
+    try {
+      const wb = XLSX.utils.book_new();
+      const today = formatDate(new Date()).replace(/\s+/g,'-');
+      const logCols = ['Ref ID','Visitor','Phone','Type','Unit','Host','Purpose','Time In','Check Out Time','Duration','Gate','ID Doc','Status'];
+      const logRows = data.entryLog.map(e => [e.refId||'',e.visitor||'',e.phone||'',e.type||'',e.flat||'',e.host||'',e.purpose||'',e.timeIn||'',e.timeOut||'',e.duration||'',e.gateUsed||'Main Gate',e.idDoc||'',e.status||'']);
+      const wsLog = XLSX.utils.aoa_to_sheet([logCols,...logRows]);
+      wsLog['!cols'] = logCols.map(h => ({wch:Math.max(h.length+2,16)}));
+      XLSX.utils.book_append_sheet(wb, wsLog, 'Entry Log');
+      const visCols = ['Permit Ref','Name','Phone','Type','Unit','Host','Purpose','Status','Entry Date','Visit Date','Repeater'];
+      const visRows = data.visitors.map(v => [v.permitRef||v.id||'',v.name||'',v.phone||'',v.type||'',v.flat||v.unit||'',v.host||'',v.purpose||'',v.status||'',v.registeredDate||'',v.visitDate||'',v.repeater||'']);
+      const wsVis = XLSX.utils.aoa_to_sheet([visCols,...visRows]);
+      wsVis['!cols'] = visCols.map(h => ({wch:Math.max(h.length+2,16)}));
+      XLSX.utils.book_append_sheet(wb, wsVis, 'All Visitors');
+      const pendCols = ['ID','Visitor','Unit','Host','Type','Purpose','Status','Requested At','Source'];
+      const pendRows = (data.pendingApprovals||[]).map(p => [p.id||'',p.visitorName||p.name||'',p.flat||p.unit||'',p.host||'',p.type||'',p.purpose||'',p.status||'',p.requestedAt||'',p.source||'resident']);
+      const wsPend = XLSX.utils.aoa_to_sheet([pendCols,...pendRows]);
+      wsPend['!cols'] = pendCols.map(h => ({wch:Math.max(h.length+2,16)}));
+      XLSX.utils.book_append_sheet(wb, wsPend, 'Pending Approvals');
+      const inCols = ['ID','Name','Type','Unit','Host','Time In','Duration'];
+      const inRows = (data.insideVisitors||[]).map(v => [v.id||'',v.name||'',v.type||'',v.flat||v.unit||'',v.host||'',v.inTime||'',v.duration||'']);
+      const wsIn = XLSX.utils.aoa_to_sheet([inCols,...inRows]);
+      wsIn['!cols'] = inCols.map(h => ({wch:Math.max(h.length+2,16)}));
+      XLSX.utils.book_append_sheet(wb, wsIn, 'Inside Now');
+      setTimeout(() => {
+        XLSX.writeFile(wb, 'VARS_SecurityLog_' + today + '.xlsx');
+        showToast('Database exported to Excel');
+      }, 100);
+    } catch (error) {
+      showToast('Error exporting database: ' + (error.message || 'Please try again'));
+    }
   };
 
   // Action for checkout
   const handleCheckout = (entry) => {
-    const timeOut = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Dubai'});
+    const timeOut = formatTime12(new Date());
     setData(prev => ({
       ...prev,
       entryLog: prev.entryLog.map(e => e.id === entry.id ? {...e, status:'CHECKED OUT', timeOut} : e),
@@ -7023,10 +7901,10 @@ const SecurityApp = ({ onLogout }) => {
       const scheduledCount = data.visitors.filter(v => v.status === 'Scheduled').length;
       const flaggedCount = data.entryLog.filter(e => e.status === 'ON HOLD' || e.status === 'REJECTED').length;
       const totalInside = clearedCount + pendingCount;
-      const guestCount = data.visitors.filter(v => v.type === 'Guest' || v.type === 'Resident Guest').length;
-      const deliveryCount = data.visitors.filter(v => v.type === 'Delivery').length;
-      const contractorCount = data.visitors.filter(v => v.type === 'Contractor').length;
-      const serviceCount = data.visitors.filter(v => v.type === 'Service' || v.type === 'Vendor' || v.type === 'Cleaning Service' || v.type === 'Maintenance').length;
+      const guestCount = data.insideVisitors.filter(v => v.type === 'Guest' || v.type === 'Resident Guest').length;
+      const deliveryCount = data.insideVisitors.filter(v => v.type === 'Delivery').length;
+      const contractorCount = data.insideVisitors.filter(v => v.type === 'Contractor').length;
+      const serviceCount = data.insideVisitors.filter(v => v.type === 'Service' || v.type === 'Vendor' || v.type === 'Cleaning Service' || v.type === 'Maintenance').length;
       // Inside visitors filtered by tab
       const filteredInside = insideFilterTab === 'ALL' ? data.insideVisitors :
         insideFilterTab === 'GUESTS' ? data.insideVisitors.filter(v => v.type === 'Guest' || v.type === 'Resident Guest' || v.type === 'VIP') :
@@ -7061,14 +7939,6 @@ const SecurityApp = ({ onLogout }) => {
               <div className="shortcut">Scan resident-issued QR pass</div>
 
             </div>
-            <div className="sec-quick-action-btn" style={{cursor:'pointer',position:'relative'}}>
-              <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px'}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-              </div>
-              <div className="label">Create Announcements</div>
-              <div className="shortcut">Register new visitor manually</div>
-
-            </div>
           </div>
 
           {/* 3-COLUMN GRID */}
@@ -7088,15 +7958,15 @@ const SecurityApp = ({ onLogout }) => {
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
                   <div style={{background:'#e0e5db',borderRadius:4,padding:'8px 6px',textAlign:'center'}}>
                     <div style={{fontSize:18,fontWeight:700,color:'#5a6b4f'}}>{clearedCount}</div>
-                    <div style={{fontSize:9,color:'#5a6b4f',letterSpacing:'0.04em'}}>CLEARED</div>
+                    <div style={{fontSize:9,color:'#5a6b4f',letterSpacing:'0.04em'}}>Cleared</div>
                   </div>
                   <div style={{background:'#ebe3d9',borderRadius:4,padding:'8px 6px',textAlign:'center'}}>
                     <div style={{fontSize:18,fontWeight:700,color:'#7a6040'}}>{pendingCount}</div>
-                    <div style={{fontSize:9,color:'#7a6040',letterSpacing:'0.04em'}}>PENDING</div>
+                    <div style={{fontSize:9,color:'#7a6040',letterSpacing:'0.04em'}}>Pending</div>
                   </div>
                   <div style={{background:'#eddbd9',borderRadius:4,padding:'8px 6px',textAlign:'center'}}>
                     <div style={{fontSize:18,fontWeight:700,color:'#8b4a42'}}>{flaggedCount}</div>
-                    <div style={{fontSize:9,color:'#8b4a42',letterSpacing:'0.04em'}}>FLAGGED</div>
+                    <div style={{fontSize:9,color:'#8b4a42',letterSpacing:'0.04em'}}>Flagged</div>
                   </div>
                 </div>
                 <div style={{borderTop:'1px solid #ebe7e3',paddingTop:12}}>
@@ -7214,7 +8084,7 @@ const SecurityApp = ({ onLogout }) => {
                       setData(prev => ({
                         ...prev,
                         insideVisitors: prev.insideVisitors.filter(iv => iv.id !== v.id),
-                        entryLog: prev.entryLog.map(e => e.visitor === v.name ? {...e, status:'CHECKED OUT', timeOut: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Dubai'})} : e)
+                        entryLog: prev.entryLog.map(e => e.visitor === v.name ? {...e, status:'CHECKED OUT', timeOut: formatTime12(new Date())} : e)
                       }));
                       showToast(v.name + ' checked out');
                     }}>QUICK CHECKOUT</button>
@@ -7340,12 +8210,12 @@ const SecurityApp = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* Security Head Contact Modal */}
+          {/* Head of Security Contact Modal */}
           {secContactModal === 'security' && (
             <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setSecContactModal(null)}>
               <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:380,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                  <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Security Head</h3>
+                  <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Head of Security</h3>
                   <button onClick={() => setSecContactModal(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
@@ -7661,7 +8531,7 @@ const SecurityApp = ({ onLogout }) => {
     }
 
     if(currentTab === 'messages') {
-      const secGuardId = 'GRD-001'; // current logged-in guard
+      const secGuardId = data.currentUser?.id || 'GRD-001'; // current logged-in guard
       const myMessages = (data.chatMessages || []).filter(m => m.guardId === secGuardId).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
       return (
         <div style={{padding:16}}>
@@ -7674,7 +8544,7 @@ const SecurityApp = ({ onLogout }) => {
                     <div style={{maxWidth:'75%',background: msg.from === 'Security' ? '#1a1a1a' : '#f0f0f0',color: msg.from === 'Security' ? '#fff' : '#1a1a1a',padding:'8px 12px',borderRadius:6,fontSize:12}}>
                       <div style={{fontWeight:600,fontSize:10,marginBottom:4}}>{msg.senderName || msg.from}</div>
                       {msg.text}
-                      <div style={{fontSize:10,marginTop:4,opacity:0.7}}>{new Date(msg.timestamp).toLocaleTimeString()}</div>
+                      <div style={{fontSize:10,marginTop:4,opacity:0.7}}>{formatTime24(new Date(msg.timestamp))}</div>
                     </div>
                   </div>
                 ))}
@@ -7763,7 +8633,7 @@ const SecurityApp = ({ onLogout }) => {
                       {label:'General Setting', icon:(<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>)},
                       {label:'Help & Support', icon:(<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>)}
                     ].map((item, i) => (
-                      <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 4px',borderBottom:i < 2 ? '1px solid #f0f0f0' : 'none',cursor:'pointer'}}>
+                      <div key={i} onClick={item.label==='General Setting'?()=>{setShowSecProfile(false)}:()=>{}} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 4px',borderBottom:i < 2 ? '1px solid #f0f0f0' : 'none',cursor:'pointer'}}>
                         <div style={{width:32,height:32,borderRadius:'50%',background:'#f2efec',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{item.icon}</div>
                         <div style={{flex:1,fontSize:13,fontWeight:500,color:'#1a1a1a'}}>{item.label}</div>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -7982,6 +8852,7 @@ const SecurityApp = ({ onLogout }) => {
                       <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',display:'flex',alignItems:'center',gap:8}}><span style={{background:'#e8e3de',padding:'2px 8px',borderRadius:3,fontSize:10,color:'#a89a92'}}>02</span> VISIT DETAILS</div>
                       <span style={{fontSize:10,color:'#1a1a1a',letterSpacing:'0.06em'}}>REQUIRED</span>
                     </div>
+                    <div style={{fontSize:10,color:'#a89a92',marginBottom:16,fontStyle:'italic'}}>Fields marked with * are required</div>
 
                     {/* Flat / Unit */}
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
@@ -8159,7 +9030,7 @@ const SecurityApp = ({ onLogout }) => {
                       let durationStr = '—';
                       if (v.securityPassedTime) {
                         try {
-                          const today = nowTime.toLocaleDateString('en-US', { timeZone: 'Asia/Dubai' });
+                          const today = nowTime.toLocaleDateString('en-GB', { timeZone: 'Asia/Dubai' });
                           const entryDate = new Date(today + ' ' + v.securityPassedTime);
                           const diffMs = nowTime - entryDate;
                           if (diffMs > 0) {
@@ -8426,6 +9297,7 @@ const App = () => {
       case 'service': return <ServiceRequestsPage/>;
       case 'packages': return <PlaceholderPage title="Packages" description="Package tracking and delivery management. Coming soon!"/>;
       case 'announcements': return <AnnouncementsPage/>;
+      case 'chat': return <ChatPage/>;
       case 'guards': return <GuardsPage searchSelectedItem={sel} clearSearchSelection={clearSel}/>;
       case 'properties': return <PropertiesPage searchSelectedItem={sel} clearSearchSelection={clearSel}/>;
       case 'escalations': return <EscalationsPage/>;
