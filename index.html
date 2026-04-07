@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VARS PM — Property Manager</title>
+<title>VARS — Property Manager</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
@@ -11,7 +11,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Helvetica Now Text';src:local('Helvetica Now Text'),local('HelveticaNowText'),local('Helvetica Now Text Regular'),local('HelveticaNowText-Regular');font-weight:100 900;font-display:swap}
+</style>
 <style>
 :root{
   --bg-primary:#ffffff;
@@ -39,7 +41,7 @@
   --radius-lg:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg-page);color:var(--text-dark);font-size:14px;font-weight:400;line-height:1.43;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+body{font-family:'Helvetica Now Text','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg-page);color:var(--text-dark);font-size:14px;font-weight:400;line-height:1.43;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:var(--border-medium);border-radius:3px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -990,7 +992,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
           <div style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:48,height:48,background:'var(--bg-warm-dark)',borderRadius:12,marginBottom:14}}>
             <span style={{color:'#fff',fontSize:22,fontWeight:500}}>V</span>
           </div>
-          <h1 style={{fontSize:22,fontWeight:500,letterSpacing:'-0.03em',margin:'0 0 4px',color:'var(--text-dark)'}}>VARS PM</h1>
+          <h1 style={{fontSize:22,fontWeight:500,letterSpacing:'-0.03em',margin:'0 0 4px',color:'var(--text-dark)'}}>VARS</h1>
           <p style={{fontSize:10,letterSpacing:'0.14em',textTransform:'uppercase',color:'var(--text-secondary)',margin:0,fontWeight:400}}>Property Management Suite</p>
         </div>
 
@@ -1056,7 +1058,7 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         </div>
 
         <div style={{marginTop:12,textAlign:'center'}}>
-          <p style={{fontSize:10,color:'#c4b8b0',letterSpacing:'0.04em'}}>Abu Dhabi · GST+4 · VARS PM v1.0 · {new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Dubai'})+', '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Dubai'})+' GST'}</p>
+          <p style={{fontSize:10,color:'#c4b8b0',letterSpacing:'0.04em'}}>Abu Dhabi · GST+4 · VARS v1.0 · {new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Dubai'})+', '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Dubai'})+' GST'}</p>
         </div>
       </div>
     </div>
@@ -1088,7 +1090,7 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="v-badge">V</div>
-        <span>VARS PM</span>
+        <span>VARS</span>
         {onClose && <button className="sidebar-close-btn" onClick={onClose} style={{marginLeft:'auto',background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#8a7f76'}}>✕</button>}
       </div>
       <nav className="sidebar-nav">
@@ -4266,7 +4268,7 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
     const d = qrData;
     if (!d) return '';
     return [
-      'VARS PM — Visitor Pre-Approval*',
+      'VARS — Visitor Pre-Approval*',
       '',
       '✅ Your visit has been pre-approved!',
       '',
@@ -4297,7 +4299,7 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, 620);
         ctx.fillStyle = '#ae9751'; ctx.fillRect(0, 0, w, 4);
         ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
-        ctx.fillText('VARS PM — Visitor Pass', w/2, 36);
+        ctx.fillText('VARS — Visitor Pass', w/2, 36);
         ctx.fillStyle = '#2d6a4f'; ctx.font = 'bold 13px Arial';
         ctx.fillText('PRE-APPROVED', w/2, 58);
         ctx.drawImage(img, (w - qrSize) / 2, 72, qrSize, qrSize);
@@ -4367,7 +4369,7 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
       } catch (err) { if (err.name === 'AbortError') return; }
     }
     await savePassImage();
-    window.open('https://t.me/share/url?url=' + encodeURIComponent('VARS PM Visitor Pass') + '&text=' + encodeURIComponent('Here is your visitor pass. Please show the attached QR image at the gate.'), '_blank');
+    window.open('https://t.me/share/url?url=' + encodeURIComponent('VARS Visitor Pass') + '&text=' + encodeURIComponent('Here is your visitor pass. Please show the attached QR image at the gate.'), '_blank');
     showToast('Image saved — attach it in the Telegram chat');
   };
 
@@ -4976,7 +4978,7 @@ const ResidentApp = ({ onLogout }) => {
                   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, 620);
                   ctx.fillStyle = '#ae9751'; ctx.fillRect(0, 0, w, 4);
                   ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
-                  ctx.fillText('VARS PM — Visitor Pass', w/2, 36);
+                  ctx.fillText('VARS — Visitor Pass', w/2, 36);
                   ctx.fillStyle = '#2d6a4f'; ctx.font = 'bold 13px Arial'; ctx.fillText('PRE-APPROVED', w/2, 58);
                   ctx.drawImage(img, (w - 180) / 2, 72, 180, 180);
                   ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 14px Arial'; ctx.fillText(vp.permit, w/2, 272);
