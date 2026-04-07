@@ -7073,7 +7073,7 @@ const ResidentApp = ({ onLogout }) => {
               {serviceBooking.type ? (
                 <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
               ) : (
-                <select value={serviceBooking.type} onChange={e => setServiceBooking(f => ({...f, type: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                <select value={serviceBooking.type} onChange={e => setServiceBooking(f => ({...f, type: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
                   <option value="">Select amenity</option>
                   <option value="Swimming Pool">Swimming Pool</option>
                   <option value="Table Tennis">Table Tennis</option>
@@ -7088,7 +7088,7 @@ const ResidentApp = ({ onLogout }) => {
             </div>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
-              <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+              <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
                 <option value="">Select location</option>
                 <option value="Ground Floor">Ground Floor</option>
                 <option value="Podium Level">Podium Level</option>
