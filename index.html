@@ -7101,7 +7101,7 @@ const ResidentApp = ({ onLogout }) => {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
               <div>
                 <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Date</label>
-                <input type="date" value={serviceBooking.date} onChange={e => setServiceBooking(f => ({...f, date: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+                <input type="date" value={serviceBooking.date} min={new Date().toISOString().split('T')[0]} onChange={e => setServiceBooking(f => ({...f, date: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
               </div>
               <div>
                 <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Time</label>
