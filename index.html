@@ -5226,6 +5226,7 @@ const ResidentApp = ({ onLogout }) => {
   const [resVisDateFilter, setResVisDateFilter] = useState('All');
   const [resVisFilterOpen, setResVisFilterOpen] = useState(false);
   const [showServiceBookingModal, setShowServiceBookingModal] = useState(false);
+  const [bookingMode, setBookingMode] = useState('amenity'); // 'amenity' or 'service'
   const [serviceBooking, setServiceBooking] = useState({ type:'', location:'', date:'', time:'', duration:'1 hour', guests:1 });
   const prevVisitorStatesRef = React.useRef({});
 
@@ -5810,7 +5811,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {bookAmenities.map((svc, i) => (
-                  <div key={i} onClick={() => {setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setBookingMode('amenity'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
                     </div>
@@ -5820,6 +5821,45 @@ const ResidentApp = ({ onLogout }) => {
               </div>
             </div>
 
+            {/* Amenity Bookings — upcoming + past */}
+            {(() => {
+              const todayISO = new Date().toISOString().split('T')[0];
+              const allBookings = (data.amenityBookings || []).slice().sort((a, b) => {
+                const da = a.date + ' ' + a.time, db = b.date + ' ' + b.time;
+                return da > db ? -1 : da < db ? 1 : 0;
+              });
+              const upcoming = allBookings.filter(b => b.date >= todayISO);
+              const past = allBookings.filter(b => b.date < todayISO);
+              const sorted = [...upcoming.reverse(), ...past];
+              if (sorted.length === 0) return null;
+              const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              return (
+                <div style={{marginBottom:24}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+                    <span style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>Amenity Bookings</span>
+                  </div>
+                  {sorted.map(b => {
+                    const isPast = b.date < todayISO;
+                    const dp = b.date.split('-');
+                    const dateLabel = b.date === todayISO ? 'Today' : (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1] + ' ' + dp[0]);
+                    return (
+                      <div key={b.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.5)',borderRadius:16,padding:14,marginBottom:8,display:'flex',alignItems:'center',gap:12,boxShadow:'0 2px 12px rgba(120,100,90,0.06)',opacity: isPast ? 0.55 : 1}}>
+                        <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',flexShrink:0}}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{b.type}</div>
+                          <div style={{fontSize:11,color:'#a89a92'}}>{dateLabel} · {b.time} · {b.duration}</div>
+                          <div style={{fontSize:10,color:'#7a6f66',marginTop:1}}>{b.location} · {b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
+                        </div>
+                        <span style={{fontSize:10,fontWeight:500,color: isPast ? '#a89a92' : '#5a6b4f'}}>{isPast ? 'Completed' : b.status}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             {/* Book Services */}
             <div style={{marginBottom:24}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
@@ -5827,7 +5867,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {bookServices.map((svc, i) => (
-                  <div key={i} onClick={() => {setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setBookingMode('service'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
                     </div>
@@ -6277,7 +6317,7 @@ const ResidentApp = ({ onLogout }) => {
                   );
                 });
               })()}
-              <button onClick={() => {setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
+              <button onClick={() => {setBookingMode('amenity'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
             </div>
 
             {/* Upcoming Service — booked separately */}
@@ -7060,42 +7100,36 @@ const ResidentApp = ({ onLogout }) => {
         </div>
       )}
 
-      {/* Service Booking Modal */}
+      {/* Booking Modal — amenity or service */}
       {showServiceBookingModal && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowServiceBookingModal(false)}>
           <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:420,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Book {serviceBooking.type || 'Amenity'}</h3>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Book {serviceBooking.type || (bookingMode === 'service' ? 'Service' : 'Amenity')}</h3>
               <button onClick={() => setShowServiceBookingModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
             </div>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Amenity Type</label>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Service Type' : 'Amenity Type'}</label>
               {serviceBooking.type ? (
                 <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
               ) : (
                 <select value={serviceBooking.type} onChange={e => setServiceBooking(f => ({...f, type: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
-                  <option value="">Select amenity</option>
-                  <option value="Swimming Pool">Swimming Pool</option>
-                  <option value="Table Tennis">Table Tennis</option>
-                  <option value="Squash">Squash</option>
-                  <option value="Gym">Gym</option>
-                  <option value="Sauna">Sauna</option>
-                  <option value="BBQ Area">BBQ Area</option>
-                  <option value="Kids Area">Kids Area</option>
-                  <option value="Yoga Room">Yoga Room</option>
+                  {bookingMode === 'service' ? (
+                    <>{['', 'Plumbing', 'Electrician', 'Housekeeping', 'AC Repair', 'Pest Control', 'Locksmith', 'Painter', 'Carpenter'].map(v => <option key={v} value={v}>{v || 'Select service'}</option>)}</>
+                  ) : (
+                    <>{['', 'Swimming Pool', 'Table Tennis', 'Squash', 'Gym', 'Sauna', 'BBQ Area', 'Kids Area', 'Yoga Room'].map(v => <option key={v} value={v}>{v || 'Select amenity'}</option>)}</>
+                  )}
                 </select>
               )}
             </div>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
               <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
-                <option value="">Select location</option>
-                <option value="Ground Floor">Ground Floor</option>
-                <option value="Podium Level">Podium Level</option>
-                <option value="Rooftop">Rooftop</option>
-                <option value="Basement Level 1">Basement Level 1</option>
-                <option value="Garden Area">Garden Area</option>
-                <option value="Club House">Club House</option>
+                {bookingMode === 'service' ? (
+                  <>{['', 'Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Common Area', 'Balcony'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}</>
+                ) : (
+                  <>{['', 'Ground Floor', 'Podium Level', 'Rooftop', 'Basement Level 1', 'Garden Area', 'Club House'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}</>
+                )}
               </select>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
@@ -7116,11 +7150,29 @@ const ResidentApp = ({ onLogout }) => {
                 </select>
               </div>
               <div>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Number of People</label>
-                <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Urgency' : 'Number of People'}</label>
+                {bookingMode === 'service' ? (
+                  <select value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                    <option value="Normal">Normal</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option>
+                  </select>
+                ) : (
+                  <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+                )}
               </div>
             </div>
-            <button onClick={() => {if (!serviceBooking.type || !serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;} const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: serviceBooking.location, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, status:'Confirmed'}; setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]})); showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time); setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});}} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>Book Amenity</button>
+            <button onClick={() => {
+              if (!serviceBooking.type || !serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;}
+              const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: serviceBooking.location, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, status:'Confirmed'};
+              if (bookingMode === 'service') {
+                setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, {id: 'SR-'+Date.now(), type: serviceBooking.type, flat: 'B-102', resident: 'Nitin Sharma', date: serviceBooking.date, time: serviceBooking.time, status: 'Scheduled', location: serviceBooking.location}]}));
+              } else {
+                setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]}));
+              }
+              showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time);
+              setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});
+            }} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>
+              {bookingMode === 'service' ? 'Book Service' : 'Book Amenity'}
+            </button>
             <button onClick={() => setShowServiceBookingModal(false)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
           </div>
         </div>
