@@ -5841,16 +5841,16 @@ const ResidentApp = ({ onLogout }) => {
                   {sorted.map(b => {
                     const isPast = b.date < todayISO;
                     const dp = b.date.split('-');
-                    const dateLabel = b.date === todayISO ? 'Today' : (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1] + ' ' + dp[0]);
+                    const dateLabel = b.date === todayISO ? 'Today' : (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1]);
                     return (
-                      <div key={b.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.5)',borderRadius:16,padding:14,marginBottom:8,display:'flex',alignItems:'center',gap:12,boxShadow:'0 2px 12px rgba(120,100,90,0.06)',opacity: isPast ? 0.55 : 1}}>
-                        <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',flexShrink:0}}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',opacity: isPast ? 0.5 : 1}}>
+                        <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{b.type}</div>
                           <div style={{fontSize:11,color:'#a89a92'}}>{dateLabel} · {b.time} · {b.duration}</div>
-                          <div style={{fontSize:10,color:'#7a6f66',marginTop:1}}>{b.location} · {b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
+                          <div style={{fontSize:10,color:'#7a6f66',marginTop:2}}>{b.location} · {b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
                         </div>
                         <span style={{fontSize:10,fontWeight:500,color: isPast ? '#a89a92' : '#5a6b4f'}}>{isPast ? 'Completed' : b.status}</span>
                       </div>
@@ -6327,7 +6327,7 @@ const ResidentApp = ({ onLogout }) => {
                 <span onClick={() => setCurrentPage('services')} style={{fontSize:11,color:'#a89a92',cursor:'pointer'}}>See All ›</span>
               </div>
               <div style={{textAlign:'center',color:'#c4b8b0',fontSize:12,padding:8}}>No upcoming services booked</div>
-              <button onClick={() => setCurrentPage('services')} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Add Service request</button>
+              <button onClick={() => {setBookingMode('service'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:'Normal'}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Add Service request</button>
             </div>
 
             {/* Recent Announcements */}
