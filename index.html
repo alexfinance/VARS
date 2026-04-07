@@ -5867,7 +5867,7 @@ const ResidentApp = ({ onLogout }) => {
         // Status badge — Door.com inspired palette
         // Logic: future = always Pre-Approved, past = Checked Out / Rejected / No Show only
         const vStatusBadge = (status, visitorDate) => {
-          const vDate = visitorDate ? ((/^\d{4}-\d{2}-\d{2}$/.test(visitorDate)) ? visitorDate : (() => { const p = visitorDate.split('/'); return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : visitorDate; })()) : null;
+          const vDate = visitorDate ? parseVisDate(visitorDate) : null;
           const isPast = vDate && vDate < todayStr;
           const isFuture = vDate && vDate > todayStr;
 
@@ -5911,11 +5911,15 @@ const ResidentApp = ({ onLogout }) => {
           return <span style={{background:s.bg,color:s.color,padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:600}}>{s.label}</span>;
         };
 
-        // Parse DD/MM/YYYY to YYYY-MM-DD
+        // Parse any date format to YYYY-MM-DD
+        const monthsMap = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
         const parseVisDate = (dateStr) => {
           if (!dateStr) return null;
-          const parts = dateStr.split('/');
-          if (parts.length === 3) return parts[2] + '-' + parts[1].padStart(2,'0') + '-' + parts[0].padStart(2,'0');
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+          const slashParts = dateStr.split('/');
+          if (slashParts.length === 3) return slashParts[2]+'-'+slashParts[1].padStart(2,'0')+'-'+slashParts[0].padStart(2,'0');
+          const monMatch = dateStr.match(/^(\d{1,2})\s+([A-Za-z]{3})(?:\s+(\d{4}))?$/);
+          if (monMatch) return (monMatch[3] || '2026')+'-'+(monthsMap[monMatch[2]]||'01')+'-'+monMatch[1].padStart(2,'0');
           return dateStr;
         };
         const today = new Date();
@@ -6099,7 +6103,16 @@ const ResidentApp = ({ onLogout }) => {
         const pendingVisitors_home = data.visitors.filter(v => v.status === 'Pending' || v.status === 'Waiting');
         const waitingApprovals = data.pendingApprovals || [];
         const scheduledVisitors = data.visitors.filter(v => v.status === 'Scheduled' || v.status === 'Pre-Approved').sort((a, b) => {
-          const parseD = (d) => { if (!d) return '9999'; if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; const p = d.split('/'); return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : d; };
+          const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+          const parseD = (d) => {
+            if (!d) return '9999-99-99';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+            const slashParts = d.split('/');
+            if (slashParts.length === 3) return slashParts[2]+'-'+slashParts[1].padStart(2,'0')+'-'+slashParts[0].padStart(2,'0');
+            const monMatch = d.match(/^(\d{1,2})\s+([A-Za-z]{3})(?:\s+(\d{4}))?$/);
+            if (monMatch) return (monMatch[3] || '2026')+'-'+(months[monMatch[2]]||'01')+'-'+monMatch[1].padStart(2,'0');
+            return '9999-99-99';
+          };
           const da = parseD(a.date), db = parseD(b.date);
           if (da !== db) return da.localeCompare(db);
           return (a.time || '').localeCompare(b.time || '');
