@@ -120,7 +120,7 @@ body{font-family:'Helvetica Now Text','Inter',-apple-system,BlinkMacSystemFont,'
 .status.paid{background:var(--bg-warm-dark);color:#fff}
 .status.unpaid{background:#fff;color:var(--accent-warm-dark);border:1px solid var(--border-medium)}
 .status.scheduled{background:var(--bg-warm-dark);color:#fff}
-.status.pre-approved{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+.status.pre-approved{background:#dcf0e0;color:#2d7a3e;border:1px solid #b8dfc1}
 .status.completed{background:var(--accent-warm-light);color:var(--accent-warm-dark);border:1px solid var(--border-medium)}
 .status.checked-out{background:var(--accent-warm-light);color:var(--accent-warm-dark);border:1px solid var(--border-medium)}
 .status.on-duty{background:var(--bg-warm-dark);color:#fff}
@@ -2115,10 +2115,25 @@ const VisitorsPage = () => {
               <div style={{fontSize:13,color:'#8a7f76'}}>✓ Pre-approved by resident — {selectedVisitor.flat} — 09:00</div>
               <div style={{fontSize:13,color:'#8a7f76'}}>◷ Guard scanned QR — Entry point: Main Gate — {selectedVisitor.time}</div>
             </div>
-            <div className="grid-2">
-              <button className="btn btn-primary"><Icon name="phone" size={14}/> Call Resident</button>
-              <button className="btn" onClick={()=>{handleReject(selectedVisitor);setSelectedVisitor(null);}}>Reject</button>
-            </div>
+            {(() => {
+              const vDate = selectedVisitor.date;
+              const todayStr = new Date().toISOString().split('T')[0];
+              let isFuture = false;
+              if (vDate) {
+                if (/^\d{4}-\d{2}-\d{2}$/.test(vDate)) isFuture = vDate > todayStr;
+                else { const p = vDate.split('/'); if (p.length === 3) isFuture = (p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0')) > todayStr; }
+              }
+              return isFuture && (selectedVisitor.status === 'Pre-Approved' || selectedVisitor.status === 'Scheduled') ? (
+                <div style={{textAlign:'center',padding:'12px 16px',background:'#f5f0ec',borderRadius:8,color:'#7a6f66',fontSize:12,fontWeight:500,marginTop:8}}>
+                  Pre-approved for {selectedVisitor.date}. Actions available on the visit day.
+                </div>
+              ) : (
+                <div className="grid-2">
+                  <button className="btn btn-primary"><Icon name="phone" size={14}/> Call Resident</button>
+                  <button className="btn" onClick={()=>{handleReject(selectedVisitor);setSelectedVisitor(null);}}>Reject</button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -4746,6 +4761,17 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
     if (!/^[a-zA-Z\s]+$/.test(fullName)) { showToast('Visitor name must contain only letters and spaces'); return; }
     if (!mobile.trim()) { showToast('Please enter mobile number'); return; }
 
+    // Block past dates and past times for today
+    if (visitDate) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (visitDate < todayStr) { showToast('Cannot pre-approve a visitor for a past date'); return; }
+      if (visitDate === todayStr && visitTime) {
+        const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+        const [h, m] = visitTime.split(':').map(Number);
+        if (h * 60 + m < nowMinutes) { showToast('Cannot pre-approve a visitor for a past time today'); return; }
+      }
+    }
+
     const permitRef = generatePermitRef();
     const now = new Date();
     const baseDate = visitDate ? new Date(visitDate) : now;
@@ -4804,28 +4830,13 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
       approvedBy: 'Resident',
       qrPayload: qrData
     };
-    const logEntry = {
-      id: data.entryLog.length + 1,
-      refId: qrData.permit,
-      visitor: qrData.visitor,
-      phone: qrData.mobile,
-      initials: qrData.visitor.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2),
-      type: qrData.type,
-      flat: 'B-102',
-      host: 'Nitin Sharma',
-      purpose: qrData.type + ' visit',
-      timeIn: qrData.time,
-      timeOut: '',
-      duration: '—',
-      idDoc: '',
-      status: 'PRE-APPROVED'
-    };
+    // Pre-approved visitors do NOT go into the entry log — entry log is only for people who actually entered the building.
+    // They will be added to the entry log by security when they physically arrive and pass the gate.
     const scheduleEntry = { time: qrData.time, description: qrData.visitor + ' — ' + qrData.type, flat: 'B-102', type: qrData.type };
     const pmScheduleEntry = { time: qrData.time, name: qrData.visitor + ' (' + qrData.type + ')', flat: 'B-102', type: qrData.type };
     setData(prev => ({
       ...prev,
       visitors: [visitorEntry, ...prev.visitors],
-      entryLog: [logEntry, ...prev.entryLog],
       todayScheduleSecurity: [...prev.todayScheduleSecurity, scheduleEntry].sort((a, b) => a.time.localeCompare(b.time)),
       todaySchedule: [...prev.todaySchedule, pmScheduleEntry].sort((a, b) => a.time.localeCompare(b.time))
     }));
@@ -5125,6 +5136,7 @@ const PreApproveForm = ({ onBack, showToast, data, setData }) => {
           <div>
             <label style={{fontSize:12,color:'#6b5d52',fontWeight:500,marginBottom:4,display:'block'}}>Visit Date</label>
             <input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
               style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',boxSizing:'border-box'}} />
           </div>
           <div>
@@ -5415,6 +5427,13 @@ const ResidentApp = ({ onLogout }) => {
 
         const saveEdit = () => {
           if (!editingVisitor) return;
+          // Recalculate validity based on new date if changed
+          const newValidUntil = editingVisitor.date
+            ? (selectedVisitor.repeater === 'Single Visit' || !selectedVisitor.repeater
+              ? editingVisitor.date + ' 23:59'
+              : 'Until cancelled')
+            : (selectedVisitor.validUntil || '—');
+
           setData(prev => ({
             ...prev,
             visitors: prev.visitors.map(v => {
@@ -5426,6 +5445,7 @@ const ResidentApp = ({ onLogout }) => {
                   type: editingVisitor.type,
                   date: editingVisitor.date,
                   time: editingVisitor.time,
+                  validUntil: newValidUntil,
                   qrPayload: v.qrPayload ? {
                     ...v.qrPayload,
                     visitor: editingVisitor.name,
@@ -5434,14 +5454,26 @@ const ResidentApp = ({ onLogout }) => {
                     date: editingVisitor.date,
                     time: editingVisitor.time,
                     vehicle: editingVisitor.vehicle,
-                    guests: editingVisitor.guests
+                    guests: editingVisitor.guests,
+                    validUntil: newValidUntil
                   } : v.qrPayload
                 };
                 setSelectedVisitor(updated);
                 return updated;
               }
               return v;
-            })
+            }),
+            // Also update schedule entries so Security app reflects changes
+            todayScheduleSecurity: prev.todayScheduleSecurity.map(s =>
+              s.description && s.description.includes(selectedVisitor.name)
+                ? { ...s, time: editingVisitor.time, description: editingVisitor.name + ' — ' + editingVisitor.type }
+                : s
+            ),
+            todaySchedule: prev.todaySchedule.map(s =>
+              s.name && s.name.includes(selectedVisitor.name)
+                ? { ...s, time: editingVisitor.time, name: editingVisitor.name + ' (' + editingVisitor.type + ')' }
+                : s
+            )
           }));
           setEditingVisitor(null);
           showToast('Visitor details updated');
@@ -5467,7 +5499,7 @@ const ResidentApp = ({ onLogout }) => {
           if (s === 'Rejected') return { bg: '#ffebee', color: '#c62828', label: '✕ REJECTED' };
           if (s === 'On Hold') return { bg: '#fff3e0', color: '#e65100', label: '⏸ ON HOLD' };
           if (s === 'Checked Out') return { bg: '#f5f5f5', color: '#616161', label: '→ CHECKED OUT' };
-          return { bg: '#e8f5e9', color: '#2d6a4f', label: '✓ PRE-APPROVED' };
+          return { bg: '#dcf0e0', color: '#2d7a3e', label: '✓ PRE-APPROVED' };
         };
         const badge = viewStatusBadge();
 
@@ -5816,11 +5848,13 @@ const ResidentApp = ({ onLogout }) => {
         const vStatusBadge = (status) => {
           const map = {
             'Inside': { bg: '#e8f5e9', color: '#2e7d32', label: 'In' },
-            'Scheduled': { bg: '#fff8e1', color: '#f57f17', label: 'Pre-Approved' },
+            'Pre-Approved': { bg: '#dcf0e0', color: '#2d7a3e', label: 'Pre-Approved' },
+            'Scheduled': { bg: '#dcf0e0', color: '#2d7a3e', label: 'Pre-Approved' },
             'Checked Out': { bg: '#f5f5f5', color: '#616161', label: 'Out' },
             'Rejected': { bg: '#ffebee', color: '#c62828', label: 'Rejected' },
             'On Hold': { bg: '#fff3e0', color: '#e65100', label: 'Hold' },
-            'Pending': { bg: '#e3f2fd', color: '#1565c0', label: 'Pending' }
+            'Pending': { bg: '#e3f2fd', color: '#1565c0', label: 'Pending' },
+            'Passed Security': { bg: '#e8f5e9', color: '#2e7d32', label: 'Passed' }
           };
           const s = map[status] || { bg: '#f5f5f5', color: '#888', label: status };
           return <span style={{background:s.bg,color:s.color,padding:'3px 10px',borderRadius:4,fontSize:10,fontWeight:600}}>{s.label}</span>;
@@ -6073,8 +6107,8 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               {scheduledVisitors.length > 0 ? scheduledVisitors.slice(0,3).map(v => {
                 const statusLabel = v.status === 'Inside' ? 'Passed Security' : v.status === 'Rejected' ? 'Rejected' : v.status === 'Checked Out' || v.status === 'Exited' ? 'Checked Out' : v.status === 'On Hold' ? 'On Hold' : 'Pre-Approved';
-                const statusColor = v.status === 'Inside' ? '#2d6a4f' : v.status === 'Rejected' ? '#8b4a42' : v.status === 'On Hold' ? '#7a6040' : '#5a5470';
-                const statusBg = v.status === 'Inside' ? '#e0e5db' : v.status === 'Rejected' ? '#eddbd9' : v.status === 'On Hold' ? '#ebe3d9' : '#e8e3de';
+                const statusColor = v.status === 'Inside' ? '#2d6a4f' : v.status === 'Rejected' ? '#8b4a42' : v.status === 'On Hold' ? '#7a6040' : '#2d7a3e';
+                const statusBg = v.status === 'Inside' ? '#e0e5db' : v.status === 'Rejected' ? '#eddbd9' : v.status === 'On Hold' ? '#ebe3d9' : '#dcf0e0';
                 return (
                 <div key={'up-'+v.id} style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer',marginBottom: 10,paddingBottom:10,borderBottom:'1px solid #f2efec'}} onClick={() => { setSelectedVisitor(v); setCurrentPage('viewVisitor'); }}>
                   <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -6529,31 +6563,59 @@ const ResidentApp = ({ onLogout }) => {
         return <PreApproveForm onBack={() => setCurrentPage('home')} showToast={showToast} data={data} setData={setData} />;
 
       case 'resAnnouncements':
+        // Combine all notifications: announcements + visitor events from last 30 days
         const allAnns = data.announcements ? data.announcements.filter(a => a.status === 'Live' || a.status === 'Sent') : [];
         const defaultAnns = [
-          { id: 'd1', title: 'Water Shortage', body: 'Due to pipeline blast there are water cutoff in apartments, Sorry for the inconvenience.', created: '2hr ago' },
-          { id: 'd2', title: 'Electric Shortage', body: 'Due to electric short circuit in area there will be electric cutoff in apartments for 3 hours, Sorry for the inconvenience.', created: '6hr ago' }
+          { id: 'd1', title: 'Water Shortage', body: 'Due to pipeline blast there are water cutoff in apartments, Sorry for the inconvenience.', created: '2hr ago', type: 'announcement' },
+          { id: 'd2', title: 'Electric Shortage', body: 'Due to electric short circuit in area there will be electric cutoff in apartments for 3 hours, Sorry for the inconvenience.', created: '6hr ago', type: 'announcement' }
         ];
-        const annsToShow = allAnns.length > 0 ? allAnns : defaultAnns;
+        const annItems = (allAnns.length > 0 ? allAnns : defaultAnns).map(a => ({
+          id: 'ann-' + a.id, type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470',
+          title: a.title, body: a.body, time: a.created || '2hr ago'
+        }));
+        // All notification items (announcements + visitor security events + static samples)
+        const allNotifItems = [...notifications, ...annItems.filter(ai => !notifications.some(n => n.id === ai.id))];
+        // Add some historical notification samples for the last month
+        const historicalNotifs = [
+          { id: 'hist-1', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Fire Drill — Tower B', body: 'Mandatory fire drill scheduled for all Tower B residents. Please evacuate via staircase when alarm sounds.', time: 'Mar 28' },
+          { id: 'hist-2', type: 'security', icon: '✓', iconBg: '#e0e5db', iconColor: '#5a6b4f', title: 'Package delivered', body: 'A large package was delivered to your unit and left at the concierge desk.', time: 'Mar 25' },
+          { id: 'hist-3', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Parking Lot Repainting', body: 'Basement parking B2 will be repainted this weekend. Please use B1 temporarily.', time: 'Mar 22' },
+          { id: 'hist-4', type: 'announcement', icon: '●', iconBg: '#f3e5f5', iconColor: '#7b1fa2', title: 'Community BBQ Event', body: 'Join us for a community BBQ this Friday at the rooftop garden. All residents welcome!', time: 'Mar 18' },
+          { id: 'hist-5', type: 'security', icon: '✓', iconBg: '#e0e5db', iconColor: '#5a6b4f', title: 'Maintenance visit completed', body: 'AC maintenance technician completed the scheduled service for your unit.', time: 'Mar 15' },
+          { id: 'hist-6', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Gym Equipment Upgrade', body: 'New treadmills and weight machines have been installed in the Tower B gym.', time: 'Mar 12' },
+        ];
+        const fullNotifHistory = [...allNotifItems, ...historicalNotifs];
         return (
           <div className="res-content" style={{padding:'12px 16px',paddingBottom:80}}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
               <button onClick={() => setCurrentPage('home')} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#6b5d52'}}>‹</button>
-              <span style={{fontSize:18,fontWeight:600,color:'#1a1a1a'}}>Announcements</span>
+              <span style={{fontSize:18,fontWeight:600,color:'#1a1a1a'}}>Notifications</span>
+              <span style={{fontSize:11,color:'rgba(26,26,26,0.35)',marginLeft:'auto'}}>Last 30 days</span>
             </div>
-            {/* Announcement cards */}
-            {annsToShow.map(a => (
-              <div key={a.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',borderRadius:16,padding:16,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 12px rgba(120,100,90,0.06)'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                  <div style={{fontSize:15,fontWeight:600,color:'#1a1a1a'}}>{a.title}</div>
-                  <span style={{fontSize:11,color:'#a89a92',cursor:'pointer',whiteSpace:'nowrap',marginLeft:12}}>See All ›</span>
+            {fullNotifHistory.map(n => {
+              const isDismissed = dismissedNotifIds.includes(n.id);
+              return (
+                <div key={n.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',borderRadius:16,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 12px rgba(120,100,90,0.06)',opacity: isDismissed ? 0.5 : 1,display:'flex',alignItems:'flex-start',gap:12}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background:n.iconBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:n.iconColor,fontWeight:700,flexShrink:0,marginTop:2}}>{n.icon}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                      <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>{n.title}</div>
+                      {!isDismissed && (
+                        <div onClick={() => dismissNotif(n.id)} style={{cursor:'pointer',color:'rgba(26,26,26,0.25)',fontSize:16,fontWeight:400,flexShrink:0,marginLeft:8,lineHeight:1}} title="Dismiss">×</div>
+                      )}
+                    </div>
+                    <div style={{fontSize:13,color:'#7a6f66',lineHeight:'1.5',marginBottom:6}}>{n.body}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{fontSize:11,color:'rgba(26,26,26,0.3)'}}>{n.time}</span>
+                      <span style={{fontSize:10,background: n.type === 'announcement' ? 'rgba(90,84,112,0.08)' : 'rgba(90,107,79,0.08)',color: n.type === 'announcement' ? '#5a5470' : '#5a6b4f',padding:'2px 8px',borderRadius:10,fontWeight:500}}>{n.type === 'announcement' ? 'Announcement' : 'Security'}</span>
+                      {isDismissed && <span style={{fontSize:10,color:'rgba(26,26,26,0.3)'}}>Dismissed</span>}
+                    </div>
+                  </div>
                 </div>
-                <div style={{fontSize:13,color:'#7a6f66',lineHeight:'1.6',marginBottom:8}}>{a.body}</div>
-                <div style={{fontSize:11,color:'#c4b8b0'}}>{a.created || '2hr ago'}</div>
-              </div>
-            ))}
-            {annsToShow.length === 0 && (
-              <div style={{textAlign:'center',color:'#a89a92',padding:40,fontSize:13}}>No announcements yet.</div>
+              );
+            })}
+            {fullNotifHistory.length === 0 && (
+              <div style={{textAlign:'center',color:'#a89a92',padding:40,fontSize:13}}>No notifications in the last 30 days.</div>
             )}
           </div>
         );
@@ -6611,13 +6673,13 @@ const ResidentApp = ({ onLogout }) => {
       {/* Header — only on home page */}
       {currentPage === 'home' && (
         <div className="res-header">
-          <div className="res-header-left" style={{display:'flex',alignItems:'center',gap:12}}>
-            <div onClick={() => setCurrentPage('profile')} style={{width:44,height:44,borderRadius:'50%',background:'rgba(26,26,26,0.06)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+          <div className="res-header-left" style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+            <div onClick={() => setCurrentPage('profile')} style={{width:44,height:44,borderRadius:'50%',background:'rgba(26,26,26,0.06)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,26,0.35)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
             </div>
-            <div style={{position:'relative'}}>
+            <div style={{position:'relative',textAlign:'center'}}>
               <div style={{fontSize:15,fontWeight:600,color:'#1a1a1a',letterSpacing:'-0.02em'}}>Hello, Nitin</div>
-              <div onClick={() => setShowResPropertyDropdown(!showResPropertyDropdown)} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:4,fontSize:11,color:'rgba(26,26,26,0.4)',marginTop:2}}>
+              <div onClick={() => setShowResPropertyDropdown(!showResPropertyDropdown)} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,fontSize:11,color:'rgba(26,26,26,0.4)',marginTop:2}}>
                 B-102, Sky Tower
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(26,26,26,0.35)" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
               </div>
@@ -6657,7 +6719,7 @@ const ResidentApp = ({ onLogout }) => {
             </div>
             {/* Notification dropdown popup */}
             {showNotifications && (
-              <div style={{position:'absolute',top:42,right:0,width:300,maxHeight:400,background:'rgba(255,255,255,0.92)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderRadius:18,boxShadow:'0 12px 40px rgba(26,26,26,0.12)',border:'1px solid rgba(255,255,255,0.6)',zIndex:999,overflow:'hidden'}}>
+              <div style={{position:'absolute',top:42,right:0,width: notifications.filter(n => !dismissedNotifIds.includes(n.id)).length === 0 && !selectedNotifDetail ? 210 : 300,maxHeight:400,background:'rgba(255,255,255,0.92)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderRadius:18,boxShadow:'0 12px 40px rgba(26,26,26,0.12)',border:'1px solid rgba(255,255,255,0.6)',zIndex:999,overflow:'hidden',transition:'width 0.2s ease'}}>
                 <div style={{padding:'14px 16px 10px',borderBottom:'1px solid rgba(26,26,26,0.06)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <span style={{fontSize:15,fontWeight:600,color:'#1a1a1a',letterSpacing:'-0.02em'}}>Notifications</span>
                   {notifications.filter(n => !dismissedNotifIds.includes(n.id)).length > 0 && (
@@ -6689,7 +6751,7 @@ const ResidentApp = ({ onLogout }) => {
                     </div>
                   ) : (
                     notifications.filter(n => !dismissedNotifIds.includes(n.id)).length === 0 ? (
-                      <div style={{padding:40,textAlign:'center',color:'#a89a92',fontSize:13}}>No new notifications</div>
+                      <div style={{padding:24,textAlign:'center',color:'#a89a92',fontSize:13}}>No new notifications</div>
                     ) : (
                       notifications.filter(n => !dismissedNotifIds.includes(n.id)).map(n => (
                         <div key={n.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'12px 16px',borderBottom:'1px solid #f2efec',cursor:'pointer',transition:'background 0.15s'}}
@@ -6708,8 +6770,8 @@ const ResidentApp = ({ onLogout }) => {
                     )
                   )}
                 </div>
-                <div onClick={() => { setShowNotifications(false); setCurrentPage('resAnnouncements'); }} style={{padding:'10px 16px',borderTop:'1px solid #f2efec',textAlign:'center',fontSize:12,color:'#928989',cursor:'pointer',fontWeight:500}}>
-                  View All Announcements ›
+                <div onClick={() => { setShowNotifications(false); setCurrentPage('resAnnouncements'); }} style={{padding:'10px 16px',borderTop:'1px solid rgba(26,26,26,0.06)',textAlign:'center',fontSize:12,color:'#928989',cursor:'pointer',fontWeight:500}}>
+                  View All ›
                 </div>
               </div>
             )}
@@ -7140,12 +7202,30 @@ const ScannedVisitorForm = ({ scannedData, onClose, onSave }) => {
       const validStr = parsed['valid until'];
       // Handle format: "DD Mon YYYY HH:MM:SS" or "DD Mon YYYY HH:MM" or "Until Cancelled"
       if (validStr === 'Until Cancelled') return false; // Multi-visit passes don't expire
-      
+
       // Use proper Date parsing for Dubai timezone
       const expiryStr = validStr.replace(/HH:MM:SS|HH:MM/, '');
       const expiryDate = new Date(expiryStr);
       const nowDubai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
       return expiryDate < nowDubai;
+    } catch(e) {}
+    return false;
+  }, [parsed]);
+
+  // Check if visitor date is in the future — future visitors cannot be admitted/rejected/held
+  const isFutureVisitor = React.useMemo(() => {
+    const dateStr = parsed['date'];
+    if (!dateStr) return false;
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      // Handle YYYY-MM-DD format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr > todayStr;
+      // Handle DD/MM/YYYY format
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const isoDate = parts[2] + '-' + parts[1].padStart(2,'0') + '-' + parts[0].padStart(2,'0');
+        return isoDate > todayStr;
+      }
     } catch(e) {}
     return false;
   }, [parsed]);
@@ -7327,11 +7407,20 @@ const ScannedVisitorForm = ({ scannedData, onClose, onSave }) => {
         </div>
 
         <div className="sec-scanned-actions">
-          <button className="sec-btn-admit" onClick={() => handleAction('admit')} disabled={isExpired}>
-            {isExpired ? 'PASS EXPIRED' : 'ADMIT VISITOR'}
-          </button>
-          <button className="sec-btn-hold" onClick={() => handleAction('hold')}>HOLD</button>
-          <button className="sec-btn-reject" onClick={() => handleAction('reject')}>REJECT</button>
+          {isFutureVisitor ? (
+            <div style={{textAlign:'center',padding:'12px 16px',background:'#f5f0ec',borderRadius:8,color:'#7a6f66',fontSize:13,fontWeight:500}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5" style={{verticalAlign:'middle',marginRight:6}}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              This visitor is pre-approved for a future date ({parsed['date']}). Actions will be available on the day of the visit.
+            </div>
+          ) : (
+            <>
+              <button className="sec-btn-admit" onClick={() => handleAction('admit')} disabled={isExpired}>
+                {isExpired ? 'PASS EXPIRED' : 'ADMIT VISITOR'}
+              </button>
+              <button className="sec-btn-hold" onClick={() => handleAction('hold')}>HOLD</button>
+              <button className="sec-btn-reject" onClick={() => handleAction('reject')}>REJECT</button>
+            </>
+          )}
         </div>
         </React.Fragment>
         )}
@@ -7711,9 +7800,9 @@ const SecurityApp = ({ onLogout }) => {
           </div>
 
           <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:8,padding:20,textAlign:'center',marginBottom:16}}>
-            <div style={{background: viewingVisitor.status === 'Inside' ? '#1b5e20' : viewingVisitor.status === 'Rejected' ? '#b71c1c' : '#8a8a8a',
-              color:'#fff',padding:'6px 16px',borderRadius:4,display:'inline-block',fontSize:12,fontWeight:600,letterSpacing:'0.04em',marginBottom:16}}>
-              {viewingVisitor.status === 'Passed Security' ? '✓ Passed Security' : viewingVisitor.status === 'Scheduled' ? '⏳ Pre-Approved' : viewingVisitor.status === 'Denied Entry' ? '✕ Denied' : viewingVisitor.status === 'On Hold' ? '⏸ On Hold' : viewingVisitor.status}
+            <div style={{background: viewingVisitor.status === 'Inside' || viewingVisitor.status === 'Passed Security' ? '#1b5e20' : viewingVisitor.status === 'Rejected' || viewingVisitor.status === 'Denied Entry' ? '#b71c1c' : viewingVisitor.status === 'Pre-Approved' || viewingVisitor.status === 'Scheduled' ? '#dcf0e0' : '#8a8a8a',
+              color: viewingVisitor.status === 'Pre-Approved' || viewingVisitor.status === 'Scheduled' ? '#2d7a3e' : '#fff',padding:'6px 16px',borderRadius:4,display:'inline-block',fontSize:12,fontWeight:600,letterSpacing:'0.04em',marginBottom:16}}>
+              {viewingVisitor.status === 'Passed Security' || viewingVisitor.status === 'Inside' ? '✓ Passed Security' : viewingVisitor.status === 'Pre-Approved' || viewingVisitor.status === 'Scheduled' ? '✓ Pre-Approved' : viewingVisitor.status === 'Denied Entry' || viewingVisitor.status === 'Rejected' ? '✕ Denied' : viewingVisitor.status === 'On Hold' ? '⏸ On Hold' : viewingVisitor.status}
             </div>
             {vp ? (
               <div ref={secQrRef} style={{display:'flex',justifyContent:'center',marginBottom:12}}></div>
