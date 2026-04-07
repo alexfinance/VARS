@@ -6098,7 +6098,12 @@ const ResidentApp = ({ onLogout }) => {
       case 'home':
         const pendingVisitors_home = data.visitors.filter(v => v.status === 'Pending' || v.status === 'Waiting');
         const waitingApprovals = data.pendingApprovals || [];
-        const scheduledVisitors = data.visitors.filter(v => v.status === 'Scheduled' || v.status === 'Pre-Approved');
+        const scheduledVisitors = data.visitors.filter(v => v.status === 'Scheduled' || v.status === 'Pre-Approved').sort((a, b) => {
+          const parseD = (d) => { if (!d) return '9999'; if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; const p = d.split('/'); return p.length === 3 ? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : d; };
+          const da = parseD(a.date), db = parseD(b.date);
+          if (da !== db) return da.localeCompare(db);
+          return (a.time || '').localeCompare(b.time || '');
+        });
         // Services are booked separately — not from pre-approved visitors
         const upcomingServices = [];
         const recentAnnouncements = data.announcements ? data.announcements.filter(a => a.status === 'Live' || a.status === 'Sent').slice(0,2) : [];
