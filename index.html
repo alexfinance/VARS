@@ -731,11 +731,14 @@ const initialData = {
     { id: 6, name: 'ElectroPro UAE', specialty: 'Electrical' }
   ],
   announcements: [
-    { id: 1, title: 'Pool Maintenance — Temporary Closure', audience: 'All Residents', author: 'Hassan Al-PM', created: '05 Apr, 09:44', status: 'Live', priority: 'High', ackRequired: true, delivered: 1240, read: 847, acknowledged: 723 },
-    { id: 2, title: 'Elevator Servicing — Tower B (07 Apr, 09:00–13:00)', audience: 'Tower B', author: 'Hassan Al-PM', created: '05 Apr, 10:01', status: 'Scheduled', priority: 'Normal', ackRequired: false, delivered: 0, read: 0, acknowledged: 0 },
-    { id: 3, title: 'Community BBQ — Friday Evening, Marina Deck', audience: 'All Residents', author: 'Hassan Al-PM', created: '03 Apr, 14:00', status: 'Sent', priority: 'Normal', ackRequired: false, delivered: 1240, read: 1102, acknowledged: 0 },
-    { id: 4, title: 'Security Alert — Visitor Policy Update', audience: 'All Residents + Guards', author: 'Admin', created: '01 Apr, 11:00', status: 'Sent', priority: 'High', ackRequired: true, delivered: 1268, read: 1254, acknowledged: 1231 },
-    { id: 5, title: '[DRAFT] Water Supply Notice — Tower C', audience: 'Tower C', author: 'Hassan Al-PM', created: '05 Apr, 08:30', status: 'Draft', priority: 'Normal', ackRequired: false, delivered: 0, read: 0, acknowledged: 0 }
+    { id: 1, title: 'Pool Maintenance — Temporary Closure', body: 'Swimming pool closed for maintenance on April 12. Expected reopening April 14. We apologise for the inconvenience.', audience: 'All Residents', author: 'Hassan Al-PM', created: '05 Apr, 09:44', status: 'Live', priority: 'High', ackRequired: true, delivered: 1240, read: 847, acknowledged: 723 },
+    { id: 2, title: 'Elevator Servicing — Tower B', body: 'Elevator servicing Saturday morning 07 Apr, 09:00–13:00. Please use Tower A elevators during this period.', audience: 'Tower B', author: 'Hassan Al-PM', created: '05 Apr, 10:01', status: 'Live', priority: 'Normal', ackRequired: false, delivered: 620, read: 410, acknowledged: 0 },
+    { id: 3, title: 'Community BBQ — Friday Evening', body: 'Join us this Friday at 7 PM on the Marina Deck for a community BBQ. Food and beverages provided. Families welcome!', audience: 'All Residents', author: 'Hassan Al-PM', created: '03 Apr, 14:00', status: 'Sent', priority: 'Normal', ackRequired: false, delivered: 1240, read: 1102, acknowledged: 0 },
+    { id: 4, title: 'Visitor Policy Update', body: 'Starting April 10, all visitors must present a valid ID at the gate. Pre-approved guests will receive a QR code for faster entry.', audience: 'All Residents + Guards', author: 'Admin', created: '01 Apr, 11:00', status: 'Sent', priority: 'High', ackRequired: true, delivered: 1268, read: 1254, acknowledged: 1231 },
+    { id: 5, title: 'Water Supply Interruption — Tower C', body: 'Scheduled water supply maintenance on April 15, 10:00–14:00 for Tower C. Please store water in advance.', audience: 'Tower C', author: 'Hassan Al-PM', created: '05 Apr, 08:30', status: 'Live', priority: 'Normal', ackRequired: false, delivered: 310, read: 180, acknowledged: 0 },
+    { id: 6, title: 'Parking Garage Deep Clean', body: 'Basement parking levels B1 and B2 will undergo deep cleaning on April 11, 08:00–16:00. Please park on street level or B3.', audience: 'All Residents', author: 'Hassan Al-PM', created: '06 Apr, 11:30', status: 'Live', priority: 'Normal', ackRequired: false, delivered: 1240, read: 670, acknowledged: 0 },
+    { id: 7, title: 'Fire Drill — All Towers', body: 'Mandatory fire drill on April 14 at 10:00 AM. All residents must evacuate to designated assembly points. Instructions will be posted on each floor.', audience: 'All Residents', author: 'Admin', created: '07 Apr, 09:00', status: 'Sent', priority: 'High', ackRequired: true, delivered: 1268, read: 990, acknowledged: 845 },
+    { id: 8, title: 'Gym Equipment Upgrade', body: 'New cardio and strength equipment arriving April 16. Gym will be closed April 15–16 for installation.', audience: 'All Residents', author: 'Hassan Al-PM', created: '07 Apr, 15:00', status: 'Live', priority: 'Normal', ackRequired: false, delivered: 1240, read: 520, acknowledged: 0 }
   ],
   guards: [
     { id: 'GRD-001', name: 'Ahmed Khalil', shift: 'Morning', shiftTime: '06:00–14:00', gate: 'Main Gate', company: 'SecureGuard LLC', contact: '+971 55 111 2222', status: 'On Duty', verified: true },
@@ -5228,6 +5231,8 @@ const ResidentApp = ({ onLogout }) => {
   const [showServiceBookingModal, setShowServiceBookingModal] = useState(false);
   const [bookingMode, setBookingMode] = useState('amenity'); // 'amenity' or 'service'
   const [serviceBooking, setServiceBooking] = useState({ type:'', location:'', date:'', time:'', duration:'1 hour', guests:1 });
+  const [editingAmenityId, setEditingAmenityId] = useState(null); // null = new booking, id = editing existing
+  const [showAmenityDetail, setShowAmenityDetail] = useState(null); // holds amenity booking object for detail/edit/delete
   const prevVisitorStatesRef = React.useRef({});
 
   // Track visitor status changes for live notifications
@@ -5811,7 +5816,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {bookAmenities.map((svc, i) => (
-                  <div key={i} onClick={() => {setBookingMode('amenity'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setBookingMode('amenity'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
                     </div>
@@ -5843,16 +5848,20 @@ const ResidentApp = ({ onLogout }) => {
                     const dp = b.date.split('-');
                     const dateLabel = b.date === todayISO ? 'Today' : (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1]);
                     return (
-                      <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',opacity: isPast ? 0.5 : 1}}>
+                      <div key={b.id} onClick={() => !isPast && setShowAmenityDetail(b)} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',opacity: isPast ? 0.5 : 1,cursor: isPast ? 'default' : 'pointer'}}>
                         <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{b.type}</div>
                           <div style={{fontSize:11,color:'#a89a92'}}>{dateLabel} · {b.time} · {b.duration}</div>
-                          <div style={{fontSize:10,color:'#7a6f66',marginTop:2}}>{b.location} · {b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
+                          <div style={{fontSize:10,color:'#7a6f66',marginTop:2}}>{b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
                         </div>
-                        <span style={{fontSize:10,fontWeight:500,color: isPast ? '#a89a92' : '#5a6b4f'}}>{isPast ? 'Completed' : b.status}</span>
+                        {isPast ? (
+                          <span style={{fontSize:10,fontWeight:500,color:'#a89a92'}}>Completed</span>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c4b8b0" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                        )}
                       </div>
                     );
                   })}
@@ -5867,7 +5876,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {bookServices.map((svc, i) => (
-                  <div key={i} onClick={() => {setBookingMode('service'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setBookingMode('service'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
                     </div>
@@ -6350,21 +6359,21 @@ const ResidentApp = ({ onLogout }) => {
                   const dateLabel = b.date === todayISO ? 'Today' : (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1]);
                   const t = b.time;
                   return (
-                    <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid rgba(200,190,180,0.15)'}}>
+                    <div key={b.id} onClick={() => setShowAmenityDetail(b)} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid rgba(200,190,180,0.15)',cursor:'pointer'}}>
                       <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{b.type}</div>
                         <div style={{fontSize:11,color:'#a89a92'}}>{dateLabel} · {t} · {b.duration}</div>
-                        <div style={{fontSize:10,color:'#7a6f66',marginTop:1}}>{b.location} · {b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
+                        <div style={{fontSize:10,color:'#7a6f66',marginTop:1}}>{b.guests} {b.guests === 1 ? 'person' : 'people'}</div>
                       </div>
-                      <span style={{fontSize:10,fontWeight:500,color:'#5a6b4f'}}>{b.status}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c4b8b0" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   );
                 });
               })()}
-              <button onClick={() => {setBookingMode('amenity'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
+              <button onClick={() => {setBookingMode('amenity'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Book Amenity</button>
             </div>
 
             {/* Upcoming Service — booked separately */}
@@ -6406,7 +6415,7 @@ const ResidentApp = ({ onLogout }) => {
                   );
                 });
               })()}
-              <button onClick={() => {setBookingMode('service'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:'Normal'}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Add Service request</button>
+              <button onClick={() => {setBookingMode('service'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:'Normal', comments:''}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>+ Add Service request</button>
             </div>
 
             {/* Recent Announcements */}
@@ -6415,10 +6424,10 @@ const ResidentApp = ({ onLogout }) => {
                 <span style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>Recent Announcements</span>
                 <span onClick={() => setCurrentPage('resAnnouncements')} style={{fontSize:11,color:'#a89a92',cursor:'pointer'}}>See All ›</span>
               </div>
-              {recentAnnouncements.length > 0 ? recentAnnouncements.slice(0,1).map(a => (
-                <div key={a.id}>
+              {recentAnnouncements.length > 0 ? recentAnnouncements.slice(0,3).map((a, idx) => (
+                <div key={a.id} onClick={() => setCurrentPage('resAnnouncements')} style={{cursor:'pointer', paddingBottom: idx < Math.min(recentAnnouncements.length, 3) - 1 ? 10 : 0, marginBottom: idx < Math.min(recentAnnouncements.length, 3) - 1 ? 10 : 0, borderBottom: idx < Math.min(recentAnnouncements.length, 3) - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none'}}>
                   <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>{a.title}</div>
-                  {a.body && <div style={{fontSize:12,color:'#8a7f76',lineHeight:'1.5',marginBottom:6}}>{a.body}</div>}
+                  {a.body && <div style={{fontSize:12,color:'#8a7f76',lineHeight:'1.5',marginBottom:6}}>{a.body.length > 80 ? a.body.substring(0,80) + '…' : a.body}</div>}
                   <div style={{fontSize:11,color:'#c4b8b0'}}>{a.created || '2hr ago'}</div>
                 </div>
               )) : (
@@ -6801,59 +6810,36 @@ const ResidentApp = ({ onLogout }) => {
         return <PreApproveForm onBack={() => setCurrentPage('home')} showToast={showToast} data={data} setData={setData} />;
 
       case 'resAnnouncements':
-        // Combine all notifications: announcements + visitor events from last 30 days
-        const allAnns = data.announcements ? data.announcements.filter(a => a.status === 'Live' || a.status === 'Sent') : [];
-        const defaultAnns = [
-          { id: 'd1', title: 'Water Shortage', body: 'Due to pipeline blast there are water cutoff in apartments, Sorry for the inconvenience.', created: '2hr ago', type: 'announcement' },
-          { id: 'd2', title: 'Electric Shortage', body: 'Due to electric short circuit in area there will be electric cutoff in apartments for 3 hours, Sorry for the inconvenience.', created: '6hr ago', type: 'announcement' }
-        ];
-        const annItems = (allAnns.length > 0 ? allAnns : defaultAnns).map(a => ({
-          id: 'ann-' + a.id, type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470',
-          title: a.title, body: a.body, time: a.created || '2hr ago'
-        }));
-        // All notification items (announcements + visitor security events + static samples)
-        const allNotifItems = [...notifications, ...annItems.filter(ai => !notifications.some(n => n.id === ai.id))];
-        // Add some historical notification samples for the last month
-        const historicalNotifs = [
-          { id: 'hist-1', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Fire Drill — Tower B', body: 'Mandatory fire drill scheduled for all Tower B residents. Please evacuate via staircase when alarm sounds.', time: 'Mar 28' },
-          { id: 'hist-2', type: 'security', icon: '✓', iconBg: '#e0e5db', iconColor: '#5a6b4f', title: 'Package delivered', body: 'A large package was delivered to your unit and left at the concierge desk.', time: 'Mar 25' },
-          { id: 'hist-3', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Parking Lot Repainting', body: 'Basement parking B2 will be repainted this weekend. Please use B1 temporarily.', time: 'Mar 22' },
-          { id: 'hist-4', type: 'announcement', icon: '●', iconBg: '#f3e5f5', iconColor: '#7b1fa2', title: 'Community BBQ Event', body: 'Join us for a community BBQ this Friday at the rooftop garden. All residents welcome!', time: 'Mar 18' },
-          { id: 'hist-5', type: 'security', icon: '✓', iconBg: '#e0e5db', iconColor: '#5a6b4f', title: 'Maintenance visit completed', body: 'AC maintenance technician completed the scheduled service for your unit.', time: 'Mar 15' },
-          { id: 'hist-6', type: 'announcement', icon: '●', iconBg: '#e0dde5', iconColor: '#5a5470', title: 'Gym Equipment Upgrade', body: 'New treadmills and weight machines have been installed in the Tower B gym.', time: 'Mar 12' },
-        ];
-        const fullNotifHistory = [...allNotifItems, ...historicalNotifs];
+        // Building announcements only — no visitor entrance/exit events
+        const buildingAnns = (data.announcements || []).filter(a => a.status === 'Live' || a.status === 'Sent');
+        const priorityColors = { High: { bg: '#eddbd9', color: '#8b4a42' }, Normal: { bg: 'rgba(90,84,112,0.08)', color: '#5a5470' } };
         return (
           <div className="res-content" style={{padding:'12px 16px',paddingBottom:80}}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
               <button onClick={() => setCurrentPage('home')} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#6b5d52'}}>‹</button>
-              <span style={{fontSize:18,fontWeight:600,color:'#1a1a1a'}}>Notifications</span>
-              <span style={{fontSize:11,color:'rgba(26,26,26,0.35)',marginLeft:'auto'}}>Last 30 days</span>
+              <span style={{fontSize:18,fontWeight:600,color:'#1a1a1a'}}>Announcements</span>
+              <span style={{fontSize:11,color:'rgba(26,26,26,0.35)',marginLeft:'auto'}}>{buildingAnns.length} announcement{buildingAnns.length !== 1 ? 's' : ''}</span>
             </div>
-            {fullNotifHistory.map(n => {
-              const isDismissed = dismissedNotifIds.includes(n.id);
+            {buildingAnns.length > 0 ? buildingAnns.map(a => {
+              const pc = priorityColors[a.priority] || priorityColors.Normal;
               return (
-                <div key={n.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',borderRadius:16,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 12px rgba(120,100,90,0.06)',opacity: isDismissed ? 0.5 : 1,display:'flex',alignItems:'flex-start',gap:12}}>
-                  <div style={{width:36,height:36,borderRadius:'50%',background:n.iconBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:n.iconColor,fontWeight:700,flexShrink:0,marginTop:2}}>{n.icon}</div>
+                <div key={a.id} style={{background:'rgba(255,255,255,0.55)',backdropFilter:'blur(12px)',borderRadius:16,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 12px rgba(120,100,90,0.06)',display:'flex',alignItems:'flex-start',gap:12}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background: a.priority === 'High' ? '#eddbd9' : '#e0dde5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color: a.priority === 'High' ? '#8b4a42' : '#5a5470',fontWeight:700,flexShrink:0,marginTop:2}}>
+                    {a.priority === 'High' ? '!' : '●'}
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                      <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>{n.title}</div>
-                      {!isDismissed && (
-                        <div onClick={() => dismissNotif(n.id)} style={{cursor:'pointer',color:'rgba(26,26,26,0.25)',fontSize:16,fontWeight:400,flexShrink:0,marginLeft:8,lineHeight:1}} title="Dismiss">×</div>
-                      )}
-                    </div>
-                    <div style={{fontSize:13,color:'#7a6f66',lineHeight:'1.5',marginBottom:6}}>{n.body}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{fontSize:11,color:'rgba(26,26,26,0.3)'}}>{n.time}</span>
-                      <span style={{fontSize:10,background: n.type === 'announcement' ? 'rgba(90,84,112,0.08)' : 'rgba(90,107,79,0.08)',color: n.type === 'announcement' ? '#5a5470' : '#5a6b4f',padding:'2px 8px',borderRadius:10,fontWeight:500}}>{n.type === 'announcement' ? 'Announcement' : 'Security'}</span>
-                      {isDismissed && <span style={{fontSize:10,color:'rgba(26,26,26,0.3)'}}>Dismissed</span>}
+                    <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>{a.title}</div>
+                    {a.body && <div style={{fontSize:13,color:'#7a6f66',lineHeight:'1.5',marginBottom:6}}>{a.body}</div>}
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                      <span style={{fontSize:11,color:'rgba(26,26,26,0.3)'}}>{a.created}</span>
+                      <span style={{fontSize:10,background:pc.bg,color:pc.color,padding:'2px 8px',borderRadius:10,fontWeight:500}}>{a.priority === 'High' ? 'Important' : 'Announcement'}</span>
+                      {a.audience && <span style={{fontSize:10,color:'#a89a92'}}>{a.audience}</span>}
                     </div>
                   </div>
                 </div>
               );
-            })}
-            {fullNotifHistory.length === 0 && (
-              <div style={{textAlign:'center',color:'#a89a92',padding:40,fontSize:13}}>No notifications in the last 30 days.</div>
+            }) : (
+              <div style={{textAlign:'center',color:'#a89a92',padding:40,fontSize:13}}>No announcements at the moment.</div>
             )}
           </div>
         );
@@ -7201,58 +7187,110 @@ const ResidentApp = ({ onLogout }) => {
                 </select>
               )}
             </div>
+            {bookingMode === 'service' && (
             <div style={{marginBottom:16}}>
               <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
               <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
-                {bookingMode === 'service' ? (
-                  <>{['', 'Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Common Area', 'Balcony'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}</>
-                ) : (
-                  <>{['', 'Ground Floor', 'Podium Level', 'Rooftop', 'Basement Level 1', 'Garden Area', 'Club House'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}</>
-                )}
+                {['', 'Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Common Area', 'Balcony'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}
               </select>
             </div>
+            )}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
               <div>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Date</label>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Date <span style={{color:'#c0392b'}}>*</span></label>
                 <input type="date" value={serviceBooking.date} min={new Date().toISOString().split('T')[0]} onChange={e => setServiceBooking(f => ({...f, date: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
               </div>
               <div>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Time</label>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Time <span style={{color:'#c0392b'}}>*</span></label>
                 <input type="time" value={serviceBooking.time} onChange={e => setServiceBooking(f => ({...f, time: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
               </div>
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
-              <div>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Duration</label>
-                <select value={serviceBooking.duration} onChange={e => setServiceBooking(f => ({...f, duration: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
-                  <option value="1 hour">1 hour</option><option value="2 hours">2 hours</option><option value="3 hours">3 hours</option><option value="4 hours">4 hours</option><option value="Half day">Half day</option><option value="Full day">Full day</option>
+            {bookingMode === 'amenity' ? (
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+                <div>
+                  <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Duration</label>
+                  <select value={serviceBooking.duration} onChange={e => setServiceBooking(f => ({...f, duration: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                    <option value="1 hour">1 hour</option><option value="2 hours">2 hours</option><option value="3 hours">3 hours</option><option value="4 hours">4 hours</option><option value="Half day">Half day</option><option value="Full day">Full day</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Number of People</label>
+                  <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
+                </div>
+              </div>
+            ) : (
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Urgency</label>
+                <select value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
+                  <option value="Normal">Normal</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option>
                 </select>
               </div>
-              <div>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Urgency' : 'Number of People'}</label>
-                {bookingMode === 'service' ? (
-                  <select value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
-                    <option value="Normal">Normal</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option>
-                  </select>
-                ) : (
-                  <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
-                )}
-              </div>
+            )}
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Comments</label>
+              <textarea value={serviceBooking.comments || ''} onChange={e => setServiceBooking(f => ({...f, comments: e.target.value}))} placeholder={bookingMode === 'service' ? 'Describe the issue or any special requirements...' : 'Any special requests or notes...'} rows={3} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
             </div>
             <button onClick={() => {
-              if (!serviceBooking.type || !serviceBooking.location || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;}
-              const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: serviceBooking.location, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, status:'Confirmed'};
+              if (!serviceBooking.type || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;}
+              if (bookingMode === 'service' && !serviceBooking.location) {showToast('Please select a location'); return;}
+              const autoLocation = bookingMode === 'amenity' ? 'Ground Floor' : serviceBooking.location;
               if (bookingMode === 'service') {
-                setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, {id: 'SR-'+Date.now(), type: serviceBooking.type, flat: 'B-102', resident: 'Nitin Sharma', date: serviceBooking.date, time: serviceBooking.time, status: 'Pending Approval', location: serviceBooking.location, urgency: serviceBooking.guests}]}));
+                setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, {id: 'SR-'+Date.now(), type: serviceBooking.type, flat: 'B-102', resident: 'Nitin Sharma', date: serviceBooking.date, time: serviceBooking.time, status: 'Pending Approval', location: serviceBooking.location, urgency: serviceBooking.guests, comments: serviceBooking.comments || ''}]}));
+              } else if (editingAmenityId) {
+                setData(prev => ({...prev, amenityBookings: (prev.amenityBookings||[]).map(b => b.id === editingAmenityId ? {...b, type: serviceBooking.type, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, location: autoLocation, comments: serviceBooking.comments || ''} : b)}));
+                showToast(serviceBooking.type + ' booking updated');
               } else {
+                const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: autoLocation, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, comments: serviceBooking.comments || '', status:'Confirmed'};
                 setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]}));
               }
-              showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time);
-              setShowServiceBookingModal(false); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1});
+              if (!editingAmenityId) showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time);
+              setShowServiceBookingModal(false); setEditingAmenityId(null); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''});
             }} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>
-              {bookingMode === 'service' ? 'Book Service' : 'Book Amenity'}
+              {bookingMode === 'service' ? 'Book Service' : (editingAmenityId ? 'Update Booking' : 'Book Amenity')}
             </button>
-            <button onClick={() => setShowServiceBookingModal(false)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
+            <button onClick={() => { setShowServiceBookingModal(false); setEditingAmenityId(null); }} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Amenity Booking Detail Modal — edit / delete */}
+      {showAmenityDetail && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowAmenityDetail(null)}>
+          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:380,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>{showAmenityDetail.type}</h3>
+              <button onClick={() => setShowAmenityDetail(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
+            </div>
+            <div style={{marginBottom:20}}>
+              {(() => {
+                const b = showAmenityDetail;
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const dp = b.date.split('-');
+                const dateLabel = dp.length === 3 ? (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1] + ' ' + dp[0]) : b.date;
+                return (
+                  <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Date</span><span style={{fontWeight:500}}>{dateLabel}</span></div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Time</span><span style={{fontWeight:500}}>{b.time}</span></div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Duration</span><span style={{fontWeight:500}}>{b.duration}</span></div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>People</span><span style={{fontWeight:500}}>{b.guests}</span></div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Status</span><span style={{fontWeight:500,color:'#5a6b4f'}}>{b.status}</span></div>
+                  </div>
+                );
+              })()}
+            </div>
+            <button onClick={() => {
+              setBookingMode('amenity');
+              setEditingAmenityId(showAmenityDetail.id);
+              setServiceBooking({type: showAmenityDetail.type, location: showAmenityDetail.location || '', date: showAmenityDetail.date, time: showAmenityDetail.time, duration: showAmenityDetail.duration, guests: showAmenityDetail.guests, comments: showAmenityDetail.comments || ''});
+              setShowAmenityDetail(null);
+              setShowServiceBookingModal(true);
+            }} style={{width:'100%',padding:13,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:8}}>Edit Booking</button>
+            <button onClick={() => {
+              setData(prev => ({...prev, amenityBookings: (prev.amenityBookings||[]).filter(b => b.id !== showAmenityDetail.id)}));
+              showToast(showAmenityDetail.type + ' booking cancelled');
+              setShowAmenityDetail(null);
+            }} style={{width:'100%',padding:13,background:'none',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:8}}>Cancel Booking</button>
+            <button onClick={() => setShowAmenityDetail(null)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Close</button>
           </div>
         </div>
       )}
