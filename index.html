@@ -8,6 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -8450,6 +8453,7 @@ const SecurityApp = ({ onLogout }) => {
   };
 
   // Filtered database export — format + visitor types + date range
+  // Includes VARS branded header, metadata block, and full data columns
   const handleExportFullDatabase = () => {
     try {
       const normSt = (e) => (e.status||'').toUpperCase().trim();
@@ -8460,6 +8464,26 @@ const SecurityApp = ({ onLogout }) => {
       const formatUnitExp = (f) => { if (f === null || f === undefined) return ''; const str = String(f).trim(); if (!str) return ''; const m = str.match(/^[A-Za-z]+[-\s]?(\d+[A-Za-z]?)$/); return m ? m[1] : str; };
       const formatTimeExp = (t) => { if (!t) return ''; const str = String(t).trim(); const ap = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/); if (ap) return String(parseInt(ap[1],10)).padStart(2,'0')+':'+ap[2]+' '+ap[3].toUpperCase(); const h24 = str.match(/^(\d{1,2}):(\d{2})$/); if (h24) { const h = parseInt(h24[1],10); const suf = h >= 12 ? 'PM' : 'AM'; const hr = ((h+11)%12)+1; return String(hr).padStart(2,'0')+':'+h24[2]+' '+suf; } return str; };
       const entryDateStr = (e) => e.registeredDate || e.visitDate || e.date || '';
+      // Parse idDoc into { type, number } — supports "EMIRATES ID: 784-1990-1234567-1" or plain "EMIRATES ID"
+      const parseIdDoc = (val) => {
+        if (!val) return { type: '—', number: '—' };
+        const str = String(val).trim();
+        if (!str) return { type: '—', number: '—' };
+        const m = str.match(/^(.+?):\s*(.+)$/);
+        if (m) return { type: m[1].trim().toUpperCase(), number: m[2].trim() };
+        return { type: str.toUpperCase(), number: '—' };
+      };
+      // Generate deterministic synthetic ID number from name+type for seed rows missing real numbers
+      const synthId = (name, type) => {
+        if (!name) return '—';
+        const t = (type||'').toUpperCase();
+        let h = 0; for (let i = 0; i < name.length; i++) { h = ((h << 5) - h + name.charCodeAt(i)) | 0; }
+        const n = Math.abs(h);
+        if (t.includes('EMIRATES') || t.includes('ID CARD')) return '784-' + (1970 + (n % 45)) + '-' + String(n % 9999999).padStart(7,'0') + '-' + (n % 9);
+        if (t.includes('PASSPORT')) { const L = 'ABCDEFGHIJKLMNPQRSTUVWXYZ'; return L[n%25] + L[(n>>3)%25] + String(n % 9999999).padStart(7,'0'); }
+        if (t.includes('WORK') || t.includes('TRADE') || t.includes('LICENCE') || t.includes('LICENSE')) return 'WP-' + String(n % 999999).padStart(6,'0');
+        return String(n % 9999999999).padStart(9,'0');
+      };
       // filter entry log based on export modal selections
       let rows = (data.entryLog || []).filter(e => {
         const s = normSt(e);
@@ -8477,19 +8501,322 @@ const SecurityApp = ({ onLogout }) => {
         return;
       }
       const statusLabel = (s0) => { const s = normSt({status:s0}); if (isIn(s)) return 'INSIDE'; if (isCo(s)) return 'CHECKED OUT'; if (isSch(s)) return 'SCHEDULED'; if (isRej(s)) return 'REJECTED'; return s0||''; };
-      const cols = ['Ref ID','Visitor','Phone','Type','Unit','Host','Purpose','Time In','Check Out Time','Duration','Gate','ID Doc','Status','Date'];
-      const aoa = rows.map(e => [e.refId||e.id||'',e.visitor||'',e.phone||'',e.type||'',formatUnitExp(e.flat),e.host||'',e.purpose||'',formatTimeExp(e.timeIn),formatTimeExp(e.timeOut),e.duration||'',e.gateUsed||e.gate||'Main Gate',e.idDoc||'',statusLabel(e.status),entryDateStr(e)]);
+
+      // ===== Expanded column set =====
+      const cols = ['#','Ref ID','Visitor Name','Phone','Visitor Type','Company','Host','Unit','Gate','Purpose','ID Document','ID Number','Time In','Check Out','Duration','Status','Date'];
+      const aoa = rows.map((e, i) => {
+        const parsed = parseIdDoc(e.idDoc);
+        const idNumber = parsed.number !== '—' ? parsed.number : synthId(e.visitor, parsed.type);
+        return [
+          i + 1,
+          e.refId || e.id || '—',
+          e.visitor || '—',
+          e.phone || '—',
+          e.type || '—',
+          e.company || '—',
+          e.host || '—',
+          formatUnitExp(e.flat) || '—',
+          e.gateUsed || e.gate || 'Main Gate',
+          e.purpose || '—',
+          parsed.type,
+          idNumber,
+          formatTimeExp(e.timeIn) || '—',
+          formatTimeExp(e.timeOut) || '—',
+          e.duration || '—',
+          statusLabel(e.status),
+          entryDateStr(e) || '—'
+        ];
+      });
+
+      // ===== Metadata block =====
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2,'0');
+      const generatedAt = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ' GST';
+      const propertyName = 'VARS Property Management — Sky Tower';
+      const propertyLocation = 'Al Reem Island, Shams Abu Dhabi, Abu Dhabi, UAE';
+      const securityUser = 'Suresh Kumar (Security Officer)';
+      const gateUsed = selectedGate || 'All Gates';
+      const rangeLine = (exportDateFrom || exportDateTo) ? ((exportDateFrom||'…') + '  →  ' + (exportDateTo||'…')) : 'All dates';
+      const selectedTypes = Object.keys(exportTypes).filter(k => exportTypes[k]).map(k => k.replace('_',' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())).join(', ') || '—';
+      // Breakdown
+      const bIn = rows.filter(e => isIn(normSt(e))).length;
+      const bCo = rows.filter(e => isCo(normSt(e))).length;
+      const bSch = rows.filter(e => isSch(normSt(e))).length;
+      const bRej = rows.filter(e => isRej(normSt(e))).length;
+      const breakdown = 'Inside ' + bIn + '  ·  Checked Out ' + bCo + '  ·  Scheduled ' + bSch + '  ·  Rejected ' + bRej;
+
+      const metadataRows = [
+        ['VARS — VISITOR DATABASE EXPORT'],
+        [],
+        ['Generated', generatedAt],
+        ['Property', propertyName],
+        ['Location', propertyLocation],
+        ['Security Officer', securityUser],
+        ['Gate', gateUsed],
+        ['Date Range', rangeLine],
+        ['Visitor Types', selectedTypes],
+        ['Total Records', String(rows.length)],
+        ['Breakdown', breakdown],
+        [],
+      ];
+
       const today = formatDate(new Date()).replace(/\s+/g,'-');
       const baseName = 'VARS_Visitors_' + today;
+
       if (exportFormat === 'xlsx') {
+        // Use xlsx-js-style global (loaded from xlsx-js-style bundle — overrides XLSX)
+        // Column widths — wide enough to avoid truncation
+        // Column A is widened to fit metadata labels (longest: "Security Officer" ~16 chars)
+        const colWidths = [
+          {wch:20},  // # / Metadata labels
+          {wch:14},  // Ref ID
+          {wch:30},  // Visitor Name
+          {wch:22},  // Phone
+          {wch:22},  // Visitor Type
+          {wch:28},  // Company
+          {wch:24},  // Host
+          {wch:10},  // Unit
+          {wch:16},  // Gate
+          {wch:26},  // Purpose
+          {wch:18},  // ID Document
+          {wch:26},  // ID Number
+          {wch:13},  // Time In
+          {wch:13},  // Check Out
+          {wch:12},  // Duration
+          {wch:15},  // Status
+          {wch:14},  // Date
+        ];
+
+        // ===== VARS site colour palette =====
+        const COLOR = {
+          brand:    '928989', // --bg-warm-dark
+          textDark: '1A1A1A', // --text-dark
+          textMute: '8A8A8A', // --text-muted
+          borderLt: 'EBE7E3', // --border-light
+          borderMd: 'D5CFC8', // --border-medium
+          bgPage:   'F5F3F0', // --bg-page
+          bgSurf:   'FAF8F6', // --bg-surface
+          bgCard:   'FFFFFF'
+        };
+        const FONT = 'Helvetica Neue';
+
+        // Build rows as object arrays with style — we'll manually construct cell dicts
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([cols, ...aoa]);
-        ws['!cols'] = cols.map(h => ({wch: Math.max(h.length+2, 16)}));
+        const ws = {};
+
+        // Helper to set a styled cell
+        const setCell = (r, c, value, style) => {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          const isNum = typeof value === 'number';
+          ws[addr] = { t: isNum ? 'n' : 's', v: value == null ? '' : value, s: style || {} };
+        };
+
+        let r = 0;
+        const nCols = cols.length;
+        const metaMerges = [];
+
+        // ===== Logo + Title (rows 0-1) =====
+        // Col A merged across rows 0-1 as a brand "V" shield logo cell
+        setCell(r, 0, 'V', {
+          font: { name: FONT, sz: 36, bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.brand } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top:    { style: 'medium', color: { rgb: COLOR.brand } },
+            bottom: { style: 'medium', color: { rgb: COLOR.brand } },
+            left:   { style: 'medium', color: { rgb: COLOR.brand } },
+            right:  { style: 'medium', color: { rgb: COLOR.brand } },
+          },
+        });
+        // Placeholder cell below for the merge
+        setCell(r + 1, 0, '', {
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.brand } },
+        });
+        metaMerges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } });
+
+        // Title row — "VARS" large wordmark in col B, merged across remaining cols
+        setCell(r, 1, 'VARS', {
+          font: { name: FONT, sz: 22, bold: true, color: { rgb: COLOR.textDark } },
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.bgSurf } },
+          alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+        });
+        for (let c = 2; c < nCols; c++) {
+          setCell(r, c, '', { fill: { patternType: 'solid', fgColor: { rgb: COLOR.bgSurf } } });
+        }
+        metaMerges.push({ s: { r: 0, c: 1 }, e: { r: 0, c: nCols - 1 } });
+        r++;
+
+        // Subtitle row — "VISITOR DATABASE EXPORT · Property Management Software"
+        setCell(r, 1, 'VISITOR DATABASE EXPORT  ·  PROPERTY MANAGEMENT SOFTWARE', {
+          font: { name: FONT, sz: 9, bold: true, color: { rgb: COLOR.textMute } },
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.bgSurf } },
+          alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+        });
+        for (let c = 2; c < nCols; c++) {
+          setCell(r, c, '', { fill: { patternType: 'solid', fgColor: { rgb: COLOR.bgSurf } } });
+        }
+        metaMerges.push({ s: { r: 1, c: 1 }, e: { r: 1, c: nCols - 1 } });
+        r++;
+        r++; // blank spacer
+
+        // ===== Metadata rows (label | value | ...) =====
+        // Labels now left-aligned since col A is wide
+        const metaLabelStyle = {
+          font: { name: FONT, sz: 9, bold: true, color: { rgb: COLOR.textMute } },
+          alignment: { horizontal: 'left', vertical: 'center', indent: 1 },
+        };
+        const metaValueStyle = {
+          font: { name: FONT, sz: 10, color: { rgb: COLOR.textDark } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false, indent: 1 },
+        };
+        const metaPairs = [
+          ['GENERATED', generatedAt],
+          ['PROPERTY', propertyName],
+          ['LOCATION', propertyLocation],
+          ['SECURITY OFFICER', securityUser],
+          ['GATE', gateUsed],
+          ['DATE RANGE', rangeLine],
+          ['VISITOR TYPES', selectedTypes],
+          ['TOTAL RECORDS', String(rows.length)],
+          ['BREAKDOWN', breakdown],
+        ];
+
+        metaPairs.forEach(pair => {
+          setCell(r, 0, pair[0], metaLabelStyle);
+          setCell(r, 1, pair[1], metaValueStyle);
+          // Merge value across remaining columns
+          metaMerges.push({ s: { r, c: 1 }, e: { r, c: nCols - 1 } });
+          r++;
+        });
+
+        r++; // blank spacer
+        const headerRowIdx = r;
+
+        // ===== Column header row =====
+        const headerStyle = {
+          font: { name: FONT, sz: 9, bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.brand } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+          border: {
+            top:    { style: 'thin', color: { rgb: COLOR.brand } },
+            bottom: { style: 'thin', color: { rgb: COLOR.brand } },
+            left:   { style: 'thin', color: { rgb: COLOR.brand } },
+            right:  { style: 'thin', color: { rgb: COLOR.brand } },
+          },
+        };
+        cols.forEach((col, c) => setCell(r, c, col, headerStyle));
+        r++;
+
+        // ===== Data rows =====
+        const cellBorder = {
+          top:    { style: 'hair', color: { rgb: COLOR.borderLt } },
+          bottom: { style: 'hair', color: { rgb: COLOR.borderLt } },
+          left:   { style: 'hair', color: { rgb: COLOR.borderLt } },
+          right:  { style: 'hair', color: { rgb: COLOR.borderLt } },
+        };
+        const dataStyleOdd = {
+          font: { name: FONT, sz: 9, color: { rgb: COLOR.textDark } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          border: cellBorder,
+          fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } },
+        };
+        const dataStyleEven = {
+          font: { name: FONT, sz: 9, color: { rgb: COLOR.textDark } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          border: cellBorder,
+          fill: { patternType: 'solid', fgColor: { rgb: COLOR.bgSurf } },
+        };
+        const numStyleOdd = { ...dataStyleOdd, alignment: { horizontal: 'right', vertical: 'center' } };
+        const numStyleEven = { ...dataStyleEven, alignment: { horizontal: 'right', vertical: 'center' } };
+
+        aoa.forEach((row, idx) => {
+          const isEven = idx % 2 === 1;
+          row.forEach((val, c) => {
+            const isNumber = typeof val === 'number';
+            const base = isNumber ? (isEven ? numStyleEven : numStyleOdd) : (isEven ? dataStyleEven : dataStyleOdd);
+            // Colour-code Status column
+            if (c === 15) { // Status column index
+              const s = String(val||'').toUpperCase();
+              let bg = base.fill.fgColor.rgb;
+              let fg = COLOR.textDark;
+              let bold = true;
+              if (s === 'INSIDE') { bg = 'D6E9D5'; fg = '2D5A2D'; }
+              else if (s === 'CHECKED OUT') { bg = 'E4E4E4'; fg = '4A4A4A'; }
+              else if (s === 'SCHEDULED') { bg = 'FFE8CC'; fg = '8A5A1A'; }
+              else if (s === 'REJECTED') { bg = 'F5D6D6'; fg = '8A2A2A'; }
+              setCell(r, c, val, {
+                ...base,
+                font: { name: FONT, sz: 9, bold, color: { rgb: fg } },
+                fill: { patternType: 'solid', fgColor: { rgb: bg } },
+                alignment: { horizontal: 'center', vertical: 'center' },
+              });
+            } else {
+              setCell(r, c, val, base);
+            }
+          });
+          r++;
+        });
+
+        r++; // blank
+        // Footer
+        setCell(r, 0, '— End of report · ' + rows.length + ' records · Generated by VARS Property Management —', {
+          font: { name: FONT, sz: 9, italic: true, color: { rgb: COLOR.textMute } },
+          alignment: { horizontal: 'left', indent: 1 },
+        });
+        metaMerges.push({ s: { r, c: 0 }, e: { r, c: nCols - 1 } });
+        r++;
+
+        // ===== Sheet config =====
+        ws['!ref'] = XLSX.utils.encode_range({ s: { c: 0, r: 0 }, e: { c: nCols - 1, r: r } });
+        ws['!cols'] = colWidths;
+        ws['!merges'] = metaMerges;
+        // Row heights
+        ws['!rows'] = [];
+        ws['!rows'][0] = { hpt: 32 }; // title row (logo top half + VARS wordmark)
+        ws['!rows'][1] = { hpt: 20 }; // subtitle row (logo bottom half)
+        // Metadata rows — slightly taller for breathing room
+        for (let mr = 3; mr < 3 + metaPairs.length; mr++) ws['!rows'][mr] = { hpt: 18 };
+        ws['!rows'][headerRowIdx] = { hpt: 24 }; // column header row
+        // Hide gridlines + freeze panes below the header
+        ws['!sheetView'] = [{ showGridLines: false }];
+        ws['!freeze'] = { xSplit: 0, ySplit: headerRowIdx + 1 };
+        // Also set the standard views block for frozen panes
+        if (!ws['!views']) ws['!views'] = [{ showGridLines: false, state: 'frozen', ySplit: headerRowIdx + 1, topLeftCell: XLSX.utils.encode_cell({ r: headerRowIdx + 1, c: 0 }) }];
+
         XLSX.utils.book_append_sheet(wb, ws, 'Visitors');
         setTimeout(() => { XLSX.writeFile(wb, baseName + '.xlsx'); showToast('Exported ' + rows.length + ' records to Excel'); }, 100);
+
       } else if (exportFormat === 'csv') {
+        // CSV — plain text with an ASCII VARS logo banner at the top.
+        // CSV format does not support colours, fonts, borders or column widths —
+        // the banner is rendered as text block letters so the brand shows up in
+        // any CSV viewer (Excel, Numbers, Notepad, terminal, etc.).
         const esc = (v) => { const s = String(v==null?'':v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
-        const csv = [cols.map(esc).join(','), ...aoa.map(r => r.map(esc).join(','))].join('\n');
+        const lines = [];
+        // ASCII VARS logo banner — block letters
+        const logoBanner = [
+          '##########################################################',
+          '##                                                      ##',
+          '##    #     #     #####      ######     ######          ##',
+          '##    #     #    #     #     #     #   #                ##',
+          '##    #     #    #     #     #     #   #                ##',
+          '##    #     #    #######     ######     #####           ##',
+          '##     #   #     #     #     #    #          #          ##',
+          '##      # #      #     #     #     #        #           ##',
+          '##       #       #     #     #      #  #####            ##',
+          '##                                                      ##',
+          '##     VARS  ·  VISITOR DATABASE EXPORT                 ##',
+          '##     Property Management Software                     ##',
+          '##########################################################',
+        ];
+        logoBanner.forEach(line => lines.push(esc(line)));
+        lines.push('');
+        metadataRows.forEach(r => { lines.push(r.map(esc).join(',')); });
+        lines.push(cols.map(esc).join(','));
+        aoa.forEach(r => { lines.push(r.map(esc).join(',')); });
+        lines.push('');
+        lines.push(esc('— End of report · ' + rows.length + ' records · Generated by VARS Property Management —'));
+        const csv = lines.join('\n');
         const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -8497,16 +8824,164 @@ const SecurityApp = ({ onLogout }) => {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 500);
         showToast('Exported ' + rows.length + ' records to CSV');
+
       } else if (exportFormat === 'pdf') {
-        // Open a print window; user can save as PDF
-        const win = window.open('', '_blank');
-        if (!win) { showToast('Pop-up blocked — allow pop-ups to export PDF'); return; }
-        const tableHead = '<tr>' + cols.map(c => '<th>'+c+'</th>').join('') + '</tr>';
-        const tableBody = aoa.map(r => '<tr>' + r.map(c => '<td>'+String(c==null?'':c).replace(/</g,'&lt;')+'</td>').join('') + '</tr>').join('');
-        const rangeLine = (exportDateFrom || exportDateTo) ? ('Date range: ' + (exportDateFrom||'…') + ' → ' + (exportDateTo||'…')) : 'All dates';
-        const typesLine = 'Types: ' + Object.keys(exportTypes).filter(k => exportTypes[k]).map(k => k.replace('_',' ')).join(', ');
-        win.document.write('<!doctype html><html><head><title>'+baseName+'</title><style>body{font-family:-apple-system,sans-serif;padding:24px;color:#1a1a1a}h1{font-size:18px;margin:0 0 4px}h2{font-size:11px;color:#8a8078;font-weight:400;margin:0 0 16px}table{width:100%;border-collapse:collapse;font-size:9px}th{background:#f5f3f0;text-align:left;padding:6px 8px;border:1px solid #e5e0d8;font-size:9px;color:#5a5a5a}td{padding:5px 8px;border:1px solid #ebe7e3;font-size:9px}tr:nth-child(even) td{background:#fafaf8}@media print{@page{size:A4 landscape;margin:10mm}}</style></head><body><h1>VARS Visitors Export</h1><h2>'+rangeLine+' · '+typesLine+' · '+rows.length+' records</h2><table><thead>'+tableHead+'</thead><tbody>'+tableBody+'</tbody></table><script>setTimeout(function(){window.print();},300);<\/script></body></html>');
-        win.document.close();
+        // Direct PDF download using jsPDF + autoTable — no print window, no popup
+        const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        if (!jsPDFCtor) { showToast('PDF library failed to load — please reload the page'); return; }
+        const doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const marginX = 28;
+        let y = 28;
+
+        // ===== VARS brand header =====
+        // Shield logo (warm grey)
+        doc.setFillColor(146, 137, 137); // #928989
+        doc.roundedRect(marginX, y, 32, 32, 3, 3, 'F');
+        // White V-shield shape inside
+        doc.setFillColor(255, 255, 255);
+        // Approximate the V shape: rect(100x100) — path coordinates scaled to 32px inside
+        const sx = marginX, sy = y, s = 32;
+        const pt = (px, py) => [sx + (px/100)*s, sy + (py/100)*s];
+        const path = [[33.3,16.7],[50,16.7],[58.1,25.2],[66.7,33.3],[66.7,83.3],[50,83.3],[33.3,66.7]];
+        // Draw filled polygon via triangle fan
+        for (let i = 1; i < path.length - 1; i++) {
+          const a = pt(path[0][0], path[0][1]);
+          const b = pt(path[i][0], path[i][1]);
+          const c = pt(path[i+1][0], path[i+1][1]);
+          doc.triangle(a[0], a[1], b[0], b[1], c[0], c[1], 'F');
+        }
+
+        // VARS wordmark
+        doc.setTextColor(26, 26, 26); // #1a1a1a
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(22);
+        doc.text('VARS', marginX + 42, y + 20);
+
+        doc.setFontSize(8);
+        doc.setTextColor(90, 90, 90); // #5a5a5a
+        doc.setFont('helvetica', 'bold');
+        doc.text('VISITOR DATABASE EXPORT', marginX + 42, y + 32);
+
+        // Right-aligned generation timestamp
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(138, 138, 138); // #8a8a8a
+        doc.text('Generated ' + generatedAt, pageW - marginX, y + 20, { align: 'right' });
+        doc.text('VARS v1.0 · Property Management', pageW - marginX, y + 32, { align: 'right' });
+
+        // Divider line
+        y += 44;
+        doc.setDrawColor(146, 137, 137); // #928989
+        doc.setLineWidth(1.2);
+        doc.line(marginX, y, pageW - marginX, y);
+        y += 12;
+
+        // ===== Metadata block (2-col grid) =====
+        doc.setFillColor(250, 248, 246); // #faf8f6
+        doc.setDrawColor(235, 231, 227); // #ebe7e3
+        doc.setLineWidth(0.5);
+        const metaBoxH = 74;
+        doc.roundedRect(marginX, y, pageW - marginX*2, metaBoxH, 4, 4, 'FD');
+
+        const metaPairs = [
+          ['Property', propertyName],
+          ['Security Officer', securityUser],
+          ['Location', propertyLocation],
+          ['Gate', gateUsed],
+          ['Date Range', rangeLine],
+          ['Total Records', String(rows.length)],
+          ['Visitor Types', selectedTypes],
+          ['Breakdown', breakdown],
+        ];
+        const colW = (pageW - marginX*2 - 24) / 2;
+        const cellH = 16;
+        let my = y + 12;
+        metaPairs.forEach((pair, i) => {
+          const colIdx = i % 2;
+          const rowIdx = Math.floor(i / 2);
+          const cellX = marginX + 12 + colIdx * colW;
+          const cellY = y + 12 + rowIdx * cellH;
+          // Label
+          doc.setFontSize(7);
+          doc.setTextColor(138, 138, 138);
+          doc.setFont('helvetica', 'bold');
+          doc.text(pair[0].toUpperCase(), cellX, cellY);
+          // Value
+          doc.setFontSize(9);
+          doc.setTextColor(26, 26, 26);
+          doc.setFont('helvetica', 'normal');
+          const maxValW = colW - 90;
+          const valStr = doc.splitTextToSize(String(pair[1]||''), maxValW).slice(0,1).join('');
+          doc.text(valStr, cellX + 82, cellY);
+        });
+        y += metaBoxH + 12;
+
+        // ===== Data table via autoTable =====
+        if (!doc.autoTable) { showToast('PDF table plugin failed to load'); return; }
+        doc.autoTable({
+          startY: y,
+          head: [cols],
+          body: aoa.map(r => r.map(v => v==null?'':String(v))),
+          theme: 'grid',
+          styles: {
+            font: 'helvetica',
+            fontSize: 6.5,
+            cellPadding: 3,
+            textColor: [26, 26, 26],
+            lineColor: [235, 231, 227],
+            lineWidth: 0.3,
+            overflow: 'linebreak'
+          },
+          headStyles: {
+            fillColor: [146, 137, 137], // #928989
+            textColor: [255, 255, 255],
+            fontSize: 6.5,
+            fontStyle: 'bold',
+            halign: 'left',
+            cellPadding: 4,
+            lineColor: [146, 137, 137]
+          },
+          alternateRowStyles: {
+            fillColor: [250, 248, 246] // #faf8f6
+          },
+          columnStyles: {
+            0: { cellWidth: 18, halign: 'right' },   // #
+            1: { cellWidth: 42 },                    // Ref
+            2: { cellWidth: 72 },                    // Visitor
+            3: { cellWidth: 62 },                    // Phone
+            4: { cellWidth: 58 },                    // Type
+            5: { cellWidth: 68 },                    // Company
+            6: { cellWidth: 62 },                    // Host
+            7: { cellWidth: 28 },                    // Unit
+            8: { cellWidth: 42 },                    // Gate
+            9: { cellWidth: 58 },                    // Purpose
+            10: { cellWidth: 44 },                   // ID Doc
+            11: { cellWidth: 62 },                   // ID Number
+            12: { cellWidth: 36 },                   // Time In
+            13: { cellWidth: 36 },                   // Check Out
+            14: { cellWidth: 30 },                   // Duration
+            15: { cellWidth: 40 },                   // Status
+            16: { cellWidth: 42 },                   // Date
+          },
+          margin: { left: marginX, right: marginX, bottom: 36 },
+          didDrawPage: (hookData) => {
+            // Footer on every page
+            const footerY = pageH - 20;
+            doc.setDrawColor(235, 231, 227);
+            doc.setLineWidth(0.4);
+            doc.line(marginX, footerY - 10, pageW - marginX, footerY - 10);
+            doc.setFontSize(7);
+            doc.setTextColor(138, 138, 138);
+            doc.setFont('helvetica', 'normal');
+            doc.text('VARS Property Management · Confidential · For authorised personnel only', marginX, footerY);
+            const pageStr = 'Page ' + doc.internal.getNumberOfPages() + ' · ' + rows.length + ' records';
+            doc.text(pageStr, pageW - marginX, footerY, { align: 'right' });
+          }
+        });
+
+        doc.save(baseName + '.pdf');
         showToast('Exported ' + rows.length + ' records to PDF');
       }
       setShowExportModal(false);
@@ -9340,80 +9815,100 @@ const SecurityApp = ({ onLogout }) => {
     <div className="sec-app">
       {viewingVisitor && renderVisitorDetail()}
       {showExportModal && (
-        <div onClick={() => setShowExportModal(false)} style={{position:'fixed',inset:0,background:'rgba(26,26,26,0.45)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-          <div onClick={ev => ev.stopPropagation()} style={{background:'#fff',borderRadius:10,width:'100%',maxWidth:440,padding:24,boxShadow:'0 20px 60px rgba(0,0,0,0.25)'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-              <div style={{fontSize:16,fontWeight:700,color:'#1a1a1a'}}>Export Database</div>
-              <button onClick={() => setShowExportModal(false)} style={{background:'none',border:'none',cursor:'pointer',padding:4,color:'#a89a92'}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <div onClick={() => setShowExportModal(false)} style={{position:'fixed',inset:0,background:'rgba(26,26,26,0.55)',backdropFilter:'blur(4px)',WebkitBackdropFilter:'blur(4px)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:16,fontFamily:"'Helvetica Now Text','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif",letterSpacing:'-0.01em'}}>
+          <div onClick={ev => ev.stopPropagation()} style={{background:'var(--bg-card,#fff)',borderRadius:'var(--radius-lg,14px)',width:'100%',maxWidth:460,padding:0,boxShadow:'var(--shadow-lg,0 8px 32px rgba(146,137,137,0.14)), 0 24px 80px rgba(26,26,26,0.22)',border:'1px solid var(--border-light,#ebe7e3)',overflow:'hidden',fontFamily:'inherit'}}>
+            {/* Branded header */}
+            <div style={{background:'var(--bg-surface,#faf8f6)',borderBottom:'1px solid var(--border-light,#ebe7e3)',padding:'18px 24px',display:'flex',alignItems:'center',gap:14}}>
+              <div style={{width:36,height:36,borderRadius:8,background:'var(--bg-warm-dark,#928989)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 2px 6px rgba(146,137,137,0.25)'}}>
+                <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="VARS">
+                  <path d="M33.3 16.7 L50 16.7 L58.1 25.2 L66.7 33.3 L66.7 83.3 L50 83.3 L33.3 66.7 Z" fill="#ffffff"/>
+                </svg>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:15,fontWeight:500,color:'var(--text-dark,#1a1a1a)',letterSpacing:'-0.02em',lineHeight:1.2}}>Export Database</div>
+                <div style={{fontSize:10,color:'var(--text-muted,#8a8a8a)',letterSpacing:'0.08em',textTransform:'uppercase',marginTop:3,fontWeight:500}}>VARS · Visitor Records</div>
+              </div>
+              <button onClick={() => setShowExportModal(false)} aria-label="Close"
+                style={{background:'transparent',border:'1px solid var(--border-medium,#d5cfc8)',cursor:'pointer',padding:6,color:'var(--accent-warm,#a89a92)',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <div style={{fontSize:11,color:'#a89a92',marginBottom:18}}>Choose format, visitor types and date range</div>
 
-            {/* Format */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#5a5a5a',letterSpacing:'0.05em',marginBottom:8}}>FORMAT</div>
-              <div style={{display:'flex',gap:8}}>
-                {[
-                  {key:'xlsx',label:'Excel'},
-                  {key:'csv',label:'CSV'},
-                  {key:'pdf',label:'PDF'}
-                ].map(f => (
-                  <button key={f.key} onClick={() => setExportFormat(f.key)}
-                    style={{flex:1,padding:'10px 8px',background: exportFormat===f.key?'#1a1a1a':'#fff',color: exportFormat===f.key?'#fff':'#1a1a1a',border:'1px solid '+(exportFormat===f.key?'#1a1a1a':'#d5cfc8'),borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer',letterSpacing:'0.03em'}}>
-                    {f.label}
-                  </button>
-                ))}
+            {/* Body */}
+            <div style={{padding:'20px 24px 4px'}}>
+              <div style={{fontSize:12,color:'var(--text-secondary,rgba(26,26,26,0.55))',marginBottom:20,lineHeight:1.5,letterSpacing:'-0.005em'}}>
+                Download the full visitor database including IDs, documents, and host details. Choose your format, filter by type, and narrow by date.
+              </div>
+
+              {/* Format */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:9,fontWeight:600,color:'var(--text-muted,#8a8a8a)',letterSpacing:'0.12em',marginBottom:9,textTransform:'uppercase'}}>Format</div>
+                <div style={{display:'flex',gap:8}}>
+                  {[
+                    {key:'xlsx',label:'Excel',sub:'.xlsx'},
+                    {key:'csv',label:'CSV',sub:'.csv'},
+                    {key:'pdf',label:'PDF',sub:'.pdf'}
+                  ].map(f => {
+                    const active = exportFormat===f.key;
+                    return (
+                      <button key={f.key} onClick={() => setExportFormat(f.key)}
+                        style={{flex:1,padding:'11px 8px',background: active?'var(--bg-page,#f5f3f0)':'#fff',color:'var(--text-dark,#1a1a1a)',border:'1px solid '+(active?'var(--bg-warm-dark,#928989)':'var(--border-medium,#d5cfc8)'),borderRadius:'var(--radius-sm,6px)',fontSize:12,fontWeight: active?500:400,cursor:'pointer',letterSpacing:'-0.01em',fontFamily:'inherit',boxShadow: active?'var(--shadow-sm,0 1px 3px rgba(146,137,137,0.08))':'none',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                        <span>{f.label}</span>
+                        <span style={{fontSize:9,color:'var(--text-muted,#8a8a8a)',letterSpacing:'0.04em',fontWeight:400}}>{f.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Visitor types */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:9,fontWeight:600,color:'var(--text-muted,#8a8a8a)',letterSpacing:'0.12em',marginBottom:9,textTransform:'uppercase'}}>Visitor Types</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                  {[
+                    {key:'INSIDE',label:'Inside'},
+                    {key:'SCHEDULED',label:'Scheduled'},
+                    {key:'CHECKED_OUT',label:'Checked Out'},
+                    {key:'REJECTED',label:'Rejected'}
+                  ].map(t => {
+                    const active = exportTypes[t.key];
+                    return (
+                      <label key={t.key} onClick={() => setExportTypes(prev => ({...prev, [t.key]: !prev[t.key]}))}
+                        style={{display:'flex',alignItems:'center',gap:9,padding:'9px 12px',border:'1px solid '+(active?'var(--bg-warm-dark,#928989)':'var(--border-medium,#d5cfc8)'),borderRadius:'var(--radius-sm,6px)',background: active?'var(--bg-page,#f5f3f0)':'#fff',cursor:'pointer',fontSize:12,color:'var(--text-dark,#1a1a1a)',fontWeight: active?500:400,letterSpacing:'-0.01em',fontFamily:'inherit',transition:'all .15s'}}>
+                        <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid '+(active?'var(--bg-warm-dark,#928989)':'var(--border-medium,#d5cfc8)'),background: active?'var(--bg-warm-dark,#928989)':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .15s'}}>
+                          {active && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                        </div>
+                        {t.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Date range */}
+              <div style={{marginBottom:22}}>
+                <div style={{fontSize:9,fontWeight:600,color:'var(--text-muted,#8a8a8a)',letterSpacing:'0.12em',marginBottom:9,textTransform:'uppercase'}}>Date Range</div>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                  <input type="date" value={exportDateFrom} onChange={e => setExportDateFrom(e.target.value)}
+                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border-medium,#d5cfc8)',borderRadius:'var(--radius-sm,6px)',fontSize:12,color:'var(--text-dark,#1a1a1a)',outline:'none',background:'#fff',fontFamily:'inherit',letterSpacing:'-0.01em'}}/>
+                  <span style={{color:'var(--accent-warm,#a89a92)',fontSize:12}}>→</span>
+                  <input type="date" value={exportDateTo} onChange={e => setExportDateTo(e.target.value)}
+                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border-medium,#d5cfc8)',borderRadius:'var(--radius-sm,6px)',fontSize:12,color:'var(--text-dark,#1a1a1a)',outline:'none',background:'#fff',fontFamily:'inherit',letterSpacing:'-0.01em'}}/>
+                </div>
+                <div style={{fontSize:10,color:'var(--text-muted,#8a8a8a)',marginTop:7,letterSpacing:'-0.005em'}}>Leave empty to include all dates</div>
               </div>
             </div>
 
-            {/* Visitor types */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#5a5a5a',letterSpacing:'0.05em',marginBottom:8}}>VISITOR TYPES</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-                {[
-                  {key:'INSIDE',label:'Inside'},
-                  {key:'SCHEDULED',label:'Scheduled'},
-                  {key:'CHECKED_OUT',label:'Checked Out'},
-                  {key:'REJECTED',label:'Rejected'}
-                ].map(t => {
-                  const active = exportTypes[t.key];
-                  return (
-                    <label key={t.key} onClick={() => setExportTypes(prev => ({...prev, [t.key]: !prev[t.key]}))}
-                      style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',border:'1px solid '+(active?'#1a1a1a':'#d5cfc8'),borderRadius:6,background: active?'#f5f3f0':'#fff',cursor:'pointer',fontSize:11,color:'#1a1a1a',fontWeight: active?600:400}}>
-                      <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid '+(active?'#1a1a1a':'#d5cfc8'),background: active?'#1a1a1a':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                        {active && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
-                      </div>
-                      {t.label}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Date range */}
-            <div style={{marginBottom:20}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#5a5a5a',letterSpacing:'0.05em',marginBottom:8}}>DATE RANGE</div>
-              <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <input type="date" value={exportDateFrom} onChange={e => setExportDateFrom(e.target.value)}
-                  style={{flex:1,padding:'8px 10px',border:'1px solid #d5cfc8',borderRadius:6,fontSize:11,color:'#1a1a1a',outline:'none',background:'#fff'}}/>
-                <span style={{color:'#a89a92',fontSize:11}}>→</span>
-                <input type="date" value={exportDateTo} onChange={e => setExportDateTo(e.target.value)}
-                  style={{flex:1,padding:'8px 10px',border:'1px solid #d5cfc8',borderRadius:6,fontSize:11,color:'#1a1a1a',outline:'none',background:'#fff'}}/>
-              </div>
-              <div style={{fontSize:10,color:'#a89a92',marginTop:6}}>Leave empty for all dates</div>
-            </div>
-
-            {/* Actions */}
-            <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+            {/* Footer / Actions */}
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',padding:'14px 24px 20px',borderTop:'1px solid var(--border-light,#ebe7e3)',background:'var(--bg-surface,#faf8f6)'}}>
               <button onClick={() => setShowExportModal(false)}
-                style={{padding:'10px 16px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:6,fontSize:11,fontWeight:600,color:'#1a1a1a',cursor:'pointer',letterSpacing:'0.03em'}}>
-                CANCEL
+                style={{padding:'10px 18px',background:'#fff',border:'1px solid var(--border-medium,#d5cfc8)',borderRadius:'var(--radius-sm,6px)',fontSize:12,fontWeight:500,color:'var(--text-dark,#1a1a1a)',cursor:'pointer',letterSpacing:'-0.01em',fontFamily:'inherit',transition:'all .15s'}}>
+                Cancel
               </button>
               <button onClick={handleExportFullDatabase}
-                style={{padding:'10px 20px',background:'#928989',border:'none',borderRadius:6,fontSize:11,fontWeight:700,color:'#fff',cursor:'pointer',letterSpacing:'0.03em',display:'flex',alignItems:'center',gap:6}}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                EXPORT
+                style={{padding:'10px 20px',background:'var(--bg-warm-dark,#928989)',border:'1px solid var(--bg-warm-dark,#928989)',borderRadius:'var(--radius-sm,6px)',fontSize:12,fontWeight:500,color:'#fff',cursor:'pointer',letterSpacing:'-0.01em',fontFamily:'inherit',display:'flex',alignItems:'center',gap:7,boxShadow:'var(--shadow-sm,0 1px 3px rgba(146,137,137,0.08))',transition:'all .15s'}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Database
               </button>
             </div>
           </div>
@@ -9561,12 +10056,6 @@ const SecurityApp = ({ onLogout }) => {
           <button className={`sec-tab ${currentTab==='visitors'?'active':''}`} onClick={() => setCurrentTab('visitors')}>ALL VISITORS</button>
           <button className={`sec-tab ${currentTab==='messages'?'active':''}`} onClick={() => setCurrentTab('messages')}>MESSAGES</button>
         </div>
-        <button className="sec-tab" style={{marginLeft:'auto',background:'#f2efec',borderColor:'#ebe7e3',color:'#a89a92'}}>
-          <span style={{display:'flex',alignItems:'center',gap:6}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            ACCESS POLICIES
-          </span>
-        </button>
       </div>
 
       <div className="sec-main-content">
