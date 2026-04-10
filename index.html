@@ -8217,15 +8217,38 @@ const SecurityApp = ({ onLogout }) => {
     // Try matching by permit ref first
     if (entry.refId) {
       const match = data.visitors.find(v => v.permitRef === entry.refId);
-      if (match) return match;
+      if (match) return { ...match, _entry: entry };
     }
     // Try matching by visitor name
     const name = entry.visitor || entry.name;
     if (name) {
       const match = data.visitors.find(v => v.name === name);
-      if (match) return match;
+      if (match) return { ...match, _entry: entry };
     }
-    return null;
+    // Fall back to synthesizing a detail object from the entry log itself so
+    // that rows which only exist in entryLog (e.g. seeded rows) still open the
+    // detail modal. Field names are mapped to the shape renderVisitorDetail expects.
+    return {
+      permitRef: entry.refId || '—',
+      name: entry.visitor || entry.name || '—',
+      contact: entry.phone || entry.contact || '—',
+      type: entry.type || '—',
+      flat: entry.flat || '—',
+      resident: entry.host || entry.resident || '—',
+      host: entry.host || '—',
+      date: entry.date || entry.registeredDate || entry.visitDate || '—',
+      time: entry.timeIn || entry.time || '—',
+      timeIn: entry.timeIn || '',
+      timeOut: entry.timeOut || '',
+      duration: entry.duration || '',
+      gate: entry.gateUsed || entry.gate || 'Main Gate',
+      status: entry.status || '—',
+      purpose: entry.purpose || '—',
+      idDoc: entry.idDoc || '—',
+      company: entry.company || '',
+      qrPayload: null,
+      _entry: entry
+    };
   };
 
   // QR for security visitor detail — just permit ref
@@ -8332,7 +8355,9 @@ const SecurityApp = ({ onLogout }) => {
   const renderVisitorDetail = () => {
     if (!viewingVisitor) return null;
     const vp = viewingVisitor.qrPayload;
-    const entry = data.entryLog.find(e => e.refId === viewingVisitor.permitRef) || {};
+    // Prefer the exact entry the user clicked (stored on _entry by findFullVisitor),
+    // and fall back to a permitRef match for legacy detail objects.
+    const entry = viewingVisitor._entry || data.entryLog.find(e => e.refId === viewingVisitor.permitRef) || {};
     return (
       <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#f2efec',zIndex:1000,overflowY:'auto',padding:16}}>
         <div style={{maxWidth:500,margin:'0 auto'}}>
@@ -8377,25 +8402,43 @@ const SecurityApp = ({ onLogout }) => {
 
           <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:8,padding:16,marginBottom:16}}>
             <div style={{fontSize:11,color:'#1a1a1a',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:12,fontWeight:600}}>Visitor Information</div>
-            {[
-              ['Name', viewingVisitor.name],
-              ['Phone', viewingVisitor.contact || (vp && vp.mobile) || '—'],
-              ['Type', viewingVisitor.type],
-              ['Unit', viewingVisitor.flat],
-              ['Host', viewingVisitor.resident || (vp && vp.resident) || '—'],
-              ['Vehicle', vp ? vp.vehicle : '—'],
-              ['ID Document', vp ? vp.idDoc : '—'],
-              ['Date', viewingVisitor.date || '—'],
-              ['Time', viewingVisitor.time || '—'],
-              ['Valid Until', vp ? vp.validUntil : '—'],
-              ['Gate', viewingVisitor.gate || 'Main Gate'],
-              ['Status', entry.status || viewingVisitor.status || '—'],
-            ].map(([label, val], i) => (
-              <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom: i < 11 ? '1px solid #e0e0e0' : 'none'}}>
-                <span style={{fontSize:12,color:'#a89a92'}}>{label}</span>
-                <span style={{fontSize:12,color:'#1a1a1a',fontWeight:500,textAlign:'right',maxWidth:'60%'}}>{val}</span>
-              </div>
-            ))}
+            {(() => {
+              // Merge every field we know about from the detail object and the clicked entry.
+              const statusUpper = ((entry.status || viewingVisitor.status || '') + '').toUpperCase().trim();
+              const isInsideDetail = statusUpper === 'PASSED SECURITY' || statusUpper === 'CLEARED' || statusUpper === 'INSIDE' || statusUpper === 'RESIDENT APPROVED' || statusUpper === 'APPROVED BY SECURITY' || statusUpper === 'APPROVED';
+              const isScheduledDetail = statusUpper === 'SCHEDULED' || statusUpper === 'PRE-APPROVED' || statusUpper === 'PENDING' || statusUpper === 'AWAITING APPROVAL';
+              const detailTimeIn = entry.timeIn || viewingVisitor.timeIn || viewingVisitor.time || '—';
+              // A visitor who is still INSIDE (or only SCHEDULED) has no check-out time yet.
+              const detailTimeOut = (isInsideDetail || isScheduledDetail) ? '—' : (entry.timeOut || viewingVisitor.timeOut || '—');
+              const detailDuration = (isInsideDetail || isScheduledDetail)
+                ? '—'
+                : ((entry.timeIn && entry.timeOut ? computeDuration(entry.timeIn, entry.timeOut) : '') || entry.duration || viewingVisitor.duration || '—');
+              const rows = [
+                ['Permit Ref', viewingVisitor.permitRef || entry.refId || '—'],
+                ['Name', viewingVisitor.name || entry.visitor || '—'],
+                ['Phone', viewingVisitor.contact || entry.phone || (vp && vp.mobile) || '—'],
+                ['Type', viewingVisitor.type || entry.type || '—'],
+                ['Company', viewingVisitor.company || entry.company || '—'],
+                ['Unit', viewingVisitor.flat || entry.flat || '—'],
+                ['Host', viewingVisitor.resident || viewingVisitor.host || entry.host || (vp && vp.resident) || '—'],
+                ['Purpose', viewingVisitor.purpose || entry.purpose || '—'],
+                ['ID Document', viewingVisitor.idDoc || entry.idDoc || (vp && vp.idDoc) || '—'],
+                ['Vehicle', vp ? (vp.vehicle || '—') : '—'],
+                ['Date', viewingVisitor.date || entry.date || entry.registeredDate || '—'],
+                ['Time In', detailTimeIn || '—'],
+                ['Check Out Time', detailTimeOut],
+                ['Duration', detailDuration],
+                ['Valid Until', vp ? (vp.validUntil || '—') : '—'],
+                ['Gate', viewingVisitor.gate || entry.gateUsed || 'Main Gate'],
+                ['Status', entry.status || viewingVisitor.status || '—'],
+              ].filter(([, val]) => val !== undefined && val !== null && val !== '');
+              return rows.map(([label, val], i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom: i < rows.length - 1 ? '1px solid #e0e0e0' : 'none'}}>
+                  <span style={{fontSize:12,color:'#a89a92'}}>{label}</span>
+                  <span style={{fontSize:12,color:'#1a1a1a',fontWeight:500,textAlign:'right',maxWidth:'60%'}}>{val}</span>
+                </div>
+              ));
+            })()}
           </div>
 
           <button onClick={() => setViewingVisitor(null)} style={{width:'100%',padding:12,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer'}}>
@@ -8532,7 +8575,7 @@ const SecurityApp = ({ onLogout }) => {
       const activePending = (data.pendingApprovals || []).filter(p => !p.resolved);
       // Case-insensitive status helpers — single source of truth for counts
       const dashNormStatus = (e) => (e.status||'').toUpperCase().trim();
-      const dashIsInside = (e) => { const s = dashNormStatus(e); return s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY'; };
+      const dashIsInside = (e) => { const s = dashNormStatus(e); return s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED'; };
       const dashIsCheckedOut = (e) => { const s = dashNormStatus(e); return s === 'CHECKED OUT' || s === 'EXITED'; };
       const dashIsScheduled = (e) => { const s = dashNormStatus(e); return s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL'; };
       const dashIsRejected = (e) => { const s = dashNormStatus(e); return s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY' || s === 'ON HOLD' || s === 'FLAGGED'; };
@@ -8544,16 +8587,38 @@ const SecurityApp = ({ onLogout }) => {
       const checkedOutCount = data.entryLog.filter(dashIsCheckedOut).length;
       const rejectedCountToday = data.entryLog.filter(dashIsRejected).length;
       const totalInside = clearedCount + pendingCount;
-      const totalToday = clearedCount + checkedOutCount + scheduledCount + rejectedCountToday;
-      const guestCount = data.insideVisitors.filter(v => v.type === 'Guest' || v.type === 'Resident Guest').length;
-      const deliveryCount = data.insideVisitors.filter(v => v.type === 'Delivery').length;
-      const contractorCount = data.insideVisitors.filter(v => v.type === 'Contractor').length;
-      const serviceCount = data.insideVisitors.filter(v => v.type === 'Service' || v.type === 'Vendor' || v.type === 'Cleaning Service' || v.type === 'Maintenance').length;
-      // Inside visitors filtered by tab
-      const filteredInside = insideFilterTab === 'ALL' ? data.insideVisitors :
-        insideFilterTab === 'GUESTS' ? data.insideVisitors.filter(v => v.type === 'Guest' || v.type === 'Resident Guest' || v.type === 'VIP') :
-        insideFilterTab === 'VENDORS' ? data.insideVisitors.filter(v => v.type === 'Delivery' || v.type === 'Contractor' || v.type === 'Vendor' || v.type === 'Service' || v.type === 'Cleaning Service' || v.type === 'Maintenance') :
-        data.insideVisitors.filter(v => v.type === 'Staff');
+      // Total Today must always equal the "ALL" count shown on the All Visitors tab,
+      // which is simply data.entryLog.length. Summing buckets would silently drop any
+      // entry whose status falls outside the four known buckets (e.g. APPROVED).
+      const totalToday = data.entryLog.length;
+      // Visitors Inside middle column is now derived directly from entryLog so its
+      // count, its filter chips, and the "Visitors Inside" KPI on the left always
+      // agree. Each inside entry is normalized into the shape the card renderer
+      // expects (name/initials/type/inTime/duration/host).
+      const getInitialsFromName = (n) => (n||'').split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0,2);
+      const insideFromLog = data.entryLog.filter(dashIsInside).map(e => ({
+        id: e.id,
+        entryId: e.id,
+        name: e.visitor || e.name || '—',
+        initials: e.initials || getInitialsFromName(e.visitor || e.name || ''),
+        type: e.type || 'Visitor',
+        inTime: e.timeIn || '',
+        duration: e.duration || '',
+        host: e.host || '—',
+        _raw: e
+      }));
+      const typeIsGuest = (t) => { const s = (t||'').toLowerCase(); return s.includes('guest') || s.includes('vip') || s.includes('resident'); };
+      const typeIsVendor = (t) => { const s = (t||'').toLowerCase(); return s.includes('delivery') || s.includes('courier') || s.includes('contractor') || s.includes('vendor') || s.includes('service') || s.includes('cleaning') || s.includes('maintenance') || s.includes('worker'); };
+      const typeIsStaff = (t) => { const s = (t||'').toLowerCase(); return s.includes('staff') || s.includes('employee'); };
+      const guestCount = insideFromLog.filter(v => typeIsGuest(v.type)).length;
+      const deliveryCount = insideFromLog.filter(v => (v.type||'').toLowerCase().includes('delivery')).length;
+      const contractorCount = insideFromLog.filter(v => (v.type||'').toLowerCase().includes('contractor')).length;
+      const serviceCount = insideFromLog.filter(v => typeIsVendor(v.type)).length;
+      // Inside visitors filtered by tab — uses the same insideFromLog so counts stay in sync
+      const filteredInside = insideFilterTab === 'ALL' ? insideFromLog :
+        insideFilterTab === 'GUESTS' ? insideFromLog.filter(v => typeIsGuest(v.type)) :
+        insideFilterTab === 'VENDORS' ? insideFromLog.filter(v => typeIsVendor(v.type)) :
+        insideFromLog.filter(v => typeIsStaff(v.type));
       // Entry log pagination
       const totalLogPages = Math.max(1, Math.ceil(data.entryLog.length / ENTRY_LOG_PER_PAGE));
       const pagedLog = data.entryLog.slice(entryLogPage * ENTRY_LOG_PER_PAGE, (entryLogPage + 1) * ENTRY_LOG_PER_PAGE);
@@ -8651,7 +8716,7 @@ const SecurityApp = ({ onLogout }) => {
                 </div>
                 {filteredInside.length === 0 ? (
                   <div style={{textAlign:'center',padding:'20px 0',color:'#a89a92',fontSize:12}}>No visitors in this category</div>
-                ) : filteredInside.slice(0,5).map(v => (
+                ) : filteredInside.slice(0,4).map(v => (
                   <div key={v.id} className="sec-visitor-now-card">
                     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
                       <div style={{width:32,height:32,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,color:'#1a1a1a'}}>
@@ -8668,16 +8733,17 @@ const SecurityApp = ({ onLogout }) => {
                     </div>
                     <div style={{fontSize:10,color:'#a89a92',marginBottom:8}}>Host: {v.host}</div>
                     <button className="sec-quick-checkout-btn" onClick={() => {
+                      const nowStr = formatTime12(new Date());
                       setData(prev => ({
                         ...prev,
-                        insideVisitors: prev.insideVisitors.filter(iv => iv.id !== v.id),
-                        entryLog: prev.entryLog.map(e => e.visitor === v.name ? {...e, status:'CHECKED OUT', timeOut: formatTime12(new Date())} : e)
+                        insideVisitors: prev.insideVisitors.filter(iv => iv.name !== v.name),
+                        entryLog: prev.entryLog.map(e => e.id === v.entryId ? {...e, status:'CHECKED OUT', timeOut: nowStr, duration: computeDuration(e.timeIn, nowStr) || e.duration || ''} : e)
                       }));
                       showToast(v.name + ' checked out');
                     }}>QUICK CHECKOUT</button>
                   </div>
                 ))}
-                <button className="sec-view-all-btn" onClick={() => setShowFullInsideList(true)}>VIEW ALL VISITORS INSIDE{filteredInside.length > 0 ? ' (' + filteredInside.length + ')' : ''}</button>
+                <button className="sec-view-all-btn" onClick={() => { setSecVisitorFilter('INSIDE'); setVisRegDateFrom(''); setVisRegDateTo(''); setVisRegPage(0); setCurrentTab('visitors'); }}>VIEW ALL VISITORS INSIDE{insideFromLog.length > 0 ? ' (' + insideFromLog.length + ')' : ''}</button>
               </div>
             </div>
 
@@ -8872,7 +8938,7 @@ const SecurityApp = ({ onLogout }) => {
       const allEntries = data.entryLog;
       // Normalize statuses case-insensitively so dashboard counts and filters stay in sync
       const normStatus = (e) => (e.status||'').toUpperCase().trim();
-      const isInside = (e) => { const s = normStatus(e); return s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY'; };
+      const isInside = (e) => { const s = normStatus(e); return s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED'; };
       const isCheckedOut = (e) => { const s = normStatus(e); return s === 'CHECKED OUT' || s === 'EXITED'; };
       const isScheduled = (e) => { const s = normStatus(e); return s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL'; };
       const isRejected = (e) => { const s = normStatus(e); return s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY' || s === 'ON HOLD' || s === 'FLAGGED'; };
@@ -9033,11 +9099,15 @@ const SecurityApp = ({ onLogout }) => {
               {pagedEntries.map((e,i) => {
                 const mSts = getStatusStyle(e.status);
                 const mIsScheduled = mSts.label === 'SCHEDULED';
+                const mIsInside = mSts.label === 'INSIDE';
+                // INSIDE visitors have no check-out time yet — only show timeIn.
                 const mTimeLabel = mIsScheduled
                   ? ('Expected ' + (formatTimeDisplay(e.timeIn) || '—'))
-                  : (formatTimeDisplay(e.timeIn) + (e.timeOut ? ' → ' + formatTimeDisplay(e.timeOut) + ' · ' + (computeDuration(e.timeIn, e.timeOut) || e.duration || '') : ''));
+                  : mIsInside
+                    ? (formatTimeDisplay(e.timeIn) || '—')
+                    : (formatTimeDisplay(e.timeIn) + (e.timeOut ? ' → ' + formatTimeDisplay(e.timeOut) + ' · ' + (computeDuration(e.timeIn, e.timeOut) || e.duration || '') : ''));
                 return (
-                <div key={e.id} style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:6,padding:12,marginBottom:8,cursor:'pointer'}} onClick={() => { const match = findFullVisitor(e); if (match) setViewingVisitor(match); }}>
+                <div key={e.id} style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:6,padding:12,marginBottom:8,cursor:'pointer'}} onClick={() => setViewingVisitor(findFullVisitor(e))}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
                     <div style={{fontWeight:600,fontSize:13,color:'#1a1a1a'}}>{e.visitor}</div>
                     <span style={{background:mSts.bg,color:mSts.color,border:`1px solid ${mSts.border||mSts.bg}`,padding:'3px 8px',borderRadius:3,fontSize:9,fontWeight:700,display:'inline-block',letterSpacing:'0.03em',whiteSpace:'nowrap'}}>{mSts.label}</span>
@@ -9071,14 +9141,15 @@ const SecurityApp = ({ onLogout }) => {
                   const isLogInside = sts.label === 'INSIDE';
                   const isLogScheduled = sts.label === 'SCHEDULED';
                   return (
-                  <tr key={e.id} style={{cursor:'pointer'}} onClick={() => { const match = findFullVisitor(e); if (match) setViewingVisitor(match); }}>
+                  <tr key={e.id} style={{cursor:'pointer'}} onClick={() => setViewingVisitor(findFullVisitor(e))}>
                     <td style={{color:'#a89a92'}}>{visRegPage * VIS_REG_PER_PAGE + i + 1}</td>
                     <td style={{fontWeight:500,color:'#1a1a1a'}}>{e.visitor}</td>
                     <td style={{color:'#a89a92'}}>{e.type || '—'}</td>
                     <td style={{color:'#a89a92'}}>{formatUnit(e.flat)}</td>
                     <td style={{color:'#a89a92'}}>{isLogScheduled ? (formatTimeDisplay(e.timeIn) || '—') : '—'}</td>
                     <td style={{color:'#a89a92'}}>{isLogScheduled ? '—' : (formatTimeDisplay(e.timeIn) || '—')}</td>
-                    <td style={{color:'#a89a92'}}>{formatTimeDisplay(e.timeOut) || '—'}</td>
+                    {/* A visitor who is still INSIDE (or SCHEDULED) has no check-out time yet */}
+                    <td style={{color:'#a89a92'}}>{(isLogInside || isLogScheduled) ? '—' : (formatTimeDisplay(e.timeOut) || '—')}</td>
                     <td style={{color:'#a89a92'}}>{(isLogInside || isLogScheduled) ? '—' : (e.timeOut ? (computeDuration(e.timeIn, e.timeOut) || e.duration || '—') : (e.duration || '—'))}</td>
                     <td style={{color:'#a89a92'}}>{e.gateUsed || e.gate || 'Main Gate'}</td>
                     <td style={{color:'#a89a92'}}>{e.host || '—'}</td>
