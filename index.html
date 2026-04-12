@@ -8616,35 +8616,55 @@ const SecurityApp = ({ onLogout }) => {
       }
     }
 
-    // Labels that are NOT part of someone's name
+    // Labels that appear on Emirates ID
     const labelWords = /^(name|nationality|date|birth|sex|gender|expiry|expire|id|number|card|resident|authority|emirates|united|arab|ajnabi|issue|of|the|identity|uae|document|type|holder|place|no|sig|signature|m|f|male|female)$/i;
-    // Arabic Unicode range
+    const nextLabelPattern = /\b(nationality|date|birth|sex|gender|expiry|id\s*number|number|ajnabi|resident)\b/i;
     const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 
-    // Strategy 1: Find "Name" line in RAW text (before stripping), grab everything between "Name" and first Arabic char
+    // Strategy 1: Find "Name" in raw OCR, extract English name before Arabic/labels
     const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const nameLineIdx = rawLines.findIndex(l => /\bname\b/i.test(l));
     if (nameLineIdx >= 0) {
-      // Take the name line + next line (name might span)
+      // Take name line + next line
       const nameZone = rawLines.slice(nameLineIdx, nameLineIdx + 2).join(' ');
-      // Strip the "Name" label itself
       const afterLabel = nameZone.replace(/.*?\bname\b[:\s]*/i, '');
-      // Cut off at first Arabic character — everything before it is the English name
-      const arabicStart = afterLabel.search(hasArabic);
-      const englishPart = arabicStart >= 0 ? afterLabel.slice(0, arabicStart) : afterLabel;
-      // Extract words: only Latin letters, 4+ chars each (real name words are always 4+)
-      const words = englishPart.split(/[^a-zA-Z]+/).filter(w => w.length >= 4 && !labelWords.test(w));
-      if (words.length >= 1) {
-        result.name = words.slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      // Cut at Arabic chars
+      const arabicIdx = afterLabel.search(hasArabic);
+      let namePart = arabicIdx >= 0 ? afterLabel.slice(0, arabicIdx) : afterLabel;
+      // Cut at next label, date, or ID number
+      const labelIdx = namePart.search(nextLabelPattern);
+      if (labelIdx > 0) namePart = namePart.slice(0, labelIdx);
+      const dateIdx = namePart.search(/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/);
+      if (dateIdx > 0) namePart = namePart.slice(0, dateIdx);
+      const idInName = namePart.search(/784/);
+      if (idInName > 0) namePart = namePart.slice(0, idInName);
+      // Extract Latin-only words, 4+ chars, not labels
+      const allWords = namePart.split(/[^a-zA-Z]+/).filter(w => w.length >= 4 && !labelWords.test(w));
+      // Emirates ID: name is always First Last (2 words). Sometimes has middle name(s).
+      // Problem: OCR-mangled Arabic can look like Latin words (e.g., "Oncol").
+      // Solution: take first 2 words always. Only include 3rd/4th word if they are 7+ chars
+      // (real middle/last names are long, OCR garbage from Arabic is usually shorter)
+      const nameWords = [];
+      for (let i = 0; i < allWords.length && nameWords.length < 4; i++) {
+        if (nameWords.length < 2) {
+          nameWords.push(allWords[i]); // always take first 2
+        } else if (allWords[i].length >= 6) {
+          nameWords.push(allWords[i]); // 3rd/4th only if 6+ chars (filters OCR garbage)
+        } else {
+          break; // short word after first 2 = probably garbage, stop
+        }
+      }
+      if (nameWords.length >= 1) {
+        result.name = nameWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
       }
     }
 
-    // Strategy 2: Fallback — scan latin-only lines for 2+ words of 4+ letters
+    // Strategy 2: Fallback — first 2 long Latin words from any line
     if (!result.name) {
       for (const line of lines) {
         const words = line.split(/\s+/).filter(w => /^[A-Za-z]{4,}$/.test(w) && !labelWords.test(w));
         if (words.length >= 2) {
-          result.name = words.slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+          result.name = words.slice(0, 2).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
           break;
         }
       }
