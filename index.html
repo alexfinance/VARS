@@ -8582,29 +8582,16 @@ const SecurityApp = ({ onLogout }) => {
       const { data: { text } } = await worker.recognize(canvas);
       console.log('[EID OCR ' + idScanStep + ']', text);
 
-      if (idScanStep === 'front') {
-        // Front side: extract Name + ID Number (Arabic stripped, Latin only)
-        const frontData = parseFrontSide(text);
-        setIdScanFrontData(frontData);
-        setNewVisitorData(prev => ({ ...prev, idDocType: 'Emirates ID' }));
-        if (frontData.name) setNewVisitorData(prev => ({ ...prev, fullName: frontData.name }));
-        if (frontData.idNumber) setNewVisitorData(prev => ({ ...prev, idDocNumber: frontData.idNumber }));
-        setIdScanStatus('done');
-        const msg = [frontData.name, frontData.idNumber].filter(Boolean).join(' — ');
-        showToast(msg ? 'Front: ' + msg + ' — now flip card' : 'Front scanned — now flip to back side');
-        setTimeout(() => { startBackSideScan(); }, 1500);
-      } else {
-        // Back side: extract name from MRZ as confirmation/fallback
-        const backData = parseBackSide(text);
-        // MRZ name overwrites front-side name (MRZ is more reliable)
-        if (backData.mrzName) {
-          setNewVisitorData(prev => ({ ...prev, fullName: backData.mrzName }));
-        }
-        setIdScanStatus('done');
-        showToast(backData.mrzName ? 'ID scanned — ' + backData.mrzName : 'Back scan complete — verify name manually');
-        terminateIdWorker();
-        setTimeout(() => { setShowIdScanner(false); setIdScanStatus(''); setIdScanStep('front'); setIdScanFrontData(null); }, 1200);
-      }
+      // Single scan: extract Name + ID Number from front side
+      const frontData = parseFrontSide(text);
+      setNewVisitorData(prev => ({ ...prev, idDocType: 'Emirates ID' }));
+      if (frontData.name) setNewVisitorData(prev => ({ ...prev, fullName: frontData.name }));
+      if (frontData.idNumber) setNewVisitorData(prev => ({ ...prev, idDocNumber: frontData.idNumber }));
+      setIdScanStatus('done');
+      const msg = [frontData.name, frontData.idNumber].filter(Boolean).join(' — ');
+      showToast(msg ? 'ID scanned — ' + msg : 'Scan complete — please verify data');
+      terminateIdWorker();
+      setTimeout(() => { setShowIdScanner(false); setIdScanStatus(''); }, 1200);
     } catch (err) {
       console.error('OCR error:', err);
       setIdScanStatus('error');
@@ -8663,22 +8650,32 @@ const SecurityApp = ({ onLogout }) => {
       // Everything after "Name" — extract only alphabetic words (2+ chars each)
       const afterName = nameMarker[1];
       const words = afterName.split(/[\s,;:.\/\d]+/).filter(w => /^[A-Za-z]{2,}$/.test(w) && !labelWords.test(w));
-      // Take the first 2-4 name words (stop at next label keyword)
+      // Take name words, stop at next label keyword
       const nameWords = [];
       for (const w of words) {
         if (labelWords.test(w)) break;
         nameWords.push(w);
-        if (nameWords.length >= 4) break;
+        if (nameWords.length >= 5) break;
       }
-      if (nameWords.length >= 2) {
-        result.name = nameWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      // Trim trailing short garbage — cut off after the last word that's 4+ letters
+      let lastGoodIdx = -1;
+      for (let i = 0; i < nameWords.length; i++) {
+        if (nameWords[i].length >= 4) lastGoodIdx = i;
+      }
+      const cleanWords = lastGoodIdx >= 0 ? nameWords.slice(0, lastGoodIdx + 1) : nameWords;
+      if (cleanWords.length >= 2) {
+        result.name = cleanWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
       }
     }
 
-    // Strategy 2: If "Name" label not found, try line-by-line — find lines with 2-3 English-only words
+    // Strategy 2: If "Name" label not found, try line-by-line
     if (!result.name) {
       for (const line of lines) {
-        const words = line.split(/\s+/).filter(w => /^[A-Za-z]{2,}$/.test(w) && !labelWords.test(w));
+        let words = line.split(/\s+/).filter(w => /^[A-Za-z]{2,}$/.test(w) && !labelWords.test(w));
+        // Trim trailing short garbage — cut after last word with 4+ letters
+        let li = -1;
+        for (let i = 0; i < words.length; i++) { if (words[i].length >= 4) li = i; }
+        if (li >= 0) words = words.slice(0, li + 1);
         if (words.length >= 2 && words.length <= 4) {
           result.name = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
           break;
@@ -11347,29 +11344,18 @@ const SecurityApp = ({ onLogout }) => {
           {/* Header */}
           <div style={{position:'absolute',top:0,left:0,right:0,display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 24px',zIndex:2001}}>
             <div>
-              <div style={{fontSize:16,fontWeight:600,color:'#fff',display:'flex',alignItems:'center',gap:10}}>
-                Scan Emirates ID
-                <span style={{fontSize:10,fontWeight:500,background: idScanStep === 'front' ? 'rgba(255,255,255,0.15)' : '#4caf50',padding:'3px 10px',borderRadius:20,color:'#fff'}}>
-                  {idScanStep === 'front' ? 'Step 1/2 — Front Side' : 'Step 2/2 — Back Side'}
-                </span>
-              </div>
+              <div style={{fontSize:16,fontWeight:600,color:'#fff'}}>Scan Emirates ID</div>
               <div style={{fontSize:11,color:'rgba(255,255,255,0.6)',marginTop:2}}>
                 {idScanStatus === 'opening' ? 'Opening camera...'
-                  : idScanStatus === 'ready' ? (idScanStep === 'front' ? 'Show the FRONT of the Emirates ID (photo side)' : 'Now flip to the BACK side (employer/MRZ side)')
+                  : idScanStatus === 'ready' ? 'Position the Emirates ID in the frame'
                   : idScanStatus === 'capturing' ? 'Capturing...'
-                  : idScanStatus === 'processing' ? (idScanStep === 'front' ? 'Reading front — extracting name & ID number...' : 'Reading back — extracting employer info...')
-                  : idScanStatus === 'done' ? (idScanStep === 'front' ? 'Front side captured! Preparing back side...' : 'ID scan complete!')
+                  : idScanStatus === 'processing' ? 'Reading ID — extracting name & ID number...'
+                  : idScanStatus === 'done' ? 'ID scanned successfully!'
                   : idScanStatus === 'error' ? 'Camera error — please try again'
                   : ''}
               </div>
             </div>
             <button onClick={closeIdScanner} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:36,height:36,borderRadius:'50%',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-          </div>
-
-          {/* Step indicator dots */}
-          <div style={{position:'absolute',top:70,left:'50%',transform:'translateX(-50)',display:'flex',gap:8,zIndex:2001}}>
-            <div style={{width:8,height:8,borderRadius:'50%',background: idScanStep === 'front' ? '#fff' : '#4caf50',transition:'all .3s'}}/>
-            <div style={{width:8,height:8,borderRadius:'50%',background: idScanStep === 'back' ? '#fff' : 'rgba(255,255,255,0.3)',transition:'all .3s'}}/>
           </div>
 
           {/* Camera viewfinder */}
@@ -11382,7 +11368,7 @@ const SecurityApp = ({ onLogout }) => {
               <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
                 <div style={{width:'90%',height:'85%',border:'2px dashed rgba(255,255,255,0.5)',borderRadius:10,position:'relative'}}>
                   <div style={{position:'absolute',top:-24,left:'50%',transform:'translateX(-50)',background:'rgba(0,0,0,0.7)',padding:'5px 14px',borderRadius:4,fontSize:11,color:'rgba(255,255,255,0.9)',whiteSpace:'nowrap',fontWeight:500}}>
-                    {idScanStep === 'front' ? 'FRONT SIDE — Photo & Name' : 'BACK SIDE — Employer & MRZ'}
+                    Align ID card within this frame
                   </div>
                   {/* Corner markers */}
                   {[[0,0,'borderTop','borderLeft'],[1,0,'borderTop','borderRight'],[0,1,'borderBottom','borderLeft'],[1,1,'borderBottom','borderRight']].map(([x,y,bv,bh], i) => (
@@ -11396,12 +11382,8 @@ const SecurityApp = ({ onLogout }) => {
             {idScanStatus === 'processing' && (
               <div style={{width:'100%',height:'100%',background:'rgba(0,0,0,0.7)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
                 <div style={{width:48,height:48,border:'3px solid rgba(255,255,255,0.2)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
-                <div style={{color:'#fff',fontSize:14,fontWeight:500}}>
-                  {idScanStep === 'front' ? 'Reading front side...' : 'Reading back side...'}
-                </div>
-                <div style={{color:'rgba(255,255,255,0.5)',fontSize:11}}>
-                  {idScanStep === 'front' ? 'Extracting name, ID number, nationality' : 'Extracting employer, occupation, MRZ data'}
-                </div>
+                <div style={{color:'#fff',fontSize:14,fontWeight:500}}>Reading Emirates ID...</div>
+                <div style={{color:'rgba(255,255,255,0.5)',fontSize:11}}>Extracting name and ID number</div>
               </div>
             )}
 
@@ -11411,12 +11393,7 @@ const SecurityApp = ({ onLogout }) => {
                 <div style={{width:56,height:56,borderRadius:'50%',background:'#4caf50',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div style={{color:'#fff',fontSize:16,fontWeight:600}}>
-                  {idScanStep === 'front' ? 'Front Side Captured!' : 'Emirates ID Scan Complete'}
-                </div>
-                {idScanStep === 'front' && (
-                  <div style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>Preparing back side scan...</div>
-                )}
+                <div style={{color:'#fff',fontSize:16,fontWeight:600}}>ID Scanned Successfully</div>
               </div>
             )}
 
@@ -11453,20 +11430,10 @@ const SecurityApp = ({ onLogout }) => {
             </button>
           )}
 
-          {/* Instructions + Skip button for back side */}
+          {/* Instructions */}
           {idScanStatus === 'ready' && (
-            <div style={{marginTop:16,textAlign:'center',maxWidth:320}}>
-              <div style={{color:'rgba(255,255,255,0.5)',fontSize:11}}>
-                {idScanStep === 'front'
-                  ? 'Hold the FRONT of the Emirates ID (with photo) flat and well-lit.'
-                  : 'Now show the BACK side (with employer info and MRZ code).'}
-              </div>
-              {idScanStep === 'back' && (
-                <button onClick={skipBackSide}
-                  style={{marginTop:10,background:'none',border:'1px solid rgba(255,255,255,0.2)',color:'rgba(255,255,255,0.5)',padding:'6px 16px',borderRadius:4,fontSize:11,cursor:'pointer'}}>
-                  Skip back side
-                </button>
-              )}
+            <div style={{marginTop:16,textAlign:'center',color:'rgba(255,255,255,0.5)',fontSize:11,maxWidth:300}}>
+              Hold the Emirates ID flat and well-lit. Tap capture when the card is clearly visible.
             </div>
           )}
         </div>
