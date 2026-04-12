@@ -8510,12 +8510,25 @@ const SecurityApp = ({ onLogout }) => {
           }
         }
         const edgeDensity = edges / px;
-        if (avgBright < 50) setIdScanGuide({ msg: 'Too dark — move to better lighting', color: '#ff6b6b', icon: '\u2600' });
-        else if (avgBright > 225) setIdScanGuide({ msg: 'Too bright — avoid direct light on card', color: '#ff6b6b', icon: '\u2600' });
-        else if (variance < 600) setIdScanGuide({ msg: 'Move closer — fill the frame with ID card', color: '#ffa726', icon: '\u2195' });
-        else if (edgeDensity < 0.02) setIdScanGuide({ msg: 'No card detected — place ID in the frame', color: '#ffa726', icon: '\u2610' });
-        else if (variance < 1200) setIdScanGuide({ msg: 'A bit closer — make the text larger', color: '#ffa726', icon: '\u2195' });
-        else if (edgeDensity < 0.05) setIdScanGuide({ msg: 'Hold steady — keep the card still', color: '#ffa726', icon: '\u270B' });
+        // Also check brightness uniformity (glare = very high local brightness with low elsewhere)
+        let brightPixels = 0, darkPixels = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+          if (lum > 240) brightPixels++;
+          if (lum < 30) darkPixels++;
+        }
+        const glareRatio = brightPixels / px;
+        const darkRatio = darkPixels / px;
+
+        if (avgBright < 60) setIdScanGuide({ msg: 'Too dark — need more light on the card', color: '#ff6b6b', icon: '\u2600' });
+        else if (avgBright > 210) setIdScanGuide({ msg: 'Too bright — move away from direct light', color: '#ff6b6b', icon: '\u2600' });
+        else if (glareRatio > 0.15) setIdScanGuide({ msg: 'Glare detected — tilt card to avoid reflection', color: '#ff6b6b', icon: '\u2728' });
+        else if (darkRatio > 0.4) setIdScanGuide({ msg: 'Card too far or not in frame — move closer', color: '#ffa726', icon: '\u2195' });
+        else if (variance < 1000) setIdScanGuide({ msg: 'Move closer — card should fill the entire frame', color: '#ffa726', icon: '\u2195' });
+        else if (edgeDensity < 0.04) setIdScanGuide({ msg: 'No text visible — position ID card flat in frame', color: '#ffa726', icon: '\u2610' });
+        else if (variance < 1800) setIdScanGuide({ msg: 'Getting closer — keep moving in slowly', color: '#ffa726', icon: '\u2195' });
+        else if (edgeDensity < 0.08) setIdScanGuide({ msg: 'Hold still — keep the card steady and flat', color: '#ffa726', icon: '\u270B' });
+        else if (glareRatio > 0.08) setIdScanGuide({ msg: 'Almost — slight glare, tilt card a little', color: '#ffa726', icon: '\u2728' });
         else setIdScanGuide({ msg: 'Looking good — capture now!', color: '#66bb6a', icon: '\u2714' });
       } catch (e) { console.warn('[EID guide]', e); }
     }, 800);
@@ -11411,13 +11424,6 @@ const SecurityApp = ({ onLogout }) => {
           {idScanStatus === 'ready' && (
             <div style={{marginTop:16,textAlign:'center',color:'rgba(255,255,255,0.5)',fontSize:11,maxWidth:300}}>
               Hold the front side of Emirates ID flat, close-up, and well-lit. Make sure the English name and ID number are clearly readable before capturing.
-            </div>
-          )}
-          {idScanStatus === 'ready' && (
-            <div style={{marginTop:10,display:'flex',flexWrap:'wrap',justifyContent:'center',gap:6,maxWidth:340}}>
-              {['Fill the frame with the card','Avoid glare on holograms','Keep text sharp, not blurry','Use good lighting'].map((tip,i) => (
-                <div key={i} style={{background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:20,padding:'4px 12px',fontSize:10,color:'rgba(255,255,255,0.4)'}}>{tip}</div>
-              ))}
             </div>
           )}
         </div>
