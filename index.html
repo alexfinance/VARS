@@ -8384,8 +8384,6 @@ const SecurityApp = ({ onLogout }) => {
   const [secUnitFocused, setSecUnitFocused] = useState(false);
   const [showIdScanner, setShowIdScanner] = useState(false);
   const [idScanStatus, setIdScanStatus] = useState(''); // '' | 'opening' | 'ready' | 'capturing' | 'processing' | 'done' | 'error'
-  const [idScanStep, setIdScanStep] = useState('front'); // 'front' | 'back'
-  const [idScanFrontData, setIdScanFrontData] = useState(null); // stores front-side parse results between steps
   const idScanVideoRef = React.useRef(null);
   const idScanCanvasRef = React.useRef(null);
   const idScanStreamRef = React.useRef(null);
@@ -8475,8 +8473,6 @@ const SecurityApp = ({ onLogout }) => {
 
   const openIdScanner = async () => {
     setShowIdScanner(true);
-    setIdScanStep('front');
-    setIdScanFrontData(null);
     setIdScanStatus('opening');
     try {
       // Start camera AND pre-load Tesseract worker in parallel for speed
@@ -8501,25 +8497,7 @@ const SecurityApp = ({ onLogout }) => {
     }
   };
 
-  // Restart camera for back side scan
-  const startBackSideScan = async () => {
-    setIdScanStep('back');
-    setIdScanStatus('opening');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
-      });
-      idScanStreamRef.current = stream;
-      if (idScanVideoRef.current) {
-        idScanVideoRef.current.srcObject = stream;
-        idScanVideoRef.current.play();
-      }
-      setIdScanStatus('ready');
-    } catch (err) {
-      console.error('Camera error:', err);
-      setIdScanStatus('error');
-    }
-  };
+
 
   // Prepare canvas: crop to card area, rotate if needed, downscale, boost contrast
   const prepareCanvasForOCR = (video) => {
@@ -8580,7 +8558,7 @@ const SecurityApp = ({ onLogout }) => {
       if (!worker) worker = await Tesseract.createWorker('eng');
       idScanWorkerRef.current = worker;
       const { data: { text } } = await worker.recognize(canvas);
-      console.log('[EID OCR ' + idScanStep + ']', text);
+      console.log('[EID OCR]', text);
 
       // Single scan: extract Name + ID Number from front side
       const frontData = parseFrontSide(text);
@@ -8608,20 +8586,9 @@ const SecurityApp = ({ onLogout }) => {
     terminateIdWorker();
     setShowIdScanner(false);
     setIdScanStatus('');
-    setIdScanStep('front');
-    setIdScanFrontData(null);
   };
 
-  // Skip back side scan and close
-  const skipBackSide = () => {
-    stopIdScanCamera();
-    terminateIdWorker();
-    setShowIdScanner(false);
-    setIdScanStatus('');
-    setIdScanStep('front');
-    setIdScanFrontData(null);
-    showToast('ID scan complete — back side skipped');
-  };
+
 
   // ---- FRONT SIDE PARSER: Full Name + ID Number ----
   const parseFrontSide = (text) => {
@@ -8634,50 +8601,50 @@ const SecurityApp = ({ onLogout }) => {
     console.log('[EID FRONT latin lines]', JSON.stringify(lines));
 
     // Emirates ID number: 784-YYYY-NNNNNNN-N
-    const idMatch = latinOnly.match(/784[-\s.]?\d{4}[-\s.]?\d{7}[-\s.]?\d/);
-    if (idMatch) {
-      result.idNumber = idMatch[0].replace(/[\s.]/g, '').replace(/(\d{3})(\d{4})(\d{7})(\d)/, '$1-$2-$3-$4');
+    // OCR may insert spaces/dots between digits, so be very flexible
+    const digitsOnly = latinOnly.replace(/[^0-9]/g, '');
+    const idDigitMatch = digitsOnly.match(/784\d{12}/);
+    if (idDigitMatch) {
+      const d = idDigitMatch[0];
+      result.idNumber = d.slice(0,3) + '-' + d.slice(3,7) + '-' + d.slice(7,14) + '-' + d.slice(14,15);
+    }
+    // Also try the formatted pattern in original text
+    if (!result.idNumber) {
+      const idMatch = latinOnly.match(/784[-\s.]?\d{4}[-\s.]?\d{7}[-\s.]?\d/);
+      if (idMatch) {
+        result.idNumber = idMatch[0].replace(/[\s.\-]/g, '').replace(/(\d{3})(\d{4})(\d{7})(\d)/, '$1-$2-$3-$4');
+      }
     }
 
     // Labels that are NOT part of someone's name
     const labelWords = /^(name|nationality|date|birth|sex|gender|expiry|expire|id|number|card|resident|authority|emirates|united|arab|ajnabi|issue|of|the|identity|uae|document|type|holder|place|no|sig|signature|m|f|male|female)$/i;
+    // Arabic Unicode range
+    const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 
-    // Strategy 1: Find "Name" keyword, then grab the English words that follow it
-    // Could be "Name Viacheslav Aleksandrov" on same line, or "Name\nViacheslav Aleksandrov" on next line
-    const fullText = lines.join(' ');
-    const nameMarker = fullText.match(/\bname\b[:\s]*(.*)/i);
-    if (nameMarker) {
-      // Everything after "Name" — extract only alphabetic words (2+ chars each)
-      const afterName = nameMarker[1];
-      const words = afterName.split(/[\s,;:.\/\d]+/).filter(w => /^[A-Za-z]{2,}$/.test(w) && !labelWords.test(w));
-      // Take name words, stop at next label keyword
-      const nameWords = [];
-      for (const w of words) {
-        if (labelWords.test(w)) break;
-        nameWords.push(w);
-        if (nameWords.length >= 5) break;
-      }
-      // Trim trailing short garbage — cut off after the last word that's 4+ letters
-      let lastGoodIdx = -1;
-      for (let i = 0; i < nameWords.length; i++) {
-        if (nameWords[i].length >= 4) lastGoodIdx = i;
-      }
-      const cleanWords = lastGoodIdx >= 0 ? nameWords.slice(0, lastGoodIdx + 1) : nameWords;
-      if (cleanWords.length >= 2) {
-        result.name = cleanWords.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    // Strategy 1: Find "Name" line in RAW text (before stripping), grab everything between "Name" and first Arabic char
+    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const nameLineIdx = rawLines.findIndex(l => /\bname\b/i.test(l));
+    if (nameLineIdx >= 0) {
+      // Take the name line + next line (name might span)
+      const nameZone = rawLines.slice(nameLineIdx, nameLineIdx + 2).join(' ');
+      // Strip the "Name" label itself
+      const afterLabel = nameZone.replace(/.*?\bname\b[:\s]*/i, '');
+      // Cut off at first Arabic character — everything before it is the English name
+      const arabicStart = afterLabel.search(hasArabic);
+      const englishPart = arabicStart >= 0 ? afterLabel.slice(0, arabicStart) : afterLabel;
+      // Extract words: only Latin letters, 4+ chars each (real name words are always 4+)
+      const words = englishPart.split(/[^a-zA-Z]+/).filter(w => w.length >= 4 && !labelWords.test(w));
+      if (words.length >= 1) {
+        result.name = words.slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
       }
     }
 
-    // Strategy 2: If "Name" label not found, try line-by-line
+    // Strategy 2: Fallback — scan latin-only lines for 2+ words of 4+ letters
     if (!result.name) {
       for (const line of lines) {
-        let words = line.split(/\s+/).filter(w => /^[A-Za-z]{2,}$/.test(w) && !labelWords.test(w));
-        // Trim trailing short garbage — cut after last word with 4+ letters
-        let li = -1;
-        for (let i = 0; i < words.length; i++) { if (words[i].length >= 4) li = i; }
-        if (li >= 0) words = words.slice(0, li + 1);
-        if (words.length >= 2 && words.length <= 4) {
-          result.name = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        const words = line.split(/\s+/).filter(w => /^[A-Za-z]{4,}$/.test(w) && !labelWords.test(w));
+        if (words.length >= 2) {
+          result.name = words.slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
           break;
         }
       }
@@ -8686,68 +8653,7 @@ const SecurityApp = ({ onLogout }) => {
     return result;
   };
 
-  // ---- BACK SIDE PARSER: Employer/Occupation + MRZ ----
-  const parseBackSide = (text) => {
-    const result = { employer: '', occupation: '', mrzName: '', issuingPlace: '' };
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-    // Employer — look for "Employer" or "Employer / Occupation" label
-    const empIdx = lines.findIndex(l => /employer/i.test(l));
-    if (empIdx >= 0) {
-      // The employer value might be on the same line after colon, or on the next line
-      const sameLine = lines[empIdx].replace(/.*employer[\/\s]*(?:occupation)?[:\s]*/i, '').trim();
-      if (sameLine.length > 2 && !/occupation/i.test(sameLine)) {
-        result.employer = sameLine;
-      } else if (empIdx + 1 < lines.length) {
-        const nextLine = lines[empIdx + 1].replace(/[^a-zA-Z\s\-&.,']/g, '').trim();
-        if (nextLine.length > 1) result.employer = nextLine;
-      }
-    }
-
-    // Occupation — look for "Occupation" label (separate from employer)
-    const occIdx = lines.findIndex(l => /^occupation[:\s]/i.test(l) || (l.toLowerCase().includes('occupation') && !l.toLowerCase().includes('employer')));
-    if (occIdx >= 0) {
-      const sameLine = lines[occIdx].replace(/.*occupation[:\s]*/i, '').trim();
-      if (sameLine.length > 2) {
-        result.occupation = sameLine;
-      } else if (occIdx + 1 < lines.length) {
-        const nextLine = lines[occIdx + 1].replace(/[^a-zA-Z\s\-&.,']/g, '').trim();
-        if (nextLine.length > 1) result.occupation = nextLine;
-      }
-    }
-    // If no separate employer found, use occupation as employer fallback
-    if (!result.employer && result.occupation) result.employer = result.occupation;
-
-    // Issuing Place
-    const ipIdx = lines.findIndex(l => /issuing\s*place/i.test(l));
-    if (ipIdx >= 0) {
-      const sameLine = lines[ipIdx].replace(/.*issuing\s*place[:\s]*/i, '').trim();
-      if (sameLine.length > 2) result.issuingPlace = sameLine;
-      else if (ipIdx + 1 < lines.length) result.issuingPlace = lines[ipIdx + 1].replace(/[^a-zA-Z\s]/g, '').trim();
-    }
-
-    // MRZ parsing (Machine Readable Zone — bottom of back side)
-    // Emirates ID MRZ has 3 lines of 30 chars, format:
-    // Line 3 pattern: LASTNAME<<FIRSTNAME<<<<<<<<<<<
-    const mrzLines = lines.filter(l => {
-      const clean = l.replace(/\s/g, '');
-      return clean.length >= 20 && /^[A-Z0-9<]{15,}$/.test(clean);
-    });
-    for (const mrzLine of mrzLines) {
-      const clean = mrzLine.replace(/\s/g, '');
-      const nameMatch = clean.match(/([A-Z]+)<<([A-Z]+)/);
-      if (nameMatch) {
-        const lastName = nameMatch[1].replace(/</g, ' ').trim();
-        const firstName = nameMatch[2].replace(/</g, ' ').trim();
-        if (lastName.length > 1 && firstName.length > 1) {
-          result.mrzName = (firstName.charAt(0) + firstName.slice(1).toLowerCase()) + ' ' + (lastName.charAt(0) + lastName.slice(1).toLowerCase());
-        }
-        break;
-      }
-    }
-
-    return result;
-  };
 
   const resetNewVisitorForm = () => {
     setSecFormStep('form');
