@@ -8620,28 +8620,45 @@ const SecurityApp = ({ onLogout }) => {
       result.idNumber = idMatch[0].replace(/[\s.]/g, '').replace(/(\d{3})(\d{4})(\d{7})(\d)/, '$1-$2-$3-$4');
     }
 
-    // Name — look for "Name" label, then take the next line
+    // Known labels/junk that should NEVER appear in a name
+    const junkWords = /^(name|nationality|date|birth|sex|gender|expiry|id|number|card|resident|authority|emirates|united|arab|ajnabi|issue|of|the|identity|uae|document|type|holder|place|no|sig|signature)$/i;
+
+    // Strategy 1: Look for "Name" label, then extract the value
     const nameLineIdx = lines.findIndex(l => /^name\b/i.test(l));
-    if (nameLineIdx >= 0 && nameLineIdx + 1 < lines.length) {
-      const candidate = lines[nameLineIdx + 1].replace(/[^a-zA-Z\s\-']/g, '').trim();
-      if (candidate.length > 3) result.name = candidate;
-    }
-    // Fallback: look for multi-word alpha lines that aren't labels
-    if (!result.name) {
-      const labels = /nationality|date|birth|sex|gender|expiry|id\s*number|card|resident|authority|emirates|united|arab|ajnabi|issue/i;
-      const nameCandidates = lines
-        .filter(l => {
-          const clean = l.replace(/[^a-zA-Z\s]/g, '').trim();
-          return clean.length > 5 && clean.split(/\s+/).length >= 2 && clean.length > l.length * 0.6 && !labels.test(clean);
-        })
-        .map(l => l.replace(/[^a-zA-Z\s\-']/g, '').trim());
-      if (nameCandidates.length > 0) {
-        result.name = nameCandidates.reduce((a, b) => a.length >= b.length ? a : b);
+    if (nameLineIdx >= 0) {
+      // Name might be on the SAME line after "Name" label (e.g., "Name Viacheslav Aleksandrov")
+      const sameLineVal = lines[nameLineIdx].replace(/^name[:\s]*/i, '').trim();
+      const sameClean = sameLineVal.replace(/[^a-zA-Z\s\-']/g, '').trim();
+      if (sameClean.length > 3 && sameClean.split(/\s+/).length >= 2) {
+        result.name = sameClean;
+      }
+      // Or on the next line
+      if (!result.name && nameLineIdx + 1 < lines.length) {
+        const candidate = lines[nameLineIdx + 1].replace(/[^a-zA-Z\s\-']/g, '').trim();
+        if (candidate.length > 3 && candidate.split(/\s+/).length >= 2) result.name = candidate;
       }
     }
-    // Title case the name
+
+    // Strategy 2: Fallback — find a line with 2-4 capitalized English words that aren't labels
+    if (!result.name) {
+      for (const line of lines) {
+        const clean = line.replace(/[^a-zA-Z\s\-']/g, '').trim();
+        const words = clean.split(/\s+/).filter(w => w.length > 1);
+        // A person's name is typically 2-4 English words, each starting with uppercase
+        if (words.length >= 2 && words.length <= 4 && words.every(w => /^[A-Z]/.test(w)) && !words.some(w => junkWords.test(w))) {
+          result.name = clean;
+          break;
+        }
+      }
+    }
+
+    // Clean the name: keep only 2-4 real name words, remove any junk words that slipped in
     if (result.name) {
-      result.name = result.name.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      let words = result.name.split(/\s+/).filter(w => w.length > 1 && !junkWords.test(w));
+      // Limit to max 4 words (first + middle + last typical for Emirates ID)
+      if (words.length > 4) words = words.slice(0, 4);
+      // Title case
+      result.name = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
     }
 
     // Nationality
