@@ -2316,6 +2316,13 @@ const TRANSLATIONS = {
     'pm.flatLabel': 'Flat:',
     'pm.createdLabel': 'Created:',
     'pm.assignedLabel': 'Assigned:',
+    'pm.newEscalationTitle': 'New Escalation',
+    'pm.escFormTitle': 'Title',
+    'pm.escFormType': 'Type',
+    'pm.escFormSeverity': 'Severity',
+    'pm.escFormAssigned': 'Assigned To',
+    'pm.escFormDescription': 'Description',
+    'pm.escFormSubmit': 'Create Escalation',
     // AnnouncementsPage - additional strings
     'pm.filterChipsAnn': 'Sent, Draft, Scheduled, Live, All',
     'pm.ackRequiredLabel': 'Ack Required',
@@ -2548,6 +2555,132 @@ const TRANSLATIONS = {
     'pm.prefDisabled': 'disabled',
 
     'pm.viewDetails': 'View Details',
+    // Payment Summary Page
+    'pm.payBillingCycle': 'Billing cycle',
+    'pm.payResidents': 'residents',
+    'pm.payExportStatement': 'Export Statement',
+    'pm.paySendReminders': 'Send Reminders',
+    'pm.payStatementGenerated': 'Statement exported to Excel',
+    'pm.payRemindersQueued': 'Payment reminders sent to overdue residents',
+    'pm.payTotalBilled': 'Total Billed',
+    'pm.payCollected': 'Collected',
+    'pm.payOutstanding': 'Outstanding',
+    'pm.payOverdueUnits': 'Overdue Units',
+    'pm.payPenalties': 'Penalties',
+    'pm.payResidentCharges': 'Resident Charges — April 2026',
+    'pm.paySearchResident': 'Search resident or flat...',
+    'pm.payPaid': 'Paid',
+    'pm.payUnpaid': 'Unpaid',
+    'pm.payOverdue': 'Overdue',
+    'pm.payPartial': 'Partial',
+    'pm.payResident': 'Resident',
+    'pm.payScCharge': 'Service Charge',
+    'pm.payParking': 'Parking',
+    'pm.payWater': 'Water',
+    'pm.payMaint': 'Maintenance',
+    'pm.payPenalty': 'Penalty',
+    'pm.payBalance': 'Balance',
+    'pm.payResidentDetail': 'Resident Payment Detail',
+    'pm.payBreakdown': 'Current Month Breakdown',
+    'pm.payTotalBalance': 'Total Balance',
+    'pm.payCleared': 'Cleared',
+    'pm.payHistory': 'Payment History (3 months)',
+    'pm.payReminderSent': 'Payment reminder sent to',
+    'pm.paySendReminder': 'Send Reminder',
+    'pm.payDownloadStmt': 'Download Statement',
+    'pm.paySelectResident': 'Select a resident to view payment details',
+    'pm.monthApr': 'April',
+    'pm.moveInOutTitle': 'Move-In/Out Planning',
+    'pm.moveInOutSubtitle': 'Upcoming moves and scheduling',
+    'pm.moveScheduledWeek': 'Scheduled This Week',
+    'pm.moveScheduledMonth': 'Scheduled This Month',
+    'pm.moveCompletedMonth': 'Completed This Month',
+    'pm.movePendingApproval': 'Pending Approval',
+    'pm.moveId': 'ID',
+    'pm.moveType': 'Type',
+    'pm.moveMovers': 'Movers',
+    'pm.moveElevator': 'Elevator',
+    'pm.moveDeposit': 'Deposit',
+    'pm.moveDetail': 'Move Details',
+    'pm.moveChecklist': 'Move Checklist',
+    'pm.moveUnitInspection': 'Unit inspection complete',
+    'pm.moveDepositReceived': 'Deposit received',
+    'pm.moveElevatorReserved': 'Elevator reserved',
+    'pm.moveMoversConfirmed': 'Moving company confirmed',
+    'pm.moveResidentNotified': 'Resident notified',
+    'pm.moveApprove': 'Approve Move',
+    'pm.moveDownloadChecklist': 'Download Checklist',
+    'pm.moveSelectMove': 'Select a move to view details and checklist',
+    'pm.moveApproved': 'Move approved successfully',
+    'pm.occTitle': 'Occupancy Dashboard',
+    'pm.occSubtitle': 'Unit status and vacancy tracking',
+    'pm.occTotalUnits': 'Total Units',
+    'pm.occOccupied': 'Occupied',
+    'pm.occVacant': 'Vacant',
+    'pm.occAvgVacancy': 'Avg Vacancy Duration',
+    'pm.occDays': 'days',
+    'pm.occTowerBreakdown': 'Tower Breakdown',
+    'pm.occUnits': 'units',
+    'pm.occOccupiedUnits': 'occupied',
+    'pm.occVacantUnits': 'vacant',
+    'pm.occVacantUnitsList': 'Vacant Units',
+    'pm.occUnit': 'Unit',
+    'pm.occType': 'Type',
+    'pm.occFloor': 'Floor',
+    'pm.occVacantSince': 'Vacant Since',
+    'pm.occDaysVacant': 'Days Vacant',
+    'pm.occLastTenant': 'Last Tenant',
+    'pm.occReason': 'Reason',
+    'pm.occAvailable': 'Available',
+    'pm.occUnderRenovation': 'Under renovation',
+    'pm.occPendingInspection': 'Pending inspection',
+    'pm.occLegalHold': 'Legal hold',
+    'pm.adoptionTitle': 'App Adoption',
+    'pm.adoptionSubtitle': 'Resident app usage and engagement analytics',
+    'pm.adoptionTotalResidents': 'Total Residents',
+    'pm.adoptionAppUsers': 'App Users',
+    'pm.adoptionActiveMonth': 'Active This Month',
+    'pm.adoptionNeverLoggedIn': 'Never Logged In',
+    'pm.adoptionByTower': 'Adoption by Tower',
+    'pm.adoptionUsingApp': 'using app',
+    'pm.adoptionEngagement': 'Engagement Metrics',
+    'pm.adoptionMAU': 'Monthly Active Users',
+    'pm.adoptionWAU': 'Weekly Active Users',
+    'pm.adoptionAvgSessions': 'Avg Sessions/Week',
+    'pm.adoptionMostUsed': 'Most Used Feature',
+    'pm.adoptionSecondMostUsed': 'Second Most Used',
+    'pm.adoptionAvgAnnResponse': 'Avg Response to Announcements',
+    'pm.adoptionVisitorPreApproval': 'Visitor Pre-Approval',
+    'pm.adoptionServiceRequests': 'Service Requests',
+    'pm.adoptionNotUsing': 'Residents Not Using App',
+    'pm.adoptionMovedIn': 'Moved In',
+    'pm.adoptionLastInvite': 'Last Invite Sent',
+    'pm.adoptionInvitesSent': 'Invites Sent',
+    'pm.adoptionResendInvite': 'Resend Invite',
+    'pm.adoptionInviteResent': 'Invite resent to',
+    'pm.adoptionOfUsers': 'of users',
+    'pm.adoptionResidents': 'residents',
+    // Notifications panel
+    'pm.notificationsTitle': 'Notifications',
+    'pm.markAllRead': 'Mark all as read',
+    'pm.noNotifications': 'No new notifications',
+    'pm.justNow': 'Just now',
+    'pm.minutesAgo': 'min ago',
+    'pm.hoursAgo': 'h ago',
+    'pm.notif.newVisitor': 'New visitor check-in',
+    'pm.notif.newVisitorBody': 'Marcus Johnson checked in at Main Gate for unit B-102',
+    'pm.notif.slaWarning': 'SLA breach warning',
+    'pm.notif.slaWarningBody': 'SR-1089 (AC Repair) approaching 4h SLA limit — 30 min remaining',
+    'pm.notif.approvalPending': 'Approval pending',
+    'pm.notif.approvalPendingBody': 'Emirates Delivery Co. waiting at Gate B for 15 min — needs your approval',
+    'pm.notif.escalationNew': 'New escalation created',
+    'pm.notif.escalationNewBody': 'Noise complaint from unit A-1204 escalated to Critical severity',
+    'pm.notif.guardOverride': 'Guard override used',
+    'pm.notif.guardOverrideBody': 'Guard Karim Al-Farsi used manual override at Gate A — review required',
+    'pm.notif.moveInScheduled': 'Move-in scheduled',
+    'pm.notif.moveInScheduledBody': 'New tenant move-in confirmed for unit C-801 on 18 Apr at 10:00',
+    'pm.notif.announcementAck': 'Low acknowledgement rate',
+    'pm.notif.announcementAckBody': 'Water maintenance notice has only 34% acknowledgement after 24 hours',
   },
   ar: {
     // Login
@@ -3619,6 +3752,13 @@ const TRANSLATIONS = {
     'pm.flatLabel': 'الشقة:',
     'pm.createdLabel': 'تم الإنشاء:',
     'pm.assignedLabel': 'المُعين:',
+    'pm.newEscalationTitle': 'تصعيد جديد',
+    'pm.escFormTitle': 'العنوان',
+    'pm.escFormType': 'النوع',
+    'pm.escFormSeverity': 'الأولوية',
+    'pm.escFormAssigned': 'مُسند إلى',
+    'pm.escFormDescription': 'الوصف',
+    'pm.escFormSubmit': 'إنشاء التصعيد',
     // AnnouncementsPage - additional strings
     'pm.filterChipsAnn': 'مُرسل، مسودة، مجدول، مباشر، الكل',
     'pm.ackRequiredLabel': 'يلزم الإقرار',
@@ -3856,6 +3996,132 @@ const TRANSLATIONS = {
 
     'pm.markHighPriority': 'وضع علامة أولوية عالية',
     'pm.viewDetails': 'عرض التفاصيل',
+    // Payment Summary Page
+    'pm.payBillingCycle': 'دورة الفوترة',
+    'pm.payResidents': 'مقيم',
+    'pm.payExportStatement': 'تصدير كشف الحساب',
+    'pm.paySendReminders': 'إرسال تذكيرات',
+    'pm.payStatementGenerated': 'تم تصدير كشف الحساب إلى Excel',
+    'pm.payRemindersQueued': 'تم إرسال تذكيرات الدفع للمقيمين المتأخرين',
+    'pm.payTotalBilled': 'إجمالي المفوتر',
+    'pm.payCollected': 'المحصّل',
+    'pm.payOutstanding': 'المستحق',
+    'pm.payOverdueUnits': 'وحدات متأخرة',
+    'pm.payPenalties': 'الغرامات',
+    'pm.payResidentCharges': 'رسوم المقيمين — أبريل 2026',
+    'pm.paySearchResident': 'ابحث عن مقيم أو شقة...',
+    'pm.payPaid': 'مدفوع',
+    'pm.payUnpaid': 'غير مدفوع',
+    'pm.payOverdue': 'متأخر',
+    'pm.payPartial': 'جزئي',
+    'pm.payResident': 'المقيم',
+    'pm.payScCharge': 'رسوم الخدمات',
+    'pm.payParking': 'موقف السيارات',
+    'pm.payWater': 'المياه',
+    'pm.payMaint': 'الصيانة',
+    'pm.payPenalty': 'الغرامة',
+    'pm.payBalance': 'الرصيد',
+    'pm.payResidentDetail': 'تفاصيل دفع المقيم',
+    'pm.payBreakdown': 'تفاصيل الشهر الحالي',
+    'pm.payTotalBalance': 'إجمالي الرصيد',
+    'pm.payCleared': 'مسدّد',
+    'pm.payHistory': 'سجل المدفوعات (3 أشهر)',
+    'pm.payReminderSent': 'تم إرسال تذكير الدفع إلى',
+    'pm.paySendReminder': 'إرسال تذكير',
+    'pm.payDownloadStmt': 'تحميل كشف الحساب',
+    'pm.paySelectResident': 'اختر مقيماً لعرض تفاصيل الدفع',
+    'pm.monthApr': 'أبريل',
+    'pm.moveInOutTitle': 'تخطيط الانتقال',
+    'pm.moveInOutSubtitle': 'عمليات الانتقال القادمة والجدولة',
+    'pm.moveScheduledWeek': 'مجدول هذا الأسبوع',
+    'pm.moveScheduledMonth': 'مجدول هذا الشهر',
+    'pm.moveCompletedMonth': 'مكتمل هذا الشهر',
+    'pm.movePendingApproval': 'بانتظار الموافقة',
+    'pm.moveId': 'الرقم',
+    'pm.moveType': 'النوع',
+    'pm.moveMovers': 'شركة النقل',
+    'pm.moveElevator': 'المصعد',
+    'pm.moveDeposit': 'التأمين',
+    'pm.moveDetail': 'تفاصيل الانتقال',
+    'pm.moveChecklist': 'قائمة التحقق',
+    'pm.moveUnitInspection': 'فحص الوحدة مكتمل',
+    'pm.moveDepositReceived': 'تم استلام التأمين',
+    'pm.moveElevatorReserved': 'تم حجز المصعد',
+    'pm.moveMoversConfirmed': 'تم تأكيد شركة النقل',
+    'pm.moveResidentNotified': 'تم إبلاغ المقيم',
+    'pm.moveApprove': 'الموافقة على الانتقال',
+    'pm.moveDownloadChecklist': 'تحميل قائمة التحقق',
+    'pm.moveSelectMove': 'اختر عملية انتقال لعرض التفاصيل والقائمة',
+    'pm.moveApproved': 'تمت الموافقة على الانتقال بنجاح',
+    'pm.occTitle': 'لوحة الإشغال',
+    'pm.occSubtitle': 'حالة الوحدات وتتبع الشواغر',
+    'pm.occTotalUnits': 'إجمالي الوحدات',
+    'pm.occOccupied': 'مأهولة',
+    'pm.occVacant': 'شاغرة',
+    'pm.occAvgVacancy': 'متوسط مدة الشغور',
+    'pm.occDays': 'يوم',
+    'pm.occTowerBreakdown': 'تفاصيل الأبراج',
+    'pm.occUnits': 'وحدة',
+    'pm.occOccupiedUnits': 'مأهولة',
+    'pm.occVacantUnits': 'شاغرة',
+    'pm.occVacantUnitsList': 'الوحدات الشاغرة',
+    'pm.occUnit': 'الوحدة',
+    'pm.occType': 'النوع',
+    'pm.occFloor': 'الطابق',
+    'pm.occVacantSince': 'شاغرة منذ',
+    'pm.occDaysVacant': 'أيام الشغور',
+    'pm.occLastTenant': 'آخر مستأجر',
+    'pm.occReason': 'السبب',
+    'pm.occAvailable': 'متاحة',
+    'pm.occUnderRenovation': 'قيد التجديد',
+    'pm.occPendingInspection': 'بانتظار الفحص',
+    'pm.occLegalHold': 'حجز قانوني',
+    'pm.adoptionTitle': 'استخدام التطبيق',
+    'pm.adoptionSubtitle': 'تحليلات استخدام تطبيق المقيمين والتفاعل',
+    'pm.adoptionTotalResidents': 'إجمالي المقيمين',
+    'pm.adoptionAppUsers': 'مستخدمو التطبيق',
+    'pm.adoptionActiveMonth': 'نشط هذا الشهر',
+    'pm.adoptionNeverLoggedIn': 'لم يسجل دخول أبداً',
+    'pm.adoptionByTower': 'الاستخدام حسب البرج',
+    'pm.adoptionUsingApp': 'يستخدم التطبيق',
+    'pm.adoptionEngagement': 'مقاييس التفاعل',
+    'pm.adoptionMAU': 'المستخدمون النشطون شهرياً',
+    'pm.adoptionWAU': 'المستخدمون النشطون أسبوعياً',
+    'pm.adoptionAvgSessions': 'متوسط الجلسات/أسبوع',
+    'pm.adoptionMostUsed': 'الميزة الأكثر استخداماً',
+    'pm.adoptionSecondMostUsed': 'ثاني أكثر استخداماً',
+    'pm.adoptionAvgAnnResponse': 'متوسط الاستجابة للإعلانات',
+    'pm.adoptionVisitorPreApproval': 'الموافقة المسبقة على الزوار',
+    'pm.adoptionServiceRequests': 'طلبات الصيانة',
+    'pm.adoptionNotUsing': 'المقيمون الذين لا يستخدمون التطبيق',
+    'pm.adoptionMovedIn': 'تاريخ الانتقال',
+    'pm.adoptionLastInvite': 'آخر دعوة مرسلة',
+    'pm.adoptionInvitesSent': 'الدعوات المرسلة',
+    'pm.adoptionResendInvite': 'إعادة إرسال الدعوة',
+    'pm.adoptionInviteResent': 'تم إعادة إرسال الدعوة إلى',
+    'pm.adoptionOfUsers': 'من المستخدمين',
+    'pm.adoptionResidents': 'مقيم',
+    // Notifications panel
+    'pm.notificationsTitle': 'الإشعارات',
+    'pm.markAllRead': 'تعيين الكل كمقروء',
+    'pm.noNotifications': 'لا توجد إشعارات جديدة',
+    'pm.justNow': 'الآن',
+    'pm.minutesAgo': 'د مضت',
+    'pm.hoursAgo': 'س مضت',
+    'pm.notif.newVisitor': 'تسجيل دخول زائر جديد',
+    'pm.notif.newVisitorBody': 'ماركوس جونسون سجّل دخوله عند البوابة الرئيسية للوحدة B-102',
+    'pm.notif.slaWarning': 'تحذير اختراق اتفاقية مستوى الخدمة',
+    'pm.notif.slaWarningBody': 'SR-1089 (صيانة المكيف) يقترب من حد 4 ساعات — 30 دقيقة متبقية',
+    'pm.notif.approvalPending': 'موافقة معلّقة',
+    'pm.notif.approvalPendingBody': 'شركة الإمارات للتوصيل بانتظار عند البوابة B منذ 15 دقيقة — تحتاج موافقتك',
+    'pm.notif.escalationNew': 'تصعيد جديد',
+    'pm.notif.escalationNewBody': 'شكوى ضوضاء من الوحدة A-1204 تم تصعيدها إلى مستوى حرج',
+    'pm.notif.guardOverride': 'استخدام تجاوز الحارس',
+    'pm.notif.guardOverrideBody': 'الحارس كريم الفارسي استخدم التجاوز اليدوي في البوابة A — تحتاج مراجعة',
+    'pm.notif.moveInScheduled': 'انتقال مجدول',
+    'pm.notif.moveInScheduledBody': 'تأكيد انتقال مستأجر جديد للوحدة C-801 في 18 أبريل الساعة 10:00',
+    'pm.notif.announcementAck': 'معدل إقرار منخفض',
+    'pm.notif.announcementAckBody': 'إشعار صيانة المياه حصل على 34% إقرار فقط بعد 24 ساعة',
   }
 };
 
@@ -4426,6 +4692,8 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showMyProfileModal, setShowMyProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifReadIds, setNotifReadIds] = useState([]);
   const [profileForm, setProfileForm] = useState({
     name: data.currentUser?.name || '',
     email: data.currentUser?.email || '',
@@ -4515,6 +4783,18 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
     });
     return results.slice(0, 12);
   }, [searchQuery, data]);
+
+  const pmNotifications = React.useMemo(() => [
+    { id: 'n1', title: t('pm.notif.newVisitor'), body: t('pm.notif.newVisitorBody'), time: '2 ' + t('pm.minutesAgo'), icon: 'user', severity: 'info' },
+    { id: 'n2', title: t('pm.notif.slaWarning'), body: t('pm.notif.slaWarningBody'), time: '15 ' + t('pm.minutesAgo'), icon: 'service', severity: 'warning' },
+    { id: 'n3', title: t('pm.notif.approvalPending'), body: t('pm.notif.approvalPendingBody'), time: '18 ' + t('pm.minutesAgo'), icon: 'visitors', severity: 'urgent' },
+    { id: 'n4', title: t('pm.notif.escalationNew'), body: t('pm.notif.escalationNewBody'), time: '1 ' + t('pm.hoursAgo'), icon: 'escalations', severity: 'warning' },
+    { id: 'n5', title: t('pm.notif.guardOverride'), body: t('pm.notif.guardOverrideBody'), time: '2 ' + t('pm.hoursAgo'), icon: 'security', severity: 'urgent' },
+    { id: 'n6', title: t('pm.notif.moveInScheduled'), body: t('pm.notif.moveInScheduledBody'), time: '3 ' + t('pm.hoursAgo'), icon: 'properties', severity: 'info' },
+    { id: 'n7', title: t('pm.notif.announcementAck'), body: t('pm.notif.announcementAckBody'), time: '5 ' + t('pm.hoursAgo'), icon: 'announcements', severity: 'info' },
+  ], [t]);
+  const unreadCount = pmNotifications.filter(n => !notifReadIds.includes(n.id)).length;
+  const handleMarkAllRead = () => setNotifReadIds(pmNotifications.map(n => n.id));
 
   return (
     <div className="topbar">
@@ -4629,8 +4909,53 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
             </div>
           )}
         </div>
-        <div className="topbar-icon" style={{borderRadius:'50%',width:34,height:34}}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div style={{position:'relative'}}>
+          <div className="topbar-icon" style={{borderRadius:'50%',width:34,height:34,cursor:'pointer',position:'relative'}} onClick={() => setShowNotifications(!showNotifications)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a6f66" strokeWidth="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            {unreadCount > 0 && (
+              <span style={{position:'absolute',top:2,right:2,width:16,height:16,background:'#c62828',borderRadius:'50%',fontSize:9,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,border:'2px solid #fff'}}>{unreadCount}</span>
+            )}
+          </div>
+          {showNotifications && (
+            <>
+              <div onClick={() => setShowNotifications(false)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:997}}/>
+              <div style={{position:'absolute',top:44,right:0,width:380,maxHeight:520,background:'#fff',borderRadius:10,boxShadow:'0 8px 32px rgba(0,0,0,.18)',border:'1px solid #ebe7e3',zIndex:999,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 16px',borderBottom:'1px solid #ebe7e3'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <h3 style={{fontSize:15,fontWeight:600,color:'#1a1a1a',margin:0}}>{t('pm.notificationsTitle')}</h3>
+                    {unreadCount > 0 && <span style={{background:'#c62828',color:'#fff',fontSize:10,padding:'2px 7px',borderRadius:10,fontWeight:600}}>{unreadCount}</span>}
+                  </div>
+                  {unreadCount > 0 && (
+                    <span onClick={handleMarkAllRead} style={{fontSize:11,color:'#928989',cursor:'pointer',fontWeight:500}}>{t('pm.markAllRead')}</span>
+                  )}
+                </div>
+                <div style={{overflowY:'auto',flex:1}}>
+                  {pmNotifications.map((n, i) => {
+                    const isRead = notifReadIds.includes(n.id);
+                    const sevColor = n.severity === 'urgent' ? '#c62828' : n.severity === 'warning' ? '#e6a817' : '#928989';
+                    return (
+                      <div key={n.id} onClick={() => { if (!isRead) setNotifReadIds(prev => [...prev, n.id]); }}
+                        style={{display:'flex',gap:12,padding:'12px 16px',borderBottom: i < pmNotifications.length - 1 ? '1px solid #f5f2ef' : 'none',cursor:'pointer',background: isRead ? '#fff' : '#faf8f6',transition:'background 0.15s'}}
+                        onMouseEnter={e => { if (!isRead) e.currentTarget.style.background='#f5f2ef'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = isRead ? '#fff' : '#faf8f6'; }}>
+                        <div style={{width:36,height:36,borderRadius:'50%',background: isRead ? '#f2efec' : '#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2}}>
+                          <Icon name={n.icon} size={15}/>
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                            {!isRead && <span style={{width:7,height:7,borderRadius:'50%',background:sevColor,flexShrink:0}}/>}
+                            <span style={{fontSize:13,fontWeight: isRead ? 400 : 600,color:'#1a1a1a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{n.title}</span>
+                          </div>
+                          <div style={{fontSize:12,color:'#8a7f76',lineHeight:1.4,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{n.body}</div>
+                          <div style={{fontSize:10,color:'#b0a89e',marginTop:4}}>{n.time}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <div style={{position:'relative'}}>
           <div className="avatar" onClick={()=>setShowPmProfile(!showPmProfile)} style={{width:34,height:34,borderRadius:'50%',background:'#e8e3de',cursor:'pointer'}}>
@@ -4962,9 +5287,9 @@ const OverviewPage = ({ setPage }) => {
     { label: t('kpi.serviceToday'),          value: fmt(todaySR),               page: 'service' },
     { label: t('kpi.scArrears'),             value: 'AED ' + fmt(scOutstanding), page: 'payment' },
     { label: t('kpi.unresolvedEscalations'), value: fmt(unackAlerts),            page: 'escalations' },
-    { label: t('kpi.moveInOut'),             value: fmt(11),                     page: 'properties' },
-    { label: t('kpi.occupancy'),             value: occupancyRate + '%',         page: 'properties' },
-    { label: t('kpi.appAdoption'),           value: '63%',                       page: 'settings' },
+    { label: t('kpi.moveInOut'),             value: fmt(11),                     page: 'moveinout' },
+    { label: t('kpi.occupancy'),             value: occupancyRate + '%',         page: 'occupancy' },
+    { label: t('kpi.appAdoption'),           value: '63%',                       page: 'adoption' },
   ];
 
   // Service Requests requiring action — pull from live database (non-completed, first 5)
@@ -5262,13 +5587,20 @@ const OverviewPage = ({ setPage }) => {
 };
 
 // ==================== VISITORS PAGE ====================
-const VisitorsPage = () => {
-  const { data, setData, showToast } = useApp();
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
+const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
+  const { data, setData, showToast, t } = useApp();
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [showManualEntry, setShowManualEntry] = useState(false);
+
+  useEffect(() => {
+    if (autoOpenForm) { setShowManualEntry(true); if (onFormOpened) onFormOpened(); }
+  }, [autoOpenForm]);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const PAGE_SIZE = 10;
   const [pmcFormStep, setPmcFormStep] = useState('form');
   const [formErrors, setFormErrors] = useState({});
   const [isCreatingVisitor, setIsCreatingVisitor] = useState(false);
@@ -5290,21 +5622,92 @@ const VisitorsPage = () => {
     repeater: 'Single Visit'
   });
 
-  const types = ['All','Guest','Vendor','Contractor'];
-  const statuses = ['All','Inside','Pending','Pre-Approved','Scheduled','Checked Out'];
+  // Merge visitors + entryLog into unified list
+  const allEntries = React.useMemo(() => {
+    const fromVisitors = data.visitors.map(v => ({
+      id: v.id, visitor: v.name, type: v.type, flat: v.flat, dateIn: v.dateIn || '', timeIn: v.time || '',
+      dateOut: v.dateOut || '', timeOut: '', duration: v.duration || '', gate: v.gate || 'Main Gate',
+      host: v.resident || '', status: v.status || 'Pending', contact: v.contact, permitRef: v.permitRef,
+      source: 'visitors', originalData: v
+    }));
+    const fromEntryLog = (data.entryLog || []).map(e => ({
+      id: e.id, visitor: e.visitor, type: e.type || '', flat: e.flat || '', dateIn: e.dateIn || e.registeredDate || e.visitDate || e.date || '',
+      timeIn: e.timeIn || e.time || '', dateOut: e.dateOut || '', timeOut: e.timeOut || '', duration: e.duration || '',
+      gate: e.gateUsed || e.gate || 'Main Gate', host: e.host || '', status: e.status || '', contact: e.contact || '',
+      permitRef: e.refId || '', source: 'entryLog', originalData: e
+    }));
+    const seen = new Set();
+    const all = [...fromVisitors, ...fromEntryLog].filter(e => {
+      const key = (e.visitor||'').toLowerCase() + '|' + (e.flat||'').toLowerCase() + '|' + (e.dateIn||'');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return all;
+  }, [data.visitors, data.entryLog]);
 
-  const filtered = data.visitors.filter(v => {
-    if (typeFilter !== 'All' && v.type !== typeFilter) return false;
-    if (statusFilter !== 'All' && v.status !== statusFilter) return false;
-    if (search && !v.name.toLowerCase().includes(search.toLowerCase()) && !v.flat.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }).sort((a, b) => {
-    // Sort by date in descending order (newest first)
-    // Parse dates like "10 Mar" to compare
-    const dateA = new Date(a.date + ' 2026');
-    const dateB = new Date(b.date + ' 2026');
-    return dateB - dateA;
-  });
+  const normStatus = (s) => (s||'').toUpperCase().trim();
+  const isInside = (e) => { const s = normStatus(e.status); return s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED'; };
+  const isCheckedOut = (e) => { const s = normStatus(e.status); return s === 'CHECKED OUT' || s === 'EXITED'; };
+  const isScheduled = (e) => { const s = normStatus(e.status); return s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL'; };
+  const isRejected = (e) => { const s = normStatus(e.status); return s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY' || s === 'ON HOLD' || s === 'FLAGGED'; };
+
+  const getStatusStyle = (status) => {
+    const s = (status||'').toUpperCase();
+    if (s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED') return {bg:'#e0e5db',color:'#5a6b4f',border:'#cdd5c6',label:'INSIDE'};
+    if (s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL') return {bg:'#f0ece5',color:'#6a5a45',border:'#d5cfc8',label:'SCHEDULED'};
+    if (s === 'CHECKED OUT' || s === 'EXITED') return {bg:'#f5f3f0',color:'#8a8078',border:'#e5e0d8',label:'CHECKED OUT'};
+    if (s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY') return {bg:'#eddbd9',color:'#8b4a42',border:'#deccca',label:'REJECTED'};
+    if (s === 'ON HOLD' || s === 'FLAGGED') return {bg:'#f0e2d0',color:'#7a4a1a',border:'#dcc4a0',label:'FLAGGED'};
+    return {bg:'#f0ece5',color:'#a89a92',border:'#e5e0d8',label:status};
+  };
+
+  const formatUnit = (f) => {
+    if (!f) return '\u2014';
+    const str = String(f).trim();
+    if (!str) return '\u2014';
+    const m = str.match(/^[A-Za-z]+[-\s]?(\d+[A-Za-z]?)$/);
+    return m ? m[1] : str;
+  };
+
+  const fmtDate = (d) => { if(!d) return '\u2014'; try { const dt = new Date(d+'T00:00:00'); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch(e) { return d; } };
+  const fmtTime = (ti) => { if(!ti) return '\u2014'; return ti; };
+
+  let filtered = allEntries;
+  if (dateFrom) filtered = filtered.filter(e => e.dateIn >= dateFrom);
+  if (dateTo) filtered = filtered.filter(e => e.dateIn <= dateTo);
+
+  const insideCount = filtered.filter(isInside).length;
+  const checkedOutCount = filtered.filter(isCheckedOut).length;
+  const scheduledCount = filtered.filter(isScheduled).length;
+  const rejectedCount = filtered.filter(isRejected).length;
+
+  const filterOptions = [
+    { key: 'ALL', label: t('pm.filterAll') || 'ALL', count: filtered.length },
+    { key: 'INSIDE', label: t('pm.filterInside') || 'INSIDE', count: insideCount },
+    { key: 'CHECKED_OUT', label: t('pm.filterCheckedOut') || 'CHECKED OUT', count: checkedOutCount },
+    { key: 'SCHEDULED', label: t('pm.filterScheduled') || 'SCHEDULED', count: scheduledCount },
+    { key: 'REJECTED', label: t('pm.filterRejected') || 'REJECTED', count: rejectedCount }
+  ];
+
+  let filteredEntries = statusFilter === 'ALL' ? filtered :
+    statusFilter === 'INSIDE' ? filtered.filter(isInside) :
+    statusFilter === 'CHECKED_OUT' ? filtered.filter(isCheckedOut) :
+    statusFilter === 'SCHEDULED' ? filtered.filter(isScheduled) :
+    statusFilter === 'REJECTED' ? filtered.filter(isRejected) : filtered;
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    filteredEntries = filteredEntries.filter(e =>
+      (e.visitor||'').toLowerCase().includes(q) ||
+      (e.flat||'').toLowerCase().includes(q) ||
+      (e.host||'').toLowerCase().includes(q) ||
+      (e.type||'').toLowerCase().includes(q)
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
+  const pagedEntries = filteredEntries.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   const resetPmcVisitorForm = () => {
     setPmcFormStep('form');
@@ -5403,76 +5806,154 @@ const VisitorsPage = () => {
   };
 
   const handleExportExcel = () => {
-    exportToExcel(filtered, [
-      {header:'Timestamp', key:'date'}, {header:'Time', key:'time'}, {header:'Name', key:'name'},
-      {header:'Flat', key:'flat'}, {header:'Contact', key:'contact'}, {header:'Type', key:'type'},
-      {header:'Gate', key:'gate'}, {header:'Status', key:'status'}, {header:'Permit Ref', key:'permitRef'},
-      {header:'Resident', key:'resident'}, {header:'Duration', key:'duration'}
+    exportToExcel(filteredEntries, [
+      {header:'Visitor Name', key:'visitor'}, {header:'Type', key:'type'}, {header:'Unit No', key:'flat'},
+      {header:'Date In', key:'dateIn'}, {header:'Time In', key:'timeIn'}, {header:'Date Out', key:'dateOut'},
+      {header:'Time Out', key:'timeOut'}, {header:'Duration', key:'duration'}, {header:'Gate', key:'gate'},
+      {header:'Host', key:'host'}, {header:'Status', key:'status'}, {header:'Contact', key:'contact'},
+      {header:'Permit Ref', key:'permitRef'}
     ], 'VARS_Visitors_Export');
     showToast('Visitors exported to Excel!');
   };
 
-  const visitorCounts = { Guests: data.visitors.filter(v=>v.type==='Guest'&&v.status==='Inside').length, Vendors: data.visitors.filter(v=>v.type==='Vendor'&&v.status==='Inside').length, Contractors: data.visitors.filter(v=>v.type==='Contractor'&&v.status==='Inside').length };
-
   return (
     <div>
       <div className="page-header">
-        <div><h1>{t('pm.visitorsLiveLog')}</h1><div className="subtitle">86 {t('pm.guestsInside')} · 7 {t('pm.pendingApprovalCount')}</div></div>
-        <button className="btn btn-primary" onClick={()=>setShowManualEntry(true)}>✦ {t('pm.createRequest')}</button>
+        <div><h1>{t('pm.visitorsLiveLog')}</h1><div className="subtitle">{insideCount} {t('pm.guestsInside')} · {scheduledCount} {t('pm.pendingApprovalCount')}</div></div>
+        <button className="btn btn-primary" onClick={()=>setShowManualEntry(true)}>&#10022; {t('pm.createRequest')}</button>
       </div>
 
-      <div className="kpi-row" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
-        <div className="kpi-card"><div className="label">{t('pm.guestsInside')}</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">34</span><span style={{fontSize:12,color:'#a89a92'}}>40%</span></div></div>
-        <div className="kpi-card"><div className="label">{t('pm.vendorsInside')}</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">28</span><span style={{fontSize:12,color:'#a89a92'}}>33%</span></div></div>
-        <div className="kpi-card"><div className="label">{t('pm.contractorsInside')}</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">24</span><span style={{fontSize:12,color:'#a89a92'}}>28%</span></div></div>
-        <div className="kpi-card"><div className="label">{t('pm.pendingApprovalCount')}</div><span className="value">7</span></div>
+      <div className="kpi-row" style={{gridTemplateColumns:'repeat(5,1fr)'}}>
+        <div className="kpi-card"><div className="label">Total Visitors</div><span className="value">{allEntries.length}</span></div>
+        <div className="kpi-card"><div className="label">Inside Now</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{insideCount}</span><span style={{fontSize:12,color:'#5a6b4f'}}>{allEntries.length ? Math.round(insideCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Checked Out</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{checkedOutCount}</span><span style={{fontSize:12,color:'#8a8078'}}>{allEntries.length ? Math.round(checkedOutCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Scheduled</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{scheduledCount}</span><span style={{fontSize:12,color:'#6a5a45'}}>{allEntries.length ? Math.round(scheduledCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Rejected</div><span className="value" style={{color:'#8b4a42'}}>{rejectedCount}</span></div>
       </div>
 
       <div className="card">
-        <div style={{display:'flex',gap:16,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
-          <div className="search-bar" style={{flex:1,maxWidth:400}}>
-            <span className="search-icon"><Icon name="search" size={14}/></span>
-            <input placeholder="Search by name, flat, type..." value={search} onChange={e=>setSearch(e.target.value)}/>
-          </div>
-          <div style={{display:'flex',gap:4,alignItems:'center'}}>
-            <span style={{fontSize:12,color:'#8a7f76',marginRight:4}}>{t('pm.visitorType')}:</span>
-            {types.map(typeItem => <span key={typeItem} className={`chip ${typeFilter===typeItem?'active':''}`} onClick={()=>setTypeFilter(typeItem)}>{typeItem}</span>)}
-          </div>
-          <div style={{display:'flex',gap:4,alignItems:'center'}}>
-            <span style={{fontSize:12,color:'#8a7f76',marginRight:4}}>{t('pm.visitorStatus')}:</span>
-            {statuses.map(s => <span key={s} className={`chip ${statusFilter===s?'active':''}`} onClick={()=>setStatusFilter(s)}>{s}</span>)}
-          </div>
+        {/* Filter Chips */}
+        <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+          {filterOptions.map(f => (
+            <div key={f.key} onClick={() => { setStatusFilter(f.key); setCurrentPage(0); }}
+              style={{padding:'6px 14px',borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,
+                background: statusFilter===f.key ? '#1a1a1a' : '#fff',
+                color: statusFilter===f.key ? '#fff' : '#1a1a1a',
+                border: statusFilter===f.key ? '1px solid #1a1a1a' : '1px solid #d5cfc8'
+              }}>
+              {f.label}
+              <span style={{background: statusFilter===f.key ? '#444' : '#f0f0f0', padding:'1px 6px', borderRadius:3, fontSize:9, fontWeight:600}}>
+                {f.count}
+              </span>
+            </div>
+          ))}
         </div>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-          <span style={{fontSize:13,color:'#8a7f76'}}>{filtered.length} {t('pm.visitorResults')}</span>
-          <button className="btn btn-sm" onClick={handleExportExcel}><Icon name="download" size={12}/> {t('pm.exportExcel')}</button>
+
+        {/* Search + Date Range */}
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:16}}>
+          <div style={{position:'relative',flex:1,maxWidth:300}}>
+            <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(0); }}
+              placeholder="Search by name, flat, host..."
+              style={{width:'100%',padding:'8px 12px 8px 32px',background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,color:'#1a1a1a',fontSize:12,boxSizing:'border-box',outline:'none'}}/>
+            <Icon name="search" size={14} style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'#8a8a8a'}}/>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:6,background:'#fff',border:'1px solid #d5cfc8',borderRadius:4,padding:'4px 10px'}}>
+            <Icon name="calendar" size={12}/>
+            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setCurrentPage(0); }}
+              style={{border:'none',background:'transparent',color:'#1a1a1a',fontSize:11,outline:'none',cursor:'pointer'}}/>
+            <span style={{color:'#a89a92',fontSize:11}}>{'\u2014'}</span>
+            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setCurrentPage(0); }}
+              style={{border:'none',background:'transparent',color:'#1a1a1a',fontSize:11,outline:'none',cursor:'pointer'}}/>
+          </div>
+          <button className="btn btn-sm" onClick={handleExportExcel}><Icon name="download" size={12}/> Export</button>
         </div>
+
+        {/* Data Table */}
         <table className="data-table">
-          <thead><tr><th>{t('pm.tableHeaderDateIn') || 'Date In'}</th><th>{t('pm.tableHeaderTime') || 'Time'}</th><th>{t('pm.tableHeaderDateOut') || 'Date Out'}</th><th>{t('pm.tableHeaderName')}</th><th>{t('pm.tableHeaderFlat')}</th><th>{t('pm.tableHeaderContact')}</th><th>{t('pm.typeLabel')}</th><th>{t('pm.tableHeaderGate') || 'Gate'}</th><th>{t('pm.tableHeaderStatus') || 'Status'}</th><th>{t('pm.tableHeaderActions')}</th></tr></thead>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Visitor Name</th>
+              <th>Visitor Type</th>
+              <th>Unit No</th>
+              <th>Date Entered</th>
+              <th>Time In</th>
+              <th>Date Exit</th>
+              <th>Time Out</th>
+              <th>Duration</th>
+              <th>Gate</th>
+              <th>Host / Resident</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
-            {filtered.map(v => {
-              const fmtDt = (d) => { if(!d) return '—'; try { const dt = new Date(d.includes('-') ? d+'T00:00:00' : d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Dubai'}); } catch(e) { return d; } };
+            {pagedEntries.map((entry, idx) => {
+              const sts = getStatusStyle(entry.status);
+              const rowNum = currentPage * PAGE_SIZE + idx + 1;
+              const isInsideStatus = isInside(entry);
+              const isScheduledStatus = isScheduled(entry);
               return (
-              <tr key={v.id}>
-                <td>{fmtDt(v.dateIn) || v.date || '—'}</td>
-                <td>{v.time || '—'}</td>
-                <td>{v.dateOut ? fmtDt(v.dateOut) : '—'}</td>
-                <td className="name-cell">{v.name}<span className="sub">{v.resident}</span></td>
-                <td>{v.flat}</td><td>{v.contact}</td>
-                <td><StatusBadge status={v.type}/></td><td>{v.gate}</td>
-                <td><StatusBadge status={v.status}/></td>
-                <td>
-                  <div style={{display:'flex',gap:4}}>
-                    <button className="btn btn-sm" onClick={()=>setSelectedVisitor(v)}><Icon name="eye" size={12}/> {t('pm.viewButton')}</button>
-                    {v.status==='Pending' && <button className="btn btn-sm btn-primary" onClick={()=>handleApprove(v)}><Icon name="check" size={12}/> {t('pm.applyChanges')}</button>}
-                  </div>
-                </td>
-              </tr>
+                <tr key={entry.id || idx}>
+                  <td style={{color:'#a89a92',fontSize:11}}>{rowNum}</td>
+                  <td className="name-cell" style={{fontWeight:600}}>{entry.visitor || '\u2014'}</td>
+                  <td>{entry.type || '\u2014'}</td>
+                  <td>{formatUnit(entry.flat)}</td>
+                  <td>{fmtDate(entry.dateIn)}</td>
+                  <td>{fmtTime(entry.timeIn)}</td>
+                  <td>{fmtDate(entry.dateOut)}</td>
+                  <td>{fmtTime(entry.timeOut)}</td>
+                  <td>{entry.duration || '\u2014'}</td>
+                  <td>{entry.gate || '\u2014'}</td>
+                  <td>{entry.host || '\u2014'}</td>
+                  <td>
+                    <span style={{background:sts.bg,color:sts.color,border:'1px solid '+(sts.border||sts.bg),padding:'4px 10px',borderRadius:4,fontSize:10,fontWeight:700,display:'inline-block',letterSpacing:'0.03em',whiteSpace:'nowrap'}}>
+                      {sts.label}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{display:'flex',gap:4}}>
+                      {(isInsideStatus || isScheduledStatus) ? (
+                        <>
+                          <button className="btn btn-sm btn-primary" onClick={() => handleApprove(entry.originalData)} style={{fontSize:10,padding:'4px 8px'}}><Icon name="check" size={10}/> Approve</button>
+                          <button className="btn btn-sm" onClick={() => handleReject(entry.originalData)} style={{fontSize:10,padding:'4px 8px',color:'#8b4a42'}}>Reject</button>
+                        </>
+                      ) : (
+                        <button className="btn btn-sm" onClick={() => setSelectedVisitor(entry.originalData)}><Icon name="eye" size={12}/> View</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               );
             })}
           </tbody>
         </table>
-        <Pagination total={86} pageSize={10} page={1} onPageChange={()=>{}}/>
+
+        {/* Pagination */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16,flexWrap:'wrap',gap:8}}>
+          <div style={{fontSize:11,color:'#a89a92'}}>
+            SHOWING {pagedEntries.length > 0 ? (currentPage * PAGE_SIZE + 1) + '\u2013' + Math.min((currentPage + 1) * PAGE_SIZE, filteredEntries.length) : '0'} OF {filteredEntries.length} ENTRIES
+          </div>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button disabled={currentPage === 0} onClick={() => setCurrentPage(p => p - 1)}
+              style={{background:'#fff',border:'1px solid #d5cfc8',color: currentPage === 0 ? '#8a8a8a' : '#1a1a1a',padding:'6px 12px',borderRadius:4,fontSize:10,cursor: currentPage === 0 ? 'default' : 'pointer'}}>
+              {'\u2190'} PREV
+            </button>
+            {Array.from({length: Math.min(totalPages, 3)}, (_, i) => {
+              const pg = totalPages <= 3 ? i : Math.max(0, Math.min(currentPage - 1, totalPages - 3)) + i;
+              return (
+                <button key={pg} onClick={() => setCurrentPage(pg)}
+                  style={{background: pg === currentPage ? '#1a1a1a' : '#fff', border:'1px solid ' + (pg === currentPage ? '#1a1a1a' : '#d0d0d0'), color: pg === currentPage ? '#fff' : '#1a1a1a', padding:'6px 10px', borderRadius:4, fontSize:10, cursor:'pointer', fontWeight: pg === currentPage ? 700 : 400, minWidth:30}}>
+                  {pg + 1}
+                </button>
+              );
+            })}
+            <button disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(p => p + 1)}
+              style={{background:'#fff',border:'1px solid #d5cfc8',color: currentPage >= totalPages - 1 ? '#8a8a8a' : '#1a1a1a',padding:'6px 12px',borderRadius:4,fontSize:10,cursor: currentPage >= totalPages - 1 ? 'default' : 'pointer'}}>
+              NEXT {'\u2192'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {selectedVisitor && (
@@ -6720,7 +7201,7 @@ const ChatPage = () => {
 };
 
 const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
-  const { data, setData, showToast } = useApp();
+  const { data, setData, showToast, t } = useApp();
   const [selectedGuard, setSelectedGuard] = useState(null);
   const [showAddGuard, setShowAddGuard] = useState(false);
   const [addStep, setAddStep] = useState(1);
@@ -6731,6 +7212,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [showDocViewer, setShowDocViewer] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingGuard, setEditingGuard] = useState(null); // holds editable copy
+  const [showContextMenu, setShowContextMenu] = useState(null); // guard id for ⋯ dropdown
   const pageSize = 10;
   const fileInputRef = useRef(null);
   const dropZoneRef = useRef(null);
@@ -6905,7 +7387,7 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const paginatedGuards = data.guards.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
-    <div>
+    <div onClick={() => showContextMenu && setShowContextMenu(null)}>
       {/* Header */}
       <div className="page-header">
         <div>
@@ -6928,7 +7410,10 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 <div style={{ fontWeight: 500, fontSize: 13 }}>{g.name}</div>
                 <div style={{ fontSize: 11, color: '#888' }}>{g.shift === 'Morning' ? 'Senior Guard' : 'Gate Captain'} · {g.gate}</div>
               </div>
-              <button className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={(e) => { e.stopPropagation(); setShowCallPopup(g); }}><Icon name="phone" size={12} /></button>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+                <button className="btn btn-sm" style={{padding:'4px 6px'}} onClick={(e) => { e.stopPropagation(); setShowCallPopup(g); }}><Icon name="phone" size={12} /></button>
+                <button className="btn btn-sm" style={{padding:'4px 6px'}} onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(g.contact); showToast('Contact copied!'); }}><Icon name="copy" size={12} /></button>
+              </div>
             </div>
           ))}
         </div>
@@ -6962,9 +7447,29 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
                     <td><StatusBadge status={g.status} /></td>
                     <td>{g.verified ? <span className="status verified" style={{fontSize:11}}>✓ Verified</span> : <StatusBadge status="Pending" />}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
+                      <div style={{ display: 'flex', gap: 4, position: 'relative' }}>
                         <button className="btn btn-sm" style={{fontSize:11,padding:'4px 10px'}} onClick={() => setSelectedGuard(g)}>Profile</button>
-                        <button className="btn btn-sm" style={{fontSize:11,padding:'4px 8px'}} onClick={() => setShowDeactivate(g)}>⋯</button>
+                        <button className="btn btn-sm" style={{fontSize:11,padding:'4px 8px'}} onClick={(e) => { e.stopPropagation(); setShowContextMenu(showContextMenu === g.id ? null : g.id); }}>⋯</button>
+                        {showContextMenu === g.id && (
+                          <div style={{position:'absolute',top:'100%',right:0,marginTop:4,background:'#fff',border:'1px solid #e0e0e0',borderRadius:6,boxShadow:'0 4px 12px rgba(0,0,0,0.1)',zIndex:20,minWidth:160,overflow:'hidden'}}
+                            onClick={e => e.stopPropagation()}>
+                            <div onClick={() => { setSelectedGuard(g); setShowContextMenu(null); }}
+                              style={{padding:'10px 14px',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid #f0f0f0'}}
+                              onMouseEnter={e => e.currentTarget.style.background='#f5f5f5'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                              <Icon name="eye" size={13}/> View Profile
+                            </div>
+                            <div onClick={() => { setShowCallPopup(g); setShowContextMenu(null); }}
+                              style={{padding:'10px 14px',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid #f0f0f0'}}
+                              onMouseEnter={e => e.currentTarget.style.background='#f5f5f5'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                              <Icon name="phone" size={13}/> Call Guard
+                            </div>
+                            <div onClick={() => { setShowDeactivate(g); setShowContextMenu(null); }}
+                              style={{padding:'10px 14px',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8,color:'#c0392b'}}
+                              onMouseEnter={e => e.currentTarget.style.background='#fdf2f2'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                              <Icon name="x" size={13}/> Remove Access
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -7243,9 +7748,9 @@ const GuardsPage = ({ searchSelectedItem, clearSearchSelection }) => {
       {showDeactivate && (
         <div className="modal-overlay" onClick={() => setShowDeactivate(null)}>
           <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: 8 }}>Deactivate Guard</h2>
-            <p style={{ color: '#666', marginBottom: 20 }}>Are you sure you want to deactivate {showDeactivate.name}? They will be removed from the system.</p>
-            <div className="grid-2"><button className="btn btn-danger" onClick={handleDeactivateGuard}>Confirm Deactivation</button><button className="btn" onClick={() => setShowDeactivate(null)}>Cancel</button></div>
+            <h2 style={{ marginBottom: 8 }}>Remove Guard Access</h2>
+            <p style={{ color: '#666', marginBottom: 20 }}>Are you sure you want to remove access for {showDeactivate.name}? They will no longer be able to log in to the guard tablet.</p>
+            <div className="grid-2"><button className="btn btn-danger" onClick={handleDeactivateGuard}>Confirm Removal</button><button className="btn" onClick={() => setShowDeactivate(null)}>Cancel</button></div>
           </div>
         </div>
       )}
@@ -7335,7 +7840,9 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [newRes, setNewRes] = useState({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
   const [resSearch, setResSearch] = useState('');
   const [importFile, setImportFile] = useState(null);
+  const [residentDocs, setResidentDocs] = useState([]);
   const importFileRef = useRef(null);
+  const residentDocRef = useRef(null);
   const [activePropertyTab, setActivePropertyTab] = useState('overview');
 
   // Sample building data
@@ -7376,10 +7883,11 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const handleAddResident = () => {
     if (!newRes.name || !newRes.flat) { showToast(t('pm.fillNameFlat')); return; }
     const id = `RES-${String(data.residents.length+1).padStart(3,'0')}`;
-    const entry = { id, name: newRes.name, flat: newRes.flat, contact: newRes.contact, coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy, absence: 'None' };
+    const entry = { id, name: newRes.name, flat: newRes.flat, contact: newRes.contact, coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy, absence: 'None', documents: residentDocs };
     setData(prev => ({...prev, residents: [...prev.residents, entry]}));
     setNewRes({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
     setShowAddResident(false);
+    setResidentDocs([]);
     showToast(t('pm.residentAdded'));
   };
 
@@ -7489,9 +7997,9 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
       <div className="page-header">
         <div><h1>{t('pm.propertiesResidents')}</h1><div className="subtitle">{data.towers.length} properties · {data.towers.reduce((a,t)=>a+t.totalFlats,0).toLocaleString()} flats · {data.towers.reduce((a,t)=>a+t.occupied,0).toLocaleString()} occupied</div></div>
         <div className="btn-group">
-          <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}>{t('pm.addResidentBtn')}</button>
-          <button className="btn" onClick={()=>setShowImport('pick')}><Icon name="upload" size={12}/> {t('pm.importBtn')}</button>
-          <button className="btn" onClick={()=>setShowExport('pick')}><Icon name="download" size={12}/> {t('pm.exportBtn')}</button>
+          <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}><Icon name="settings" size={12}/> {t('pm.addResidentBtn')}</button>
+          <button className="btn" onClick={()=>setShowImport('csv')}><Icon name="upload" size={12}/> Import CSV</button>
+          <button className="btn" onClick={()=>{}}> + Add Property</button>
         </div>
       </div>
 
@@ -7560,6 +8068,14 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #ebe7e3'}}><span>Visitor pre-approval required</span><Toggle value={selectedResident.visitorPreApproval !== false} onChange={(v)=>{const updated={...selectedResident,visitorPreApproval:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,visitorPreApproval:v}:r)}));showToast('Preference updated','Visitor pre-approval '+(v?'enabled':'disabled'))}}/></div>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #ebe7e3'}}><span>Email notifications</span><Toggle value={selectedResident.emailNotifications === true} onChange={(v)=>{const updated={...selectedResident,emailNotifications:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,emailNotifications:v}:r)}));showToast('Preference updated','Email notifications '+(v?'enabled':'disabled'))}}/></div>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',marginBottom:16}}><span>Push notifications</span><Toggle value={selectedResident.pushNotifications !== false} onChange={(v)=>{const updated={...selectedResident,pushNotifications:v};setSelectedResident(updated);setData(prev=>({...prev,residents:prev.residents.map(r=>r.id===selectedResident.id?{...r,pushNotifications:v}:r)}));showToast('Preference updated','Push notifications '+(v?'enabled':'disabled'))}}/></div>
+            {selectedResident.coResidents > 0 && (
+              <div style={{marginTop:8,marginBottom:16}}>
+                <div style={{fontSize:12,color:'#a89a92',marginBottom:4}}>Co - Resident</div>
+                <div style={{fontSize:13,fontWeight:500}}>
+                  {selectedResident.coResidentName || (selectedResident.coResidents > 1 ? `${selectedResident.coResidents - 1} co-resident${selectedResident.coResidents > 2 ? 's' : ''} registered` : 'None registered')}
+                </div>
+              </div>
+            )}
             <div className="grid-2" style={{marginTop:16}}>
               <button className="btn btn-primary" onClick={()=>setEditingResident({...selectedResident})}>Edit Profile</button>
               <button className="btn" onClick={()=>setSelectedResident(null)}>Close</button>
@@ -7616,6 +8132,56 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                   <option value="Standard">Standard</option><option value="Enhanced">Enhanced</option><option value="Custom">Custom</option>
                 </select>
               </div>
+            </div>
+            <div className="form-group">
+              <label>Documents</label>
+              <input type="file" ref={residentDocRef} multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:'none'}}
+                onChange={e => {
+                  if (e.target.files.length > 0) {
+                    const fileArray = Array.from(e.target.files);
+                    const readers = fileArray.map(file => new Promise(resolve => {
+                      const reader = new FileReader();
+                      reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result });
+                      reader.readAsDataURL(file);
+                    }));
+                    Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
+                  }
+                  e.target.value = '';
+                }} />
+              <div onClick={() => residentDocRef.current && residentDocRef.current.click()}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#1a1a1a'; }}
+                onDragLeave={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0'; }}
+                onDrop={e => {
+                  e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0';
+                  if (e.dataTransfer.files.length > 0) {
+                    const fileArray = Array.from(e.dataTransfer.files);
+                    const readers = fileArray.map(file => new Promise(resolve => {
+                      const reader = new FileReader();
+                      reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result });
+                      reader.readAsDataURL(file);
+                    }));
+                    Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
+                  }
+                }}
+                style={{padding:20,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#f5f2ef',transition:'all 0.2s'}}>
+                <Icon name="upload" size={20}/>
+                <div style={{fontSize:12,marginTop:6}}>Drop files here or <span style={{fontWeight:600,textDecoration:'underline'}}>Browse Files</span></div>
+                <div style={{fontSize:10,color:'#a89a92',marginTop:4}}>Emirates ID, Passport, Lease — PDF, JPG, PNG up to 10MB</div>
+              </div>
+              {residentDocs.length > 0 && (
+                <div style={{marginTop:8}}>
+                  {residentDocs.map((doc, idx) => (
+                    <div key={idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:12,padding:'8px 10px',background:'#f9f9f9',borderRadius:6,marginBottom:4,border:'1px solid #e8e8e8'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <span style={{background:'#e8e8e8',padding:'2px 6px',borderRadius:3,fontSize:10,fontWeight:600,textTransform:'uppercase'}}>{doc.type}</span>
+                        <span style={{fontWeight:500}}>{doc.name}</span>
+                        <span style={{color:'#888',fontSize:10}}>{doc.size}</span>
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); setResidentDocs(prev => prev.filter((_,i) => i !== idx)); }} style={{background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:16}}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid-2" style={{marginTop:8}}>
               <button className="btn btn-primary" onClick={handleAddResident}>Add Resident</button>
@@ -7740,8 +8306,10 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
 // ==================== ESCALATIONS PAGE ====================
 const EscalationsPage = () => {
-  const { data, t } = useApp();
+  const { data, setData, showToast, t } = useApp();
   const [selected, setSelected] = useState(null);
+  const [showNewEscalation, setShowNewEscalation] = useState(false);
+  const [escForm, setEscForm] = useState({ title: '', type: 'SLA Breach', severity: 'High', flat: '', description: '', assigned: '' });
   const unresolved = data.escalations.filter(e => e.status !== 'Resolved');
   const resolved = data.escalations.filter(e => e.status === 'Resolved');
   const criticalCount = unresolved.filter(e => e.severity === 'Critical').length;
@@ -7750,7 +8318,7 @@ const EscalationsPage = () => {
     <div>
       <div className="page-header">
         <div><h1>{t('pm.escalationsTitle')}</h1><div className="subtitle">{unresolved.length} {t('pm.unresolvedHeading').toLowerCase()} · {criticalCount} {t('pm.criticalLabel')} · {t('pm.slaTrackerLabel')}</div></div>
-        <button className="btn btn-primary">{t('pm.newEscalationBtn')}</button>
+        <button className="btn btn-primary" onClick={() => setShowNewEscalation(true)}>{t('pm.newEscalationBtn')}</button>
       </div>
       <div className="kpi-row" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
         <div className="kpi-card"><div className="label">{t('pm.totalUnresolvedCard')}</div><div><span className="value">{unresolved.length}</span><span style={{fontSize:12,color:'#a89a92',marginLeft:4}}>{criticalCount} {t('pm.criticalLabel')}</span></div></div>
@@ -7811,6 +8379,54 @@ const EscalationsPage = () => {
           </div>
         </div>
       </div>
+      {showNewEscalation && (
+        <div className="modal-overlay" onClick={() => setShowNewEscalation(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div><div className="modal-sub">form/escalation/new</div><h2>{t('pm.newEscalationTitle') || 'New Escalation'}</h2></div>
+              <button className="modal-close" onClick={() => setShowNewEscalation(false)}>×</button>
+            </div>
+            <div className="form-group"><label>{t('pm.escFormTitle') || 'Title'} *</label><input className="form-input" placeholder="e.g. Fire alarm malfunction in Tower B" value={escForm.title} onChange={e => setEscForm(p => ({...p, title: e.target.value}))}/></div>
+            <div className="grid-2">
+              <div className="form-group"><label>{t('pm.escFormType') || 'Type'}</label>
+                <select className="form-input" value={escForm.type} onChange={e => setEscForm(p => ({...p, type: e.target.value}))}>
+                  <option value="SLA Breach">SLA Breach</option>
+                  <option value="Security">Security</option>
+                  <option value="Compliance">Compliance</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Safety">Safety</option>
+                </select>
+              </div>
+              <div className="form-group"><label>{t('pm.escFormSeverity') || 'Severity'}</label>
+                <select className="form-input" value={escForm.severity} onChange={e => setEscForm(p => ({...p, severity: e.target.value}))}>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid-2">
+              <div className="form-group"><label>{t('pm.flatUnitLabel') || 'Flat / Unit'}</label><input className="form-input" placeholder="e.g. B-1402" value={escForm.flat} onChange={e => setEscForm(p => ({...p, flat: e.target.value}))}/></div>
+              <div className="form-group"><label>{t('pm.escFormAssigned') || 'Assigned To'}</label><input className="form-input" placeholder="e.g. Ahmed K." value={escForm.assigned} onChange={e => setEscForm(p => ({...p, assigned: e.target.value}))}/></div>
+            </div>
+            <div className="form-group"><label>{t('pm.escFormDescription') || 'Description'}</label><textarea className="form-input" rows={3} placeholder="Describe the escalation..." value={escForm.description} onChange={e => setEscForm(p => ({...p, description: e.target.value}))} style={{resize:'vertical',fontFamily:'inherit'}}/></div>
+            <div className="grid-2" style={{marginTop:8}}>
+              <button className="btn btn-primary" onClick={() => {
+                if (!escForm.title) { showToast('Please enter a title'); return; }
+                const newId = 'ESC-' + String(data.escalations.length + 1).padStart(3, '0');
+                const now = new Date();
+                const created = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+                const newEsc = { id: newId, title: escForm.title, type: escForm.type, severity: escForm.severity, flat: escForm.flat, created, assigned: escForm.assigned || 'Unassigned', sla: '48h remaining', status: 'Open', description: escForm.description };
+                setData(prev => ({...prev, escalations: [newEsc, ...prev.escalations]}));
+                setEscForm({ title: '', type: 'SLA Breach', severity: 'High', flat: '', description: '', assigned: '' });
+                setShowNewEscalation(false);
+                showToast('Escalation created', newEsc.title);
+              }}>{t('pm.escFormSubmit') || 'Create Escalation'}</button>
+              <button className="btn" onClick={() => setShowNewEscalation(false)}>{t('pm.cancelBtn') || 'Cancel'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -8183,6 +8799,521 @@ const MobileBottomNav = ({ page, setPage }) => {
 };
 
 // ==================== PLACEHOLDER PAGES ====================
+// ==================== PAYMENT SUMMARY PAGE ====================
+const PaymentSummaryPage = () => {
+  const { data, t, showToast } = useApp();
+  const [filter, setFilter] = useState('All');
+  const [selectedResident, setSelectedResident] = useState(null);
+  const [search, setSearch] = useState('');
+
+  const fmt = (n) => n.toLocaleString();
+  const isAr = t('pm.paymentSummary') !== 'Payment Summary';
+
+  // Resident payment data — comprehensive list
+  const residentPayments = React.useMemo(() => [
+    { id: 'R-001', name: 'Fatima Al-Suwaidi', flat: 'A-0301', tower: 'Tower A', scMonthly: 2400, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '08 Apr 2026', parking: 750, parkingStatus: 'Paid', water: 380, waterStatus: 'Paid', maintenance: 0, penalty: 0, balance: 0, method: 'Auto-debit', history: [{m:'Mar',a:2400,s:'Paid'},{m:'Feb',a:2400,s:'Paid'},{m:'Jan',a:2400,s:'Paid'}] },
+    { id: 'R-002', name: 'James Harrison', flat: 'A-1204', tower: 'Tower A', scMonthly: 3200, scStatus: 'Overdue', scDueDate: '10 Apr 2026', scPaidDate: null, parking: 750, parkingStatus: 'Overdue', water: 420, waterStatus: 'Paid', maintenance: 500, penalty: 200, balance: 4650, method: 'Manual', history: [{m:'Mar',a:3200,s:'Paid'},{m:'Feb',a:3200,s:'Late'},{m:'Jan',a:3200,s:'Paid'}] },
+    { id: 'R-003', name: 'Ahmad Al-Sayed', flat: 'C-0501', tower: 'Tower C', scMonthly: 2800, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '05 Apr 2026', parking: 0, parkingStatus: 'N/A', water: 350, waterStatus: 'Paid', maintenance: 0, penalty: 0, balance: 0, method: 'Bank transfer', history: [{m:'Mar',a:2800,s:'Paid'},{m:'Feb',a:2800,s:'Paid'},{m:'Jan',a:2800,s:'Paid'}] },
+    { id: 'R-004', name: 'Sofia Mendes', flat: 'D-1102', tower: 'Tower D', scMonthly: 3500, scStatus: 'Partial', scDueDate: '10 Apr 2026', scPaidDate: '09 Apr 2026', parking: 750, parkingStatus: 'Unpaid', water: 410, waterStatus: 'Unpaid', maintenance: 0, penalty: 0, balance: 1160, method: 'Card', history: [{m:'Mar',a:3500,s:'Paid'},{m:'Feb',a:3500,s:'Paid'},{m:'Jan',a:3500,s:'Paid'}] },
+    { id: 'R-005', name: 'Khalid Al-Mansoori', flat: 'A-0202', tower: 'Tower A', scMonthly: 2600, scStatus: 'Overdue', scDueDate: '10 Apr 2026', scPaidDate: null, parking: 750, parkingStatus: 'Overdue', water: 380, waterStatus: 'Overdue', maintenance: 1200, penalty: 400, balance: 5330, method: 'Manual', history: [{m:'Mar',a:2600,s:'Late'},{m:'Feb',a:2600,s:'Late'},{m:'Jan',a:2600,s:'Paid'}] },
+    { id: 'R-006', name: 'Dina Al-Farsi', flat: 'A-0302', tower: 'Tower A', scMonthly: 2400, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '03 Apr 2026', parking: 0, parkingStatus: 'N/A', water: 320, waterStatus: 'Paid', maintenance: 0, penalty: 0, balance: 0, method: 'Auto-debit', history: [{m:'Mar',a:2400,s:'Paid'},{m:'Feb',a:2400,s:'Paid'},{m:'Jan',a:2400,s:'Paid'}] },
+    { id: 'R-007', name: 'Rashid Al-Ketbi', flat: 'B-0601', tower: 'Tower B', scMonthly: 2800, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '10 Apr 2026', parking: 750, parkingStatus: 'Paid', water: 450, waterStatus: 'Paid', maintenance: 0, penalty: 0, balance: 0, method: 'Bank transfer', history: [{m:'Mar',a:2800,s:'Paid'},{m:'Feb',a:2800,s:'Paid'},{m:'Jan',a:2800,s:'Paid'}] },
+    { id: 'R-008', name: 'Leila Al-Hosani', flat: 'C-0201', tower: 'Tower C', scMonthly: 3100, scStatus: 'Unpaid', scDueDate: '10 Apr 2026', scPaidDate: null, parking: 750, parkingStatus: 'Unpaid', water: 390, waterStatus: 'Unpaid', maintenance: 0, penalty: 0, balance: 4240, method: 'Manual', history: [{m:'Mar',a:3100,s:'Paid'},{m:'Feb',a:3100,s:'Paid'},{m:'Jan',a:3100,s:'Paid'}] },
+    { id: 'R-009', name: 'Tariq Al-Nuaimi', flat: 'C-0304', tower: 'Tower C', scMonthly: 2500, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '07 Apr 2026', parking: 750, parkingStatus: 'Paid', water: 340, waterStatus: 'Paid', maintenance: 250, penalty: 0, balance: 0, method: 'Card', history: [{m:'Mar',a:2500,s:'Paid'},{m:'Feb',a:2500,s:'Paid'},{m:'Jan',a:2500,s:'Paid'}] },
+    { id: 'R-010', name: 'Huda Al-Breiki', flat: 'A-0405', tower: 'Tower A', scMonthly: 2400, scStatus: 'Overdue', scDueDate: '10 Apr 2026', scPaidDate: null, parking: 0, parkingStatus: 'N/A', water: 380, waterStatus: 'Overdue', maintenance: 0, penalty: 600, balance: 3380, method: 'Manual', history: [{m:'Mar',a:2400,s:'Late'},{m:'Feb',a:2400,s:'Late'},{m:'Jan',a:2400,s:'Late'}] },
+    { id: 'R-011', name: 'Maha Al-Mazrouei', flat: 'D-1102', tower: 'Tower D', scMonthly: 3500, scStatus: 'Paid', scDueDate: '10 Apr 2026', scPaidDate: '06 Apr 2026', parking: 750, parkingStatus: 'Paid', water: 400, waterStatus: 'Paid', maintenance: 0, penalty: 0, balance: 0, method: 'Auto-debit', history: [{m:'Mar',a:3500,s:'Paid'},{m:'Feb',a:3500,s:'Paid'},{m:'Jan',a:3500,s:'Paid'}] },
+    { id: 'R-012', name: 'Omar Al-Muraikhi', flat: 'B-0903', tower: 'Tower B', scMonthly: 2900, scStatus: 'Unpaid', scDueDate: '10 Apr 2026', scPaidDate: null, parking: 750, parkingStatus: 'Unpaid', water: 370, waterStatus: 'Unpaid', maintenance: 0, penalty: 0, balance: 4020, method: 'Manual', history: [{m:'Mar',a:2900,s:'Paid'},{m:'Feb',a:2900,s:'Paid'},{m:'Jan',a:2900,s:'Paid'}] },
+  ], [t]);
+
+  const filtered = residentPayments.filter(r => {
+    if (filter === 'Overdue' && r.scStatus !== 'Overdue') return false;
+    if (filter === 'Unpaid' && r.scStatus !== 'Unpaid' && r.scStatus !== 'Overdue') return false;
+    if (filter === 'Paid' && r.scStatus !== 'Paid') return false;
+    if (filter === 'Partial' && r.scStatus !== 'Partial') return false;
+    if (search && !r.name.toLowerCase().includes(search.toLowerCase()) && !r.flat.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const totalBilled = residentPayments.reduce((s,r) => s + r.scMonthly + (r.parkingStatus !== 'N/A' ? r.parking : 0) + r.water + r.maintenance, 0);
+  const totalCollected = residentPayments.filter(r => r.scStatus === 'Paid').reduce((s,r) => s + r.scMonthly + (r.parkingStatus === 'Paid' ? r.parking : 0) + (r.waterStatus === 'Paid' ? r.water : 0) + r.maintenance, 0);
+  const totalOutstanding = residentPayments.reduce((s,r) => s + r.balance, 0);
+  const totalPenalties = residentPayments.reduce((s,r) => s + r.penalty, 0);
+  const overdueCount = residentPayments.filter(r => r.scStatus === 'Overdue').length;
+  const paidCount = residentPayments.filter(r => r.scStatus === 'Paid').length;
+  const collectionRate = Math.round((totalCollected / totalBilled) * 100);
+
+  const statusColor = (s) => s === 'Paid' ? '#2e7d32' : s === 'Overdue' ? '#c62828' : s === 'Unpaid' ? '#e65100' : s === 'Partial' ? '#f9a825' : '#888';
+  const statusBg = (s) => s === 'Paid' ? '#e8f5e9' : s === 'Overdue' ? '#ffebee' : s === 'Unpaid' ? '#fff3e0' : s === 'Partial' ? '#fffde7' : '#f5f5f5';
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1>{t('pm.paymentSummary')}</h1>
+          <div className="subtitle">{t('pm.payBillingCycle')}: {t('pm.monthApr')} 2026 · {residentPayments.length} {t('pm.payResidents')}</div>
+        </div>
+        <div className="btn-group">
+          <button className="btn" onClick={() => showToast(t('pm.payStatementGenerated'))}><Icon name="download" size={14}/> {t('pm.payExportStatement')}</button>
+          <button className="btn btn-primary" onClick={() => showToast(t('pm.payRemindersQueued'))}><Icon name="announcements" size={14}/> {t('pm.paySendReminders')}</button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="kpi-row" style={{gridTemplateColumns:'repeat(5,1fr)'}}>
+        <div className="kpi-card">
+          <div className="label">{t('pm.payTotalBilled')}</div>
+          <div className="value">AED {fmt(totalBilled)}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">{t('pm.payCollected')}</div>
+          <div><span className="value">AED {fmt(totalCollected)}</span><span style={{fontSize:11,color:'#2e7d32',marginLeft:6}}>{collectionRate}%</span></div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">{t('pm.payOutstanding')}</div>
+          <div><span className="value" style={{color:'#c62828'}}>AED {fmt(totalOutstanding)}</span></div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">{t('pm.payOverdueUnits')}</div>
+          <div><span className="value" style={{color:'#e65100'}}>{overdueCount}</span><span style={{fontSize:11,color:'#a89a92',marginLeft:4}}>/ {residentPayments.length}</span></div>
+        </div>
+        <div className="kpi-card">
+          <div className="label">{t('pm.payPenalties')}</div>
+          <div><span className="value">AED {fmt(totalPenalties)}</span></div>
+        </div>
+      </div>
+
+      <div className="page-with-panel">
+        {/* Main Table */}
+        <div>
+          <div className="card">
+            <div className="card-header">
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <h3>{t('pm.payResidentCharges')}</h3>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('pm.paySearchResident')} style={{padding:'6px 12px',border:'1px solid #d5cfc8',borderRadius:6,fontSize:12,width:200,outline:'none'}}/>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                {['All','Paid','Unpaid','Overdue','Partial'].map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    style={{padding:'5px 14px',fontSize:11,fontWeight: filter === f ? 600 : 400,border: '1px solid ' + (filter === f ? '#1a1a1a' : '#d5cfc8'),borderRadius:20,background: filter === f ? '#1a1a1a' : '#fff',color: filter === f ? '#fff' : '#8a8a8a',cursor:'pointer'}}>
+                    {f === 'All' ? t('pm.filterAll') : f === 'Paid' ? t('pm.payPaid') : f === 'Unpaid' ? t('pm.payUnpaid') : f === 'Overdue' ? t('pm.payOverdue') : t('pm.payPartial')}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('pm.payResident')}</th>
+                  <th>{t('pm.flat')}</th>
+                  <th>{t('pm.payScCharge')}</th>
+                  <th>{t('pm.payParking')}</th>
+                  <th>{t('pm.payWater')}</th>
+                  <th>{t('pm.payMaint')}</th>
+                  <th>{t('pm.payPenalty')}</th>
+                  <th>{t('pm.payBalance')}</th>
+                  <th>{t('pm.tableHeaderStatus')}</th>
+                  <th>{t('pm.tableHeaderActions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(r => (
+                  <tr key={r.id} style={{cursor:'pointer'}} onClick={() => setSelectedResident(r)}>
+                    <td><strong>{r.name}</strong></td>
+                    <td>{r.flat}</td>
+                    <td>AED {fmt(r.scMonthly)}</td>
+                    <td>{r.parkingStatus === 'N/A' ? '—' : 'AED ' + fmt(r.parking)}</td>
+                    <td>AED {fmt(r.water)}</td>
+                    <td>{r.maintenance > 0 ? 'AED ' + fmt(r.maintenance) : '—'}</td>
+                    <td style={{color: r.penalty > 0 ? '#c62828' : 'inherit'}}>{r.penalty > 0 ? 'AED ' + fmt(r.penalty) : '—'}</td>
+                    <td style={{fontWeight:600,color: r.balance > 0 ? '#c62828' : '#2e7d32'}}>{r.balance > 0 ? 'AED ' + fmt(r.balance) : '✓'}</td>
+                    <td><span style={{fontSize:11,padding:'3px 10px',borderRadius:12,background:statusBg(r.scStatus),color:statusColor(r.scStatus),fontWeight:600}}>{r.scStatus}</span></td>
+                    <td>
+                      <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setSelectedResident(r); }}><Icon name="eye" size={12}/></button>
+                      {(r.scStatus === 'Overdue' || r.scStatus === 'Unpaid') && (
+                        <button className="btn btn-sm" style={{marginLeft:4}} onClick={e => { e.stopPropagation(); showToast(t('pm.payReminderSent') + ' ' + r.name); }}><Icon name="announcements" size={12}/></button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Detail Panel */}
+        <div className="right-panel">
+          {selectedResident ? (
+            <div className="card">
+              <h3>{t('pm.payResidentDetail')}</h3>
+              <div style={{marginTop:12,marginBottom:16}}>
+                <div style={{fontSize:18,fontWeight:600,color:'#1a1a1a'}}>{selectedResident.name}</div>
+                <div style={{fontSize:12,color:'#a89a92'}}>{selectedResident.flat} · {selectedResident.tower}</div>
+                <div style={{display:'flex',gap:6,marginTop:6}}>
+                  <span style={{fontSize:11,padding:'3px 10px',borderRadius:12,background:statusBg(selectedResident.scStatus),color:statusColor(selectedResident.scStatus),fontWeight:600}}>{selectedResident.scStatus}</span>
+                  <span style={{fontSize:11,padding:'3px 10px',borderRadius:12,background:'#f2efec',color:'#8a8a8a'}}>{selectedResident.method}</span>
+                </div>
+              </div>
+
+              {/* Breakdown */}
+              <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',marginBottom:8}}>{t('pm.payBreakdown')}</div>
+              {[
+                [t('pm.payScCharge'), selectedResident.scMonthly, selectedResident.scStatus],
+                [t('pm.payParking'), selectedResident.parkingStatus !== 'N/A' ? selectedResident.parking : null, selectedResident.parkingStatus],
+                [t('pm.payWater'), selectedResident.water, selectedResident.waterStatus],
+                ...(selectedResident.maintenance > 0 ? [[t('pm.payMaint'), selectedResident.maintenance, 'Paid']] : []),
+                ...(selectedResident.penalty > 0 ? [[t('pm.payPenalty'), selectedResident.penalty, 'Penalty']] : []),
+              ].filter(r => r[1] !== null).map(([label, amount, status], i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid #f0ece8'}}>
+                  <span style={{fontSize:12,color:'#8a8a8a'}}>{label}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:12,fontWeight:600,color:'#1a1a1a'}}>AED {fmt(amount)}</span>
+                    <span style={{width:6,height:6,borderRadius:'50%',background: status === 'Paid' ? '#2e7d32' : status === 'Penalty' ? '#c62828' : '#e65100'}}/>
+                  </div>
+                </div>
+              ))}
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',marginTop:4}}>
+                <span style={{fontSize:13,fontWeight:700,color:'#1a1a1a'}}>{t('pm.payTotalBalance')}</span>
+                <span style={{fontSize:13,fontWeight:700,color: selectedResident.balance > 0 ? '#c62828' : '#2e7d32'}}>{selectedResident.balance > 0 ? 'AED ' + fmt(selectedResident.balance) : '✓ ' + t('pm.payCleared')}</span>
+              </div>
+
+              {/* Payment History */}
+              <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',marginTop:16,marginBottom:8}}>{t('pm.payHistory')}</div>
+              {selectedResident.history.map((h, i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid #f0ece8'}}>
+                  <span style={{fontSize:12,color:'#8a8a8a'}}>{h.m} 2026</span>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:12,color:'#1a1a1a'}}>AED {fmt(h.a)}</span>
+                    <span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background: h.s === 'Paid' ? '#e8f5e9' : h.s === 'Late' ? '#fff3e0' : '#ffebee',color: h.s === 'Paid' ? '#2e7d32' : h.s === 'Late' ? '#e65100' : '#c62828',fontWeight:500}}>{h.s}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Actions */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:16}}>
+                {selectedResident.balance > 0 && (
+                  <button className="btn btn-primary btn-sm" onClick={() => showToast(t('pm.payReminderSent') + ' ' + selectedResident.name)}>{t('pm.paySendReminder')}</button>
+                )}
+                <button className="btn btn-sm" onClick={() => showToast(t('pm.payStatementGenerated'))}>{t('pm.payDownloadStmt')}</button>
+              </div>
+            </div>
+          ) : (
+            <div className="card" style={{textAlign:'center',padding:'40px 20px',color:'#a89a92'}}>
+              <Icon name="payment" size={32}/>
+              <div style={{marginTop:8,fontSize:13}}>{t('pm.paySelectResident')}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MoveInOutPage = () => {
+  const { data, t, showToast } = useApp();
+  const [selectedMove, setSelectedMove] = React.useState(null);
+
+  const moves = [
+    { id: 'MV-001', type: 'Move-In', resident: 'Omar Al-Muraikhi', flat: 'B-0903', date: '16 Apr', time: '14:00', status: 'Scheduled', movers: 'Emirates Move & Pack', elevator: 'B-2', deposit: 'AED 2,000', notes: 'Furniture delivery expected, 2 trucks' },
+    { id: 'MV-002', type: 'Move-Out', resident: 'Faisal Al-Mansoori', flat: 'B-1204', date: '19 Apr', time: '11:00', status: 'Pending Approval', movers: 'TBD', elevator: 'B-1', deposit: 'AED 2,000', notes: 'Lease ending, unit inspection needed' },
+    { id: 'MV-003', type: 'Move-In', resident: 'Nour Al-Rashid', flat: 'C-0904', date: '18 Apr', time: '10:00', status: 'Scheduled', movers: 'ProMove LLC', elevator: 'C-1', deposit: 'AED 2,000', notes: 'New tenant, 1 bedroom unit' },
+    { id: 'MV-004', type: 'Move-Out', resident: 'Khalid Al-Mansoori', flat: 'A-1204', date: '22 Apr', time: '09:00', status: 'Approved', movers: 'SelfMove', elevator: 'A-2', deposit: 'AED 2,000 (refund pending)', notes: 'Deposit inspection scheduled 21 Apr' },
+    { id: 'MV-005', type: 'Move-In', resident: 'Layla Hassan', flat: 'D-0501', date: '25 Apr', time: '14:00', status: 'Pending Approval', movers: 'TBD', elevator: 'D-1', deposit: 'Not paid', notes: 'Awaiting lease signing' },
+    { id: 'MV-006', type: 'Move-Out', resident: 'James Harrison', flat: 'A-0202', date: '28 Apr', time: '10:00', status: 'Scheduled', movers: 'Emirates Move & Pack', elevator: 'A-1', deposit: 'AED 2,000', notes: 'Early lease termination, penalty applies' },
+    { id: 'MV-007', type: 'Move-In', resident: 'Aisha Al-Dhaheri', flat: 'C-0702', date: '30 Apr', time: '11:00', status: 'Scheduled', movers: 'SafeMove UAE', elevator: 'C-2', deposit: 'AED 2,000', notes: 'Family of 4, large furniture' },
+    { id: 'MV-008', type: 'Move-Out', resident: 'Tariq Facilities', flat: 'A-0501', date: '02 May', time: '09:00', status: 'Approved', movers: 'SelfMove', elevator: 'A-1', deposit: 'AED 2,000 (cleared)', notes: 'Unit passed final inspection' },
+  ];
+
+  const handleApprove = (move) => {
+    showToast(t('pm.moveApproved'));
+  };
+
+  const m = selectedMove;
+  const checklist = m ? [
+    { label: t('pm.moveUnitInspection'), done: m.status === 'Approved' || m.status === 'Scheduled' },
+    { label: t('pm.moveDepositReceived'), done: m.deposit.includes('AED 2,000') && m.deposit !== 'Not paid' },
+    { label: t('pm.moveElevatorReserved'), done: m.status === 'Scheduled' || m.status === 'Approved' },
+    { label: t('pm.moveMoversConfirmed'), done: m.movers !== 'TBD' },
+    { label: t('pm.moveResidentNotified'), done: m.status !== 'Pending Approval' },
+  ] : [];
+
+  return (
+    <div className="page-with-panel">
+      <div style={{flex:1,minWidth:0}}>
+        <div className="page-header">
+          <h1>{t('pm.moveInOutTitle')}</h1>
+          <p className="subtitle">{t('pm.moveInOutSubtitle')}</p>
+        </div>
+        <div className="kpi-row">
+          <div className="kpi-card"><div className="kpi-value">3</div><div className="kpi-label">{t('pm.moveScheduledWeek')}</div></div>
+          <div className="kpi-card"><div className="kpi-value">11</div><div className="kpi-label">{t('pm.moveScheduledMonth')}</div></div>
+          <div className="kpi-card"><div className="kpi-value">8</div><div className="kpi-label">{t('pm.moveCompletedMonth')}</div></div>
+          <div className="kpi-card"><div className="kpi-value">2</div><div className="kpi-label">{t('pm.movePendingApproval')}</div></div>
+        </div>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>{t('pm.moveId')}</th>
+              <th>{t('pm.moveType')}</th>
+              <th>{t('pm.resident')}</th>
+              <th>{t('pm.flat')}</th>
+              <th>{t('pm.date')}/{t('pm.time')}</th>
+              <th>{t('pm.moveMovers')}</th>
+              <th>{t('pm.moveElevator')}</th>
+              <th>{t('pm.moveDeposit')}</th>
+              <th>{t('pm.status')}</th>
+              <th>{t('pm.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {moves.map(mv => (
+              <tr key={mv.id} onClick={() => setSelectedMove(mv)} style={{cursor:'pointer', background: selectedMove && selectedMove.id === mv.id ? 'var(--bg-hover,#f0f0f0)' : undefined}}>
+                <td>{mv.id}</td>
+                <td>{mv.type}</td>
+                <td>{mv.resident}</td>
+                <td>{mv.flat}</td>
+                <td>{mv.date} {mv.time}</td>
+                <td>{mv.movers}</td>
+                <td>{mv.elevator}</td>
+                <td>{mv.deposit}</td>
+                <td><StatusBadge status={mv.status}/></td>
+                <td>
+                  {mv.status === 'Pending Approval' && <button className="btn btn-primary btn-sm" onClick={e => { e.stopPropagation(); handleApprove(mv); }}>{t('pm.moveApprove')}</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="right-panel">
+        {m ? (
+          <div>
+            <h3>{t('pm.moveDetail')}</h3>
+            <p><strong>{t('pm.moveId')}:</strong> {m.id}</p>
+            <p><strong>{t('pm.moveType')}:</strong> {m.type}</p>
+            <p><strong>{t('pm.resident')}:</strong> {m.resident}</p>
+            <p><strong>{t('pm.flat')}:</strong> {m.flat}</p>
+            <p><strong>{t('pm.date')}:</strong> {m.date} {m.time}</p>
+            <p><strong>{t('pm.moveMovers')}:</strong> {m.movers}</p>
+            <p><strong>{t('pm.moveElevator')}:</strong> {m.elevator}</p>
+            <p><strong>{t('pm.moveDeposit')}:</strong> {m.deposit}</p>
+            <p><strong>{t('pm.notes')}:</strong> {m.notes}</p>
+            <h4>{t('pm.moveChecklist')}</h4>
+            {checklist.map((c, i) => (
+              <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                <span style={{color: c.done ? 'var(--green,#22c55e)' : 'var(--text-muted,#aaa)', fontSize:18}}>{c.done ? '\u2611' : '\u2610'}</span>
+                <span style={{textDecoration: c.done ? 'line-through' : 'none'}}>{c.label}</span>
+              </div>
+            ))}
+            <div style={{marginTop:16,display:'flex',gap:8,flexWrap:'wrap'}}>
+              {m.status === 'Pending Approval' && <button className="btn btn-primary btn-sm" onClick={() => handleApprove(m)}>{t('pm.moveApprove')}</button>}
+              <button className="btn btn-sm" onClick={() => showToast('Checklist downloaded')}>{t('pm.moveDownloadChecklist')}</button>
+            </div>
+          </div>
+        ) : (
+          <p style={{color:'var(--text-muted,#888)',padding:24}}>{t('pm.moveSelectMove')}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const OccupancyPage = () => {
+  const { data, t, showToast } = useApp();
+
+  const towers = [
+    { name: 'Tower A', total: 75, occupied: 68, vacant: 7, pct: 90.7 },
+    { name: 'Tower B', total: 75, occupied: 62, vacant: 13, pct: 82.7 },
+    { name: 'Tower C', total: 75, occupied: 65, vacant: 10, pct: 86.7 },
+    { name: 'Tower D', total: 75, occupied: 60, vacant: 15, pct: 80.0 },
+  ];
+
+  const vacantUnits = [
+    { unit: 'A-0105', tower: 'Tower A', type: '1BR', floor: 1, vacantSince: '12 Mar 2026', daysVacant: 35, lastTenant: 'Sarah Williams', reason: 'Relocated', status: 'Available' },
+    { unit: 'A-0803', tower: 'Tower A', type: 'Studio', floor: 8, vacantSince: '28 Mar 2026', daysVacant: 19, lastTenant: 'Ahmed Khalil', reason: 'Lease ended', status: 'Under renovation' },
+    { unit: 'B-0201', tower: 'Tower B', type: '2BR', floor: 2, vacantSince: '05 Feb 2026', daysVacant: 70, lastTenant: 'Maria Santos', reason: 'Transferred', status: 'Available' },
+    { unit: 'B-0604', tower: 'Tower B', type: '1BR', floor: 6, vacantSince: '20 Mar 2026', daysVacant: 27, lastTenant: 'Li Wei', reason: 'Relocated', status: 'Available' },
+    { unit: 'B-0905', tower: 'Tower B', type: 'Studio', floor: 9, vacantSince: '01 Apr 2026', daysVacant: 15, lastTenant: 'Raj Patel', reason: 'Lease ended', status: 'Pending inspection' },
+    { unit: 'B-1103', tower: 'Tower B', type: '1BR', floor: 11, vacantSince: '15 Mar 2026', daysVacant: 32, lastTenant: 'Tom Anderson', reason: 'Relocated', status: 'Available' },
+    { unit: 'C-0102', tower: 'Tower C', type: '2BR', floor: 1, vacantSince: '10 Apr 2026', daysVacant: 6, lastTenant: 'Fatima Hassan', reason: 'Upgraded', status: 'Under renovation' },
+    { unit: 'C-0507', tower: 'Tower C', type: 'Studio', floor: 5, vacantSince: '22 Feb 2026', daysVacant: 53, lastTenant: 'John Smith', reason: 'Lease ended', status: 'Available' },
+    { unit: 'C-0801', tower: 'Tower C', type: '1BR', floor: 8, vacantSince: '01 Apr 2026', daysVacant: 15, lastTenant: 'Yuki Tanaka', reason: 'Relocated', status: 'Available' },
+    { unit: 'D-0203', tower: 'Tower D', type: '2BR', floor: 2, vacantSince: '18 Jan 2026', daysVacant: 88, lastTenant: 'Mark Johnson', reason: 'Terminated', status: 'Legal hold' },
+    { unit: 'D-0405', tower: 'Tower D', type: 'Studio', floor: 4, vacantSince: '25 Mar 2026', daysVacant: 22, lastTenant: 'Priya Sharma', reason: 'Relocated', status: 'Available' },
+    { unit: 'D-0706', tower: 'Tower D', type: '1BR', floor: 7, vacantSince: '08 Apr 2026', daysVacant: 8, lastTenant: 'Ali Hassan', reason: 'Lease ended', status: 'Pending inspection' },
+    { unit: 'D-0901', tower: 'Tower D', type: '2BR', floor: 9, vacantSince: '14 Mar 2026', daysVacant: 33, lastTenant: 'Chen Wei', reason: 'Transferred', status: 'Available' },
+    { unit: 'D-1004', tower: 'Tower D', type: 'Studio', floor: 10, vacantSince: '30 Mar 2026', daysVacant: 17, lastTenant: 'Sophie Martin', reason: 'Relocated', status: 'Under renovation' },
+    { unit: 'D-1202', tower: 'Tower D', type: '1BR', floor: 12, vacantSince: '05 Apr 2026', daysVacant: 11, lastTenant: 'David Kim', reason: 'Lease ended', status: 'Available' },
+  ];
+
+  const statusColor = (s) => {
+    if (s === 'Available') return 'var(--green,#22c55e)';
+    if (s === 'Under renovation') return 'var(--orange,#f97316)';
+    if (s === 'Pending inspection') return 'var(--yellow,#eab308)';
+    if (s === 'Legal hold') return 'var(--red,#ef4444)';
+    return 'inherit';
+  };
+
+  const statusLabel = (s) => {
+    if (s === 'Available') return t('pm.occAvailable');
+    if (s === 'Under renovation') return t('pm.occUnderRenovation');
+    if (s === 'Pending inspection') return t('pm.occPendingInspection');
+    if (s === 'Legal hold') return t('pm.occLegalHold');
+    return s;
+  };
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>{t('pm.occTitle')}</h1>
+        <p className="subtitle">{t('pm.occSubtitle')}</p>
+      </div>
+      <div className="kpi-row">
+        <div className="kpi-card"><div className="kpi-value">300</div><div className="kpi-label">{t('pm.occTotalUnits')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">255 (85%)</div><div className="kpi-label">{t('pm.occOccupied')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">45</div><div className="kpi-label">{t('pm.occVacant')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">22 {t('pm.occDays')}</div><div className="kpi-label">{t('pm.occAvgVacancy')}</div></div>
+      </div>
+      <h3 style={{margin:'24px 0 12px'}}>{t('pm.occTowerBreakdown')}</h3>
+      <div className="grid-2">
+        {towers.map(tw => (
+          <div className="card" key={tw.name} style={{padding:16}}>
+            <h4 style={{marginBottom:8}}>{tw.name}</h4>
+            <p>{tw.total} {t('pm.occUnits')} &middot; {tw.occupied} {t('pm.occOccupiedUnits')} &middot; {tw.vacant} {t('pm.occVacantUnits')}</p>
+            <div style={{background:'var(--bg-muted,#e5e7eb)',borderRadius:6,height:10,marginTop:8,overflow:'hidden'}}>
+              <div style={{width: tw.pct + '%', height:'100%', background:'var(--primary,#6366f1)',borderRadius:6}}/>
+            </div>
+            <p style={{marginTop:4,fontSize:13,color:'var(--text-muted,#888)'}}>{tw.pct}%</p>
+          </div>
+        ))}
+      </div>
+      <h3 style={{margin:'24px 0 12px'}}>{t('pm.occVacantUnitsList')}</h3>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>{t('pm.occUnit')}</th>
+            <th>{t('pm.tower')}</th>
+            <th>{t('pm.occType')}</th>
+            <th>{t('pm.occFloor')}</th>
+            <th>{t('pm.occVacantSince')}</th>
+            <th>{t('pm.occDaysVacant')}</th>
+            <th>{t('pm.occLastTenant')}</th>
+            <th>{t('pm.occReason')}</th>
+            <th>{t('pm.status')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {vacantUnits.map(u => (
+            <tr key={u.unit}>
+              <td>{u.unit}</td>
+              <td>{u.tower}</td>
+              <td>{u.type}</td>
+              <td>{u.floor}</td>
+              <td>{u.vacantSince}</td>
+              <td>{u.daysVacant}</td>
+              <td>{u.lastTenant}</td>
+              <td>{u.reason}</td>
+              <td><span style={{color: statusColor(u.status), fontWeight:600}}>{statusLabel(u.status)}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const AppAdoptionPage = () => {
+  const { data, t, showToast } = useApp();
+
+  const towerAdoption = [
+    { name: 'Tower A', residents: 75, users: 54, pct: 72 },
+    { name: 'Tower B', residents: 75, users: 48, pct: 64 },
+    { name: 'Tower C', residents: 75, users: 51, pct: 68 },
+    { name: 'Tower D', residents: 75, users: 36, pct: 48 },
+  ];
+
+  const notUsing = [
+    { name: 'Hassan Al-Rashid', flat: 'A-0301', tower: 'Tower A', moveIn: 'Jan 2024', lastInvite: '01 Apr 2026', invites: 3 },
+    { name: 'Maria Garcia', flat: 'A-0805', tower: 'Tower A', moveIn: 'Mar 2025', lastInvite: '15 Mar 2026', invites: 2 },
+    { name: 'Zhou Ming', flat: 'B-0402', tower: 'Tower B', moveIn: 'Nov 2024', lastInvite: '01 Apr 2026', invites: 4 },
+    { name: 'Fatima Noor', flat: 'B-0701', tower: 'Tower B', moveIn: 'Aug 2023', lastInvite: '20 Mar 2026', invites: 5 },
+    { name: 'Raj Krishnan', flat: 'C-0201', tower: 'Tower C', moveIn: 'Jun 2025', lastInvite: '01 Apr 2026', invites: 1 },
+    { name: 'Elena Volkov', flat: 'C-0906', tower: 'Tower C', moveIn: 'Feb 2024', lastInvite: '10 Mar 2026', invites: 3 },
+    { name: 'Thomas Wright', flat: 'D-0103', tower: 'Tower D', moveIn: 'Dec 2023', lastInvite: '01 Apr 2026', invites: 6 },
+    { name: 'Amina Saeed', flat: 'D-0504', tower: 'Tower D', moveIn: 'Apr 2025', lastInvite: '15 Mar 2026', invites: 2 },
+    { name: 'Park Soo-Jin', flat: 'D-0802', tower: 'Tower D', moveIn: 'Jul 2024', lastInvite: '01 Apr 2026', invites: 4 },
+    { name: 'Carlos Mendez', flat: 'D-1101', tower: 'Tower D', moveIn: 'Oct 2024', lastInvite: '20 Mar 2026', invites: 3 },
+  ];
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>{t('pm.adoptionTitle')}</h1>
+        <p className="subtitle">{t('pm.adoptionSubtitle')}</p>
+      </div>
+      <div className="kpi-row">
+        <div className="kpi-card"><div className="kpi-value">300</div><div className="kpi-label">{t('pm.adoptionTotalResidents')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">189 (63%)</div><div className="kpi-label">{t('pm.adoptionAppUsers')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">156</div><div className="kpi-label">{t('pm.adoptionActiveMonth')}</div></div>
+        <div className="kpi-card"><div className="kpi-value">72</div><div className="kpi-label">{t('pm.adoptionNeverLoggedIn')}</div></div>
+      </div>
+      <div className="grid-2" style={{marginTop:24}}>
+        <div className="card" style={{padding:16}}>
+          <h3 style={{marginBottom:12}}>{t('pm.adoptionByTower')}</h3>
+          {towerAdoption.map(tw => (
+            <div key={tw.name} style={{marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:4}}>
+                <span>{tw.name}</span>
+                <span>{tw.residents} {t('pm.adoptionResidents')}, {tw.users} {t('pm.adoptionUsingApp')} ({tw.pct}%)</span>
+              </div>
+              <div style={{background:'var(--bg-muted,#e5e7eb)',borderRadius:6,height:10,overflow:'hidden'}}>
+                <div style={{width: tw.pct + '%', height:'100%', background:'var(--primary,#6366f1)',borderRadius:6}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="card" style={{padding:16}}>
+          <h3 style={{marginBottom:12}}>{t('pm.adoptionEngagement')}</h3>
+          <div style={{display:'flex',flexDirection:'column',gap:10,fontSize:14}}>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionMAU')}</span><strong>156 (82.5% {t('pm.adoptionOfUsers')})</strong></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionWAU')}</span><strong>98 (51.9% {t('pm.adoptionOfUsers')})</strong></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionAvgSessions')}</span><strong>3.2</strong></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionMostUsed')}</span><strong>{t('pm.adoptionVisitorPreApproval')} (42%)</strong></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionSecondMostUsed')}</span><strong>{t('pm.adoptionServiceRequests')} (28%)</strong></div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>{t('pm.adoptionAvgAnnResponse')}</span><strong>67%</strong></div>
+          </div>
+        </div>
+      </div>
+      <h3 style={{margin:'24px 0 12px'}}>{t('pm.adoptionNotUsing')}</h3>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>{t('pm.resident')}</th>
+            <th>{t('pm.flat')}</th>
+            <th>{t('pm.tower')}</th>
+            <th>{t('pm.adoptionMovedIn')}</th>
+            <th>{t('pm.adoptionLastInvite')}</th>
+            <th>{t('pm.adoptionInvitesSent')}</th>
+            <th>{t('pm.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {notUsing.map(r => (
+            <tr key={r.flat}>
+              <td>{r.name}</td>
+              <td>{r.flat}</td>
+              <td>{r.tower}</td>
+              <td>{r.moveIn}</td>
+              <td>{r.lastInvite}</td>
+              <td>{r.invites}</td>
+              <td><button className="btn btn-primary btn-sm" onClick={() => showToast(t('pm.adoptionInviteResent') + ' ' + r.name)}>{t('pm.adoptionResendInvite')}</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 const PlaceholderPage = ({ title, description }) => {
   const { t } = useApp();
   return (
@@ -14506,6 +15637,7 @@ const App = () => {
     try { return localStorage.getItem('varspm_role') || null; } catch(e) { return null; }
   });
   const [page, setPage] = useState('overview');
+  const [autoOpenVisitorForm, setAutoOpenVisitorForm] = useState(false);
   const [data, setData] = useState(loadPersistedData);
   const [toast, setToast] = useState(null);
   const [language, setLanguageState] = useState(getInitialLanguage);
@@ -14706,7 +15838,7 @@ const App = () => {
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
   const handleCreateClick = (type) => {
-    if (type === 'visitor') setPage('visitors');
+    if (type === 'visitor') { setAutoOpenVisitorForm(true); setPage('visitors'); }
     else if (type === 'announcement') setPage('announcements');
     else if (type === 'service') setPage('service');
     else if (type === 'guard') setPage('guards');
@@ -14762,8 +15894,8 @@ const App = () => {
     const clearSel = () => setSearchSelectedItem(null);
     switch (page) {
       case 'overview': return <OverviewPage setPage={setPage}/>;
-      case 'payment': return <PlaceholderPage title="Payment Summary" description="Payment tracking and billing management. Coming soon!"/>;
-      case 'visitors': return <VisitorsPage/>;
+      case 'payment': return <PaymentSummaryPage/>;
+      case 'visitors': return <VisitorsPage autoOpenForm={autoOpenVisitorForm} onFormOpened={() => setAutoOpenVisitorForm(false)}/>;
       case 'service': return <ServiceRequestsPage/>;
       case 'packages': return <PlaceholderPage title="Packages" description="Package tracking and delivery management. Coming soon!"/>;
       case 'announcements': return <AnnouncementsPage/>;
@@ -14773,6 +15905,9 @@ const App = () => {
       case 'escalations': return <EscalationsPage/>;
       case 'reports': return <ReportsPage/>;
       case 'settings': return <SettingsPage/>;
+      case 'moveinout': return <MoveInOutPage/>;
+      case 'occupancy': return <OccupancyPage/>;
+      case 'adoption': return <AppAdoptionPage/>;
       default: return <OverviewPage setPage={setPage}/>;
     }
   };
