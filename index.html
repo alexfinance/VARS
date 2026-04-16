@@ -5654,11 +5654,11 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
 
   const getStatusStyle = (status) => {
     const s = (status||'').toUpperCase();
-    if (s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED') return {bg:'#e0e5db',color:'#5a6b4f',border:'#cdd5c6',label:'INSIDE'};
-    if (s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL') return {bg:'#f0ece5',color:'#6a5a45',border:'#d5cfc8',label:'SCHEDULED'};
-    if (s === 'CHECKED OUT' || s === 'EXITED') return {bg:'#f5f3f0',color:'#8a8078',border:'#e5e0d8',label:'CHECKED OUT'};
-    if (s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY') return {bg:'#eddbd9',color:'#8b4a42',border:'#deccca',label:'REJECTED'};
-    if (s === 'ON HOLD' || s === 'FLAGGED') return {bg:'#f0e2d0',color:'#7a4a1a',border:'#dcc4a0',label:'FLAGGED'};
+    if (s === 'PASSED SECURITY' || s === 'CLEARED' || s === 'INSIDE' || s === 'RESIDENT APPROVED' || s === 'APPROVED BY SECURITY' || s === 'APPROVED') return {bg:'#928989',color:'#fff',border:'#928989',label:'INSIDE'};
+    if (s === 'SCHEDULED' || s === 'PRE-APPROVED' || s === 'PENDING' || s === 'AWAITING APPROVAL') return {bg:'#fff',color:'#6a5a45',border:'#d5cfc8',label:'SCHEDULED'};
+    if (s === 'CHECKED OUT' || s === 'EXITED') return {bg:'#e8e3de',color:'#6a5a45',border:'#d5cfc8',label:'CHECKED OUT'};
+    if (s === 'REJECTED' || s === 'REJECTED BY SECURITY' || s === 'DENIED ENTRY') return {bg:'#fff',color:'#1a1a1a',border:'#1a1a1a',label:'REJECTED'};
+    if (s === 'ON HOLD' || s === 'FLAGGED') return {bg:'#fff',color:'#6a5a45',border:'#d5cfc8',label:'FLAGGED'};
     return {bg:'#f0ece5',color:'#a89a92',border:'#e5e0d8',label:status};
   };
 
@@ -5825,10 +5825,10 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
 
       <div className="kpi-row" style={{gridTemplateColumns:'repeat(5,1fr)'}}>
         <div className="kpi-card"><div className="label">Total Visitors</div><span className="value">{allEntries.length}</span></div>
-        <div className="kpi-card"><div className="label">Inside Now</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{insideCount}</span><span style={{fontSize:12,color:'#5a6b4f'}}>{allEntries.length ? Math.round(insideCount/allEntries.length*100) : 0}%</span></div></div>
-        <div className="kpi-card"><div className="label">Checked Out</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{checkedOutCount}</span><span style={{fontSize:12,color:'#8a8078'}}>{allEntries.length ? Math.round(checkedOutCount/allEntries.length*100) : 0}%</span></div></div>
-        <div className="kpi-card"><div className="label">Scheduled</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{scheduledCount}</span><span style={{fontSize:12,color:'#6a5a45'}}>{allEntries.length ? Math.round(scheduledCount/allEntries.length*100) : 0}%</span></div></div>
-        <div className="kpi-card"><div className="label">Rejected</div><span className="value" style={{color:'#8b4a42'}}>{rejectedCount}</span></div>
+        <div className="kpi-card"><div className="label">Inside Now</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{insideCount}</span><span style={{fontSize:12,color:'#a89a92'}}>{allEntries.length ? Math.round(insideCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Checked Out</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{checkedOutCount}</span><span style={{fontSize:12,color:'#a89a92'}}>{allEntries.length ? Math.round(checkedOutCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Scheduled</div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span className="value">{scheduledCount}</span><span style={{fontSize:12,color:'#a89a92'}}>{allEntries.length ? Math.round(scheduledCount/allEntries.length*100) : 0}%</span></div></div>
+        <div className="kpi-card"><div className="label">Rejected</div><span className="value">{rejectedCount}</span></div>
       </div>
 
       <div className="card">
@@ -5837,12 +5837,12 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
           {filterOptions.map(f => (
             <div key={f.key} onClick={() => { setStatusFilter(f.key); setCurrentPage(0); }}
               style={{padding:'6px 14px',borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:6,
-                background: statusFilter===f.key ? '#1a1a1a' : '#fff',
+                background: statusFilter===f.key ? '#928989' : '#fff',
                 color: statusFilter===f.key ? '#fff' : '#1a1a1a',
-                border: statusFilter===f.key ? '1px solid #1a1a1a' : '1px solid #d5cfc8'
+                border: statusFilter===f.key ? '1px solid #928989' : '1px solid #d5cfc8'
               }}>
               {f.label}
-              <span style={{background: statusFilter===f.key ? '#444' : '#f0f0f0', padding:'1px 6px', borderRadius:3, fontSize:9, fontWeight:600}}>
+              <span style={{background: statusFilter===f.key ? 'rgba(255,255,255,0.2)' : '#f0ece5', padding:'1px 6px', borderRadius:3, fontSize:9, fontWeight:600}}>
                 {f.count}
               </span>
             </div>
@@ -5916,7 +5916,7 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
                       {(isInsideStatus || isScheduledStatus) ? (
                         <>
                           <button className="btn btn-sm btn-primary" onClick={() => handleApprove(entry.originalData)} style={{fontSize:10,padding:'4px 8px'}}><Icon name="check" size={10}/> Approve</button>
-                          <button className="btn btn-sm" onClick={() => handleReject(entry.originalData)} style={{fontSize:10,padding:'4px 8px',color:'#8b4a42'}}>Reject</button>
+                          <button className="btn btn-sm" onClick={() => handleReject(entry.originalData)} style={{fontSize:10,padding:'4px 8px'}}>Reject</button>
                         </>
                       ) : (
                         <button className="btn btn-sm" onClick={() => setSelectedVisitor(entry.originalData)}><Icon name="eye" size={12}/> View</button>
@@ -5943,7 +5943,7 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
               const pg = totalPages <= 3 ? i : Math.max(0, Math.min(currentPage - 1, totalPages - 3)) + i;
               return (
                 <button key={pg} onClick={() => setCurrentPage(pg)}
-                  style={{background: pg === currentPage ? '#1a1a1a' : '#fff', border:'1px solid ' + (pg === currentPage ? '#1a1a1a' : '#d0d0d0'), color: pg === currentPage ? '#fff' : '#1a1a1a', padding:'6px 10px', borderRadius:4, fontSize:10, cursor:'pointer', fontWeight: pg === currentPage ? 700 : 400, minWidth:30}}>
+                  style={{background: pg === currentPage ? '#928989' : '#fff', border:'1px solid ' + (pg === currentPage ? '#928989' : '#d5cfc8'), color: pg === currentPage ? '#fff' : '#1a1a1a', padding:'6px 10px', borderRadius:4, fontSize:10, cursor:'pointer', fontWeight: pg === currentPage ? 700 : 400, minWidth:30}}>
                   {pg + 1}
                 </button>
               );
@@ -8005,18 +8005,18 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
       <div className="card"><h3 style={{marginBottom:16}}>{t('pm.propertiesOverview')}</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
-          {data.towers.map(t => (
-            <div key={t.name} style={{border:'1px solid #e5e5e5',borderRadius:10,padding:16}}>
+          {data.towers.map(tw => (
+            <div key={tw.name} style={{border:'1px solid #e5e5e5',borderRadius:10,padding:16}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                 <div style={{width:32,height:32,background:'#e8e3de',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='#a89a92' stroke-width='1.5'><rect x='4' y='2' width='16' height='20' rx='2'/><path d='M9 22V18h6v4M9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01'/></svg></div>
                 <span style={{cursor:'pointer'}}>⋯</span>
               </div>
-              <h3 style={{fontSize:14,marginBottom:2}}>{t.name}</h3>
-              {t.location && <div style={{fontSize:11,color:'#a89a92',marginBottom:8}}>{t.location}</div>}
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span>{t('pm.totalUnits')}</span><strong>{t.totalFlats.toLocaleString()}</strong></div>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span>{t('pm.occupied')}</span><strong>{t.occupied.toLocaleString()}</strong></div>
-              <div className="progress-bar" style={{marginTop:8}}><div className="fill" style={{width:`${Math.round(t.occupied/t.totalFlats*100)}%`}}/></div>
-              <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{Math.round(t.occupied/t.totalFlats*100)}% {t('pm.occupancy')}</div>
+              <h3 style={{fontSize:14,marginBottom:2}}>{tw.name}</h3>
+              {tw.location && <div style={{fontSize:11,color:'#a89a92',marginBottom:8}}>{tw.location}</div>}
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span>{t('pm.totalUnits')}</span><strong>{tw.totalFlats.toLocaleString()}</strong></div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13}}><span>{t('pm.occupied')}</span><strong>{tw.occupied.toLocaleString()}</strong></div>
+              <div className="progress-bar" style={{marginTop:8}}><div className="fill" style={{width:`${Math.round(tw.occupied/tw.totalFlats*100)}%`}}/></div>
+              <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{Math.round(tw.occupied/tw.totalFlats*100)}% {t('pm.occupancy')}</div>
             </div>
           ))}
         </div>
@@ -8196,7 +8196,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null)}}>
           <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <div><div className="modal-sub">modal/import · Resident Data Import</div><h2 style={{fontSize:16}}>{showImport === 'pick' ? 'Import Residents' : 'Import via ' + showImport.toUpperCase()}</h2></div>
+              <div><div className="modal-sub">modal/import/csv</div><h2 style={{fontSize:16}}>Import Properties via CSV</h2></div>
               <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null)}}>×</button>
             </div>
 
@@ -8225,45 +8225,41 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
             {(showImport === 'csv' || showImport === 'excel' || showImport === 'sql') && (
               <div>
-                {/* Step 1: Template */}
-                <div style={{background:'#f2efec',borderRadius:8,padding:16,marginBottom:16}}>
-                  <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>1. Download Template</div>
-                  <p style={{fontSize:11,color:'#8a7f76',marginBottom:10}}>Use this template to prepare your data. It contains the required columns and a sample row.</p>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
-                    {RESIDENT_COLUMNS.map(c => <span key={c.key} style={{background:'#e8e8e8',padding:'2px 8px',borderRadius:4,fontSize:10,fontWeight:600}}>{c.header}</span>)}
+                {/* Required CSV Columns */}
+                <div style={{border:'1px solid #e5e5e5',borderRadius:8,padding:16,marginBottom:16}}>
+                  <div style={{fontSize:12,fontWeight:600,marginBottom:10}}>Required CSV Columns:</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {['flat_number','resident_name','mobile','email','tower','floor','owner_verified'].map(col => (
+                      <span key={col} style={{background:'#f0f0f0',padding:'4px 10px',borderRadius:4,fontSize:11,fontWeight:500,color:'#1a1a1a'}}>{col}</span>
+                    ))}
                   </div>
-                  <button className="btn btn-sm" onClick={()=>handleDownloadTemplate(showImport)}><Icon name="download" size={12}/> Download {showImport.toUpperCase()} Template</button>
                 </div>
-
-                {/* Step 2: Upload */}
-                <div style={{marginBottom:16}}>
-                  <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>2. Upload Your File</div>
-                  <input type="file" ref={importFileRef} style={{display:'none'}}
-                    accept={showImport === 'csv' ? '.csv' : showImport === 'excel' ? '.xlsx,.xls' : '.sql'}
-                    onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
-                  <div onClick={()=>importFileRef.current && importFileRef.current.click()}
-                    onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
-                    onDragLeave={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0'}}
-                    onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0';if(e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0])}}
-                    style={{padding:24,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#f5f2ef',transition:'all 0.2s'}}>
-                    {importFile ? (
-                      <div>
-                        <div style={{fontWeight:600,fontSize:13}}>{importFile.name}</div>
-                        <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{(importFile.size/1024).toFixed(1)} KB · Click to change</div>
-                      </div>
-                    ) : (
-                      <div>
-                        <Icon name="upload" size={20}/>
-                        <div style={{fontSize:12,marginTop:6}}>Drag & drop or <span style={{fontWeight:600,textDecoration:'underline'}}>Browse Files</span></div>
-                        <div style={{fontSize:10,color:'#a89a92',marginTop:4}}>{showImport === 'csv' ? '.csv files' : showImport === 'excel' ? '.xlsx, .xls files' : '.sql files'}</div>
-                      </div>
-                    )}
-                  </div>
+                {/* File Upload Zone */}
+                <input type="file" ref={importFileRef} style={{display:'none'}}
+                  accept={showImport === 'csv' ? '.csv' : showImport === 'excel' ? '.xlsx,.xls' : '.sql'}
+                  onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
+                <div onClick={()=>importFileRef.current && importFileRef.current.click()}
+                  onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
+                  onDragLeave={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0'}}
+                  onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0';if(e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0])}}
+                  style={{padding:32,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#fff',transition:'all 0.2s',marginBottom:16}}>
+                  {importFile ? (
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{importFile.name}</div>
+                      <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{(importFile.size/1024).toFixed(1)} KB · Click to change</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Icon name="upload" size={24}/>
+                      <div style={{fontSize:13,marginTop:8,color:'#1a1a1a'}}>Drop CSV file here</div>
+                      <button className="btn btn-sm" style={{marginTop:10}} onClick={e => { e.stopPropagation(); importFileRef.current && importFileRef.current.click(); }}>Browse Files</button>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{display:'flex',gap:8}}>
-                  <button className="btn" style={{flex:1}} onClick={()=>{setShowImport('pick');setImportFile(null)}}>← Back</button>
-                  <button className="btn btn-primary" style={{flex:1}} onClick={()=>handleImportFile(importFile, showImport)}>Import Data</button>
+                  <button className="btn btn-primary" style={{flex:1}} onClick={()=>handleImportFile(importFile, showImport)}>Import</button>
+                  <button className="btn" style={{flex:1}} onClick={()=>{setShowImport(false);setImportFile(null)}}>Cancel</button>
                 </div>
               </div>
             )}
