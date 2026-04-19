@@ -7883,8 +7883,8 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const handleAddResident = () => {
     if (!newRes.name || !newRes.flat) { showToast(t('pm.fillNameFlat')); return; }
     const id = `RES-${String(data.residents.length+1).padStart(3,'0')}`;
-    const entry = { id, name: newRes.name, flat: newRes.flat, contact: newRes.contact, coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy, absence: 'None', documents: residentDocs };
-    setData(prev => ({...prev, residents: [...prev.residents, entry]}));
+    const entry = { id, name: newRes.name, flat: newRes.flat, contact: newRes.contact, coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy, absence: 'None', documents: residentDocs, createdAt: Date.now() };
+    setData(prev => ({...prev, residents: [entry, ...prev.residents]}));
     setNewRes({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
     setShowAddResident(false);
     setResidentDocs([]);
@@ -7997,8 +7997,8 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
       <div className="page-header">
         <div><h1>{t('pm.propertiesResidents')}</h1><div className="subtitle">{data.towers.length} properties · {data.towers.reduce((a,t)=>a+t.totalFlats,0).toLocaleString()} flats · {data.towers.reduce((a,t)=>a+t.occupied,0).toLocaleString()} occupied</div></div>
         <div className="btn-group">
-          <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}><Icon name="settings" size={12}/> {t('pm.addResidentBtn')}</button>
-          <button className="btn" onClick={()=>setShowImport('csv')}><Icon name="upload" size={12}/> Import CSV</button>
+          <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}><Icon name="user" size={12}/> {t('pm.addResidentBtn')}</button>
+          <button className="btn" onClick={()=>setShowImport('action')}><Icon name="upload" size={12}/> Import / Export Database</button>
           <button className="btn" onClick={()=>{}}> + Add Property</button>
         </div>
       </div>
@@ -8076,6 +8076,38 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 </div>
               </div>
             )}
+            {selectedResident.documents && selectedResident.documents.length > 0 && (
+              <div style={{marginTop:16,marginBottom:16}}>
+                <div style={{fontWeight:600,marginBottom:8}}>Documents</div>
+                {[
+                  { key: 'tenancy', label: 'Tenancy Contract' },
+                  { key: 'layout', label: 'Unit Layout' },
+                  { key: 'photos', label: 'Photos of the Unit' },
+                  { key: 'resident', label: 'Resident Documents (Passport / Emirates ID)' },
+                  { key: 'other', label: 'Other Documents' },
+                ].map(cat => {
+                  const catDocs = selectedResident.documents.filter(d => (d.category || 'other') === cat.key);
+                  if (catDocs.length === 0) return null;
+                  return (
+                    <div key={cat.key} style={{marginBottom:10}}>
+                      <div style={{fontSize:11,fontWeight:600,color:'#6b5d55',marginBottom:4,textTransform:'uppercase',letterSpacing:0.5}}>{cat.label}</div>
+                      {catDocs.map((doc, idx) => (
+                        <div key={idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:11,padding:'6px 8px',background:'#f9f9f9',borderRadius:6,marginBottom:3,border:'1px solid #e8e8e8'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{background:'#e8e8e8',padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600,textTransform:'uppercase'}}>{doc.type}</span>
+                            <span style={{fontWeight:500}}>{doc.name}</span>
+                            <span style={{color:'#888',fontSize:9}}>{doc.size}</span>
+                          </div>
+                          <a href={doc.dataUrl} download={doc.name} style={{fontSize:11,color:'#6b5d55',fontWeight:600,textDecoration:'none',display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
+                            <Icon name="download" size={12}/> Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             <div className="grid-2" style={{marginTop:16}}>
               <button className="btn btn-primary" onClick={()=>setEditingResident({...selectedResident})}>Edit Profile</button>
               <button className="btn" onClick={()=>setSelectedResident(null)}>Close</button>
@@ -8110,7 +8142,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         <div className="modal-overlay" onClick={()=>setShowAddResident(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <div><div className="modal-sub">form/resident/add</div><h2>Add New Resident</h2></div>
+              <div><h2>Add New Resident</h2></div>
               <button className="modal-close" onClick={()=>setShowAddResident(false)}>×</button>
             </div>
             <div className="form-group"><label>Full Name *</label><input className="form-input" placeholder="e.g. Mr. Ahmed Al-Sayed" value={newRes.name} onChange={e=>setNewRes(p=>({...p,name:e.target.value}))}/></div>
@@ -8135,53 +8167,64 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
             </div>
             <div className="form-group">
               <label>Documents</label>
-              <input type="file" ref={residentDocRef} multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:'none'}}
-                onChange={e => {
-                  if (e.target.files.length > 0) {
-                    const fileArray = Array.from(e.target.files);
-                    const readers = fileArray.map(file => new Promise(resolve => {
-                      const reader = new FileReader();
-                      reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result });
-                      reader.readAsDataURL(file);
-                    }));
-                    Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
-                  }
-                  e.target.value = '';
-                }} />
-              <div onClick={() => residentDocRef.current && residentDocRef.current.click()}
-                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#1a1a1a'; }}
-                onDragLeave={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0'; }}
-                onDrop={e => {
-                  e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0';
-                  if (e.dataTransfer.files.length > 0) {
-                    const fileArray = Array.from(e.dataTransfer.files);
-                    const readers = fileArray.map(file => new Promise(resolve => {
-                      const reader = new FileReader();
-                      reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result });
-                      reader.readAsDataURL(file);
-                    }));
-                    Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
-                  }
-                }}
-                style={{padding:20,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#f5f2ef',transition:'all 0.2s'}}>
-                <Icon name="upload" size={20}/>
-                <div style={{fontSize:12,marginTop:6}}>Drop files here or <span style={{fontWeight:600,textDecoration:'underline'}}>Browse Files</span></div>
-                <div style={{fontSize:10,color:'#a89a92',marginTop:4}}>Emirates ID, Passport, Lease — PDF, JPG, PNG up to 10MB</div>
-              </div>
-              {residentDocs.length > 0 && (
-                <div style={{marginTop:8}}>
-                  {residentDocs.map((doc, idx) => (
-                    <div key={idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:12,padding:'8px 10px',background:'#f9f9f9',borderRadius:6,marginBottom:4,border:'1px solid #e8e8e8'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        <span style={{background:'#e8e8e8',padding:'2px 6px',borderRadius:3,fontSize:10,fontWeight:600,textTransform:'uppercase'}}>{doc.type}</span>
-                        <span style={{fontWeight:500}}>{doc.name}</span>
-                        <span style={{color:'#888',fontSize:10}}>{doc.size}</span>
-                      </div>
-                      <button onClick={e => { e.stopPropagation(); setResidentDocs(prev => prev.filter((_,i) => i !== idx)); }} style={{background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:16}}>×</button>
+              {[
+                { key: 'tenancy', label: 'Tenancy Contract' },
+                { key: 'layout', label: 'Unit Layout' },
+                { key: 'photos', label: 'Photos of the Unit' },
+                { key: 'resident', label: 'Resident Documents (Passport / Emirates ID)' },
+                { key: 'other', label: 'Other Documents' },
+              ].map(cat => (
+                <div key={cat.key} style={{marginBottom:12}}>
+                  <div style={{fontSize:11,fontWeight:600,color:'#6b5d55',marginBottom:4,textTransform:'uppercase',letterSpacing:0.5}}>{cat.label}</div>
+                  <input type="file" id={`docInput-${cat.key}`} multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{display:'none'}}
+                    onChange={e => {
+                      if (e.target.files.length > 0) {
+                        const fileArray = Array.from(e.target.files);
+                        const readers = fileArray.map(file => new Promise(resolve => {
+                          const reader = new FileReader();
+                          reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result, category: cat.key });
+                          reader.readAsDataURL(file);
+                        }));
+                        Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
+                      }
+                      e.target.value = '';
+                    }} />
+                  <div onClick={() => document.getElementById(`docInput-${cat.key}`).click()}
+                    onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#1a1a1a'; }}
+                    onDragLeave={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0'; }}
+                    onDrop={e => {
+                      e.preventDefault(); e.currentTarget.style.borderColor = '#d0d0d0';
+                      if (e.dataTransfer.files.length > 0) {
+                        const fileArray = Array.from(e.dataTransfer.files);
+                        const readers = fileArray.map(file => new Promise(resolve => {
+                          const reader = new FileReader();
+                          reader.onload = ev => resolve({ name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB', type: file.name.split('.').pop().toLowerCase(), dataUrl: ev.target.result, category: cat.key });
+                          reader.readAsDataURL(file);
+                        }));
+                        Promise.all(readers).then(docs => setResidentDocs(prev => [...prev, ...docs]));
+                      }
+                    }}
+                    style={{padding:12,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#f5f2ef',transition:'all 0.2s'}}>
+                    <Icon name="upload" size={16}/>
+                    <div style={{fontSize:11,marginTop:4}}>Drop files here or <span style={{fontWeight:600,textDecoration:'underline'}}>Browse Files</span></div>
+                    <div style={{fontSize:10,color:'#a89a92',marginTop:2}}>PDF, JPG, PNG up to 10MB</div>
+                  </div>
+                  {residentDocs.filter(d => d.category === cat.key).length > 0 && (
+                    <div style={{marginTop:6}}>
+                      {residentDocs.map((doc, idx) => doc.category === cat.key ? (
+                        <div key={idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:11,padding:'6px 8px',background:'#f9f9f9',borderRadius:6,marginBottom:3,border:'1px solid #e8e8e8'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{background:'#e8e8e8',padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:600,textTransform:'uppercase'}}>{doc.type}</span>
+                            <span style={{fontWeight:500}}>{doc.name}</span>
+                            <span style={{color:'#888',fontSize:9}}>{doc.size}</span>
+                          </div>
+                          <button onClick={e => { e.stopPropagation(); setResidentDocs(prev => prev.filter((_,i) => i !== idx)); }} style={{background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:14}}>×</button>
+                        </div>
+                      ) : null)}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+              ))}
             </div>
             <div className="grid-2" style={{marginTop:8}}>
               <button className="btn btn-primary" onClick={handleAddResident}>Add Resident</button>
@@ -8192,80 +8235,229 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
       )}
 
       {/* Import Modal */}
-      {showImport && (
-        <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null)}}>
-          <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <div><div className="modal-sub">modal/import/csv</div><h2 style={{fontSize:16}}>Import Properties via CSV</h2></div>
-              <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null)}}>×</button>
+      {showImport && (() => {
+        const downloadTemplate = (kind) => {
+          try {
+            let rows;
+            let sheetName;
+            let fileName;
+            if (kind === 'resident') {
+              sheetName = 'Residents';
+              fileName = 'Resident_Template.xlsx';
+              rows = [
+                { id: 'RES-101', name: 'Mr. Ahmed Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Pending', policy: 'Standard', absence: 'None' },
+                { id: 'RES-102', name: 'Ms. Fatima Al-Neyadi', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18-25 Mar' },
+              ];
+            } else {
+              sheetName = 'Properties';
+              fileName = 'Property_Template.xlsx';
+              rows = [
+                { name: 'The Pinnacle Residences', location: 'Al Reem Island', totalFlats: 1240, occupied: 1087 },
+                { name: 'Al Raha Gardens', location: 'Al Raha Beach', totalFlats: 680, occupied: 598 },
+              ];
+            }
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            XLSX.writeFile(wb, fileName);
+          } catch(err) { showToast('Template download failed: ' + err.message); }
+        };
+
+        const handleImportProperty = (file) => {
+          if (!file) { showToast('Please select a file'); return; }
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const wb = XLSX.read(e.target.result, { type: 'binary' });
+              const ws = wb.Sheets[wb.SheetNames[0]];
+              const jsonData = XLSX.utils.sheet_to_json(ws);
+              const newTowers = jsonData.filter(r => r.name).map(r => ({
+                name: r.name, location: r.location || '', totalFlats: parseInt(r.totalFlats)||0, occupied: parseInt(r.occupied)||0
+              }));
+              if (newTowers.length === 0) { showToast('No valid property rows found'); return; }
+              setData(prev => ({ ...prev, towers: [...newTowers, ...prev.towers] }));
+              showToast(`${newTowers.length} propert${newTowers.length!==1?'ies':'y'} imported`);
+              setShowImport(false); setImportFile(null);
+            } catch(err) { showToast('Import failed: ' + err.message); }
+          };
+          reader.readAsBinaryString(file);
+        };
+
+        const exportProperties = () => {
+          try {
+            const ws = XLSX.utils.json_to_sheet(data.towers);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Properties');
+            XLSX.writeFile(wb, 'Properties_Database.xlsx');
+            showToast('Properties database exported');
+            setShowImport(false);
+          } catch(err) { showToast('Export failed: ' + err.message); }
+        };
+
+        const exportResidents = () => {
+          try {
+            const cleanRows = data.residents.map(r => ({
+              id: r.id, name: r.name, flat: r.flat, coResidents: r.coResidents, contact: r.contact,
+              status: r.status, policy: r.policy, absence: r.absence
+            }));
+            const ws = XLSX.utils.json_to_sheet(cleanRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Residents');
+            XLSX.writeFile(wb, 'Residents_Database.xlsx');
+            showToast('Residents database exported');
+            setShowImport(false);
+          } catch(err) { showToast('Export failed: ' + err.message); }
+        };
+
+        const titleMap = {
+          'action': 'Import / Export Database',
+          'import-pick': 'Import — What to import?',
+          'import-property': 'Import Properties',
+          'import-resident': 'Import Residents',
+          'export-pick': 'Export — What to export?',
+        };
+        const title = titleMap[showImport] || 'Import / Export Database';
+
+        const renderUploadForm = (kind) => {
+          const kindLabel = kind === 'property' ? 'Property' : 'Resident';
+          const requiredCols = kind === 'property'
+            ? ['name','location','totalFlats','occupied']
+            : ['id','name','flat','coResidents','contact','status','policy','absence'];
+          const handleImport = () => {
+            if (kind === 'property') handleImportProperty(importFile);
+            else handleImportFile(importFile, 'excel');
+          };
+          return (
+            <div>
+              <div style={{border:'1px solid #e5e5e5',borderRadius:8,padding:16,marginBottom:12}}>
+                <div style={{fontSize:12,fontWeight:600,marginBottom:10}}>Required Columns:</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {requiredCols.map(col => (
+                    <span key={col} style={{background:'#f0f0f0',padding:'4px 10px',borderRadius:4,fontSize:11,fontWeight:500,color:'#1a1a1a'}}>{col}</span>
+                  ))}
+                </div>
+              </div>
+              <div onClick={()=>downloadTemplate(kind)}
+                style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:12,cursor:'pointer',background:'#faf7f4'}}>
+                <Icon name="download" size={16}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600}}>Download example Excel template</div>
+                  <div style={{fontSize:11,color:'#a89a92'}}>Sample file showing the required format</div>
+                </div>
+              </div>
+              <input type="file" ref={importFileRef} style={{display:'none'}}
+                accept=".xlsx,.xls,.csv"
+                onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
+              <div onClick={()=>importFileRef.current && importFileRef.current.click()}
+                onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
+                onDragLeave={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0'}}
+                onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0';if(e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0])}}
+                style={{padding:32,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#fff',transition:'all 0.2s',marginBottom:16}}>
+                {importFile ? (
+                  <div>
+                    <div style={{fontWeight:600,fontSize:13}}>{importFile.name}</div>
+                    <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{(importFile.size/1024).toFixed(1)} KB · Click to change</div>
+                  </div>
+                ) : (
+                  <div>
+                    <Icon name="upload" size={24}/>
+                    <div style={{fontSize:13,marginTop:8,color:'#1a1a1a'}}>Drop Excel or CSV file here</div>
+                    <button className="btn btn-sm" style={{marginTop:10}} onClick={e => { e.stopPropagation(); importFileRef.current && importFileRef.current.click(); }}>Browse Files</button>
+                  </div>
+                )}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn" style={{flex:1}} onClick={()=>{setShowImport('import-pick');setImportFile(null)}}>Back</button>
+                <button className="btn btn-primary" style={{flex:1}} onClick={handleImport}>Import {kindLabel}s</button>
+              </div>
             </div>
+          );
+        };
 
-            {showImport === 'pick' && (
-              <div>
-                <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Choose the format of your data source.</p>
-                {[
-                  {key:'csv', label:'CSV File', sub:'Comma-separated values (.csv)', icon:'\u2013'},
-                  {key:'excel', label:'Excel Spreadsheet', sub:'Microsoft Excel (.xlsx, .xls)', icon:'\u2013'},
-                  {key:'sql', label:'SQL Database', sub:'SQL insert statements (.sql)', icon:'\u2013'}
-                ].map(opt => (
-                  <div key={opt.key} onClick={()=>setShowImport(opt.key)}
-                    style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
-                    onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
-                    <span style={{fontSize:24}}>{opt.icon}</span>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
-                      <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
-                    </div>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                  </div>
-                ))}
+        return (
+          <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null)}}>
+            <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
+              <div className="modal-header">
+                <div><h2 style={{fontSize:16}}>{title}</h2></div>
+                <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null)}}>×</button>
               </div>
-            )}
 
-            {(showImport === 'csv' || showImport === 'excel' || showImport === 'sql') && (
-              <div>
-                {/* Required CSV Columns */}
-                <div style={{border:'1px solid #e5e5e5',borderRadius:8,padding:16,marginBottom:16}}>
-                  <div style={{fontSize:12,fontWeight:600,marginBottom:10}}>Required CSV Columns:</div>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                    {['flat_number','resident_name','mobile','email','tower','floor','owner_verified'].map(col => (
-                      <span key={col} style={{background:'#f0f0f0',padding:'4px 10px',borderRadius:4,fontSize:11,fontWeight:500,color:'#1a1a1a'}}>{col}</span>
-                    ))}
+              {showImport === 'action' && (
+                <div>
+                  <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Choose an action.</p>
+                  {[
+                    {key:'import-pick', label:'Import', sub:'Add properties or residents from Excel / CSV', icon:'upload'},
+                    {key:'export-pick', label:'Export', sub:'Download current database as Excel', icon:'download'},
+                  ].map(opt => (
+                    <div key={opt.key} onClick={()=>setShowImport(opt.key)}
+                      style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                      <Icon name={opt.icon} size={18}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                        <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showImport === 'import-pick' && (
+                <div>
+                  <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>What would you like to import?</p>
+                  {[
+                    {key:'import-property', label:'Add Property list', sub:'Import a list of properties (towers)'},
+                    {key:'import-resident', label:'Add Resident list', sub:'Import a list of residents'},
+                  ].map(opt => (
+                    <div key={opt.key} onClick={()=>{setImportFile(null);setShowImport(opt.key)}}
+                      style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                        <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  ))}
+                  <div style={{marginTop:12}}>
+                    <button className="btn" style={{width:'100%'}} onClick={()=>setShowImport('action')}>Back</button>
                   </div>
                 </div>
-                {/* File Upload Zone */}
-                <input type="file" ref={importFileRef} style={{display:'none'}}
-                  accept={showImport === 'csv' ? '.csv' : showImport === 'excel' ? '.xlsx,.xls' : '.sql'}
-                  onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
-                <div onClick={()=>importFileRef.current && importFileRef.current.click()}
-                  onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
-                  onDragLeave={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0'}}
-                  onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='#d0d0d0';if(e.dataTransfer.files[0]) setImportFile(e.dataTransfer.files[0])}}
-                  style={{padding:32,border:'2px dashed #d0d0d0',borderRadius:8,textAlign:'center',cursor:'pointer',background:'#fff',transition:'all 0.2s',marginBottom:16}}>
-                  {importFile ? (
-                    <div>
-                      <div style={{fontWeight:600,fontSize:13}}>{importFile.name}</div>
-                      <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>{(importFile.size/1024).toFixed(1)} KB · Click to change</div>
-                    </div>
-                  ) : (
-                    <div>
-                      <Icon name="upload" size={24}/>
-                      <div style={{fontSize:13,marginTop:8,color:'#1a1a1a'}}>Drop CSV file here</div>
-                      <button className="btn btn-sm" style={{marginTop:10}} onClick={e => { e.stopPropagation(); importFileRef.current && importFileRef.current.click(); }}>Browse Files</button>
-                    </div>
-                  )}
-                </div>
+              )}
 
-                <div style={{display:'flex',gap:8}}>
-                  <button className="btn btn-primary" style={{flex:1}} onClick={()=>handleImportFile(importFile, showImport)}>Import</button>
-                  <button className="btn" style={{flex:1}} onClick={()=>{setShowImport(false);setImportFile(null)}}>Cancel</button>
+              {showImport === 'import-property' && renderUploadForm('property')}
+              {showImport === 'import-resident' && renderUploadForm('resident')}
+
+              {showImport === 'export-pick' && (
+                <div>
+                  <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Which database would you like to export?</p>
+                  {[
+                    {key:'property', label:'Property database', sub:`Export ${data.towers.length} propert${data.towers.length!==1?'ies':'y'} to Excel`, fn: exportProperties},
+                    {key:'resident', label:'Resident database', sub:`Export ${data.residents.length} resident${data.residents.length!==1?'s':''} to Excel`, fn: exportResidents},
+                  ].map(opt => (
+                    <div key={opt.key} onClick={opt.fn}
+                      style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                      <Icon name="download" size={16}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                        <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{marginTop:12}}>
+                    <button className="btn" style={{width:'100%'}} onClick={()=>setShowImport('action')}>Back</button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Export Modal */}
       {showExport && (
