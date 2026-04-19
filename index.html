@@ -7834,11 +7834,14 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const { data, setData, showToast, t } = useApp();
   const [selectedResident, setSelectedResident] = useState(null);
   const [editingResident, setEditingResident] = useState(null);
-  const [showImport, setShowImport] = useState(false); // false | 'pick' | 'csv' | 'excel' | 'sql'
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [showImport, setShowImport] = useState(false); // false | 'action' | 'import-pick' | 'import-property' | 'import-resident' | 'export-pick' | 'export-property' | 'export-resident'
+  const [ioFormat, setIoFormat] = useState(null); // 'excel' | 'csv' | 'sql' | 'pdf' | 'word' | null
   const [showExport, setShowExport] = useState(false); // false | 'pick'
   const [showAddResident, setShowAddResident] = useState(false);
   const [newRes, setNewRes] = useState({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
   const [resSearch, setResSearch] = useState('');
+  const [showOnlyPending, setShowOnlyPending] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [residentDocs, setResidentDocs] = useState([]);
   const importFileRef = useRef(null);
@@ -7987,10 +7990,20 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
     else reader.readAsBinaryString(file);
   };
 
+  const pendingCount = data.residents.filter(r => r.status === 'Pending').length;
   const filteredResidents = data.residents.filter(r => {
+    if (showOnlyPending && r.status !== 'Pending') return false;
     if (!resSearch) return true;
     return r.name.toLowerCase().includes(resSearch.toLowerCase()) || r.flat.toLowerCase().includes(resSearch.toLowerCase());
   });
+
+  const approveResident = (resident) => {
+    setData(prev => ({...prev, residents: prev.residents.map(r => r.id === resident.id ? {...r, status: 'Verified'} : r)}));
+    showToast(resident.name + ' approved', 'Status changed to Verified');
+    if (selectedResident && selectedResident.id === resident.id) {
+      setSelectedResident({...selectedResident, status: 'Verified'});
+    }
+  };
 
   return (
     <div>
@@ -7998,6 +8011,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         <div><h1>{t('pm.propertiesResidents')}</h1><div className="subtitle">{data.towers.length} properties · {data.towers.reduce((a,t)=>a+t.totalFlats,0).toLocaleString()} flats · {data.towers.reduce((a,t)=>a+t.occupied,0).toLocaleString()} occupied</div></div>
         <div className="btn-group">
           <button className="btn btn-primary" onClick={()=>setShowAddResident(true)}><Icon name="user" size={12}/> {t('pm.addResidentBtn')}</button>
+          <button className="btn btn-primary" onClick={()=>{setIoFormat(null);setImportFile(null);setShowImport('import-property');}}><Icon name="properties" size={12}/> + Add Property</button>
           <button className="btn" onClick={()=>setShowImport('action')}><Icon name="upload" size={12}/> Import / Export Database</button>
         </div>
       </div>
@@ -8023,7 +8037,16 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
       <div className="card">
         <div className="card-header"><h3>{t('pm.residentRegistry')}</h3>
-          <div style={{display:'flex',gap:8}}>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <button className="btn btn-sm" onClick={()=>setShowOnlyPending(p=>!p)}
+              style={showOnlyPending
+                ? {background:'#6b5d55',color:'#fff',borderColor:'#6b5d55',display:'flex',alignItems:'center',gap:6}
+                : {display:'flex',alignItems:'center',gap:6}}>
+              <Icon name="clock" size={12}/> Pending Approvals
+              {pendingCount > 0 && (
+                <span style={{background:showOnlyPending?'#fff':'#c05621',color:showOnlyPending?'#6b5d55':'#fff',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:700,minWidth:16,textAlign:'center'}}>{pendingCount}</span>
+              )}
+            </button>
             <div className="search-bar" style={{maxWidth:200}}><span className="search-icon"><Icon name="search" size={14}/></span><input placeholder={t('pm.searchResidentFlat')} value={resSearch} onChange={e=>setResSearch(e.target.value)}/></div>
             <button className="btn btn-sm"><Icon name="filter" size={12}/> {t('pm.filterBtn')}</button>
           </div>
@@ -8035,9 +8058,18 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
               <tr key={r.id}>
                 <td>{r.id}</td><td className="name-cell"><div style={{display:'flex',alignItems:'center',gap:6}}><Icon name="user" size={14}/>{r.name}</div></td>
                 <td>{r.coResidents}</td><td>{r.flat}</td><td>{r.contact}</td>
-                <td>{r.status==='Verified' ? <span className="status verified">✓ {t('pm.statusVerified')}</span> : <StatusBadge status="Pending"/>}</td>
+                <td>{r.status==='Verified' ? <span className="status verified">✓ {t('pm.statusVerified')}</span> : r.status==='Active' ? <span className="status verified">✓ Active</span> : <StatusBadge status="Pending"/>}</td>
                 <td>{r.policy}</td><td>{r.absence}</td>
-                <td><button className="btn btn-sm" onClick={()=>setSelectedResident(r)}>{t('pm.propertyDetails')}</button></td>
+                <td>
+                  <div style={{display:'flex',gap:6}}>
+                    {r.status === 'Pending' && (
+                      <button className="btn btn-sm btn-primary" onClick={()=>approveResident(r)} style={{display:'flex',alignItems:'center',gap:4}}>
+                        <Icon name="check" size={12}/> Approve
+                      </button>
+                    )}
+                    <button className="btn btn-sm" onClick={()=>setSelectedResident(r)}>{t('pm.propertyDetails')}</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -8097,9 +8129,14 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                             <span style={{fontWeight:500}}>{doc.name}</span>
                             <span style={{color:'#888',fontSize:9}}>{doc.size}</span>
                           </div>
-                          <a href={doc.dataUrl} download={doc.name} style={{fontSize:11,color:'#6b5d55',fontWeight:600,textDecoration:'none',display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
-                            <Icon name="download" size={12}/> Download
-                          </a>
+                          <div style={{display:'flex',alignItems:'center',gap:10}}>
+                            <button onClick={()=>setPreviewDoc(doc)} style={{background:'none',border:'none',fontSize:11,color:'#6b5d55',fontWeight:600,display:'flex',alignItems:'center',gap:4,cursor:'pointer',padding:0}}>
+                              <Icon name="eye" size={12}/> Preview
+                            </button>
+                            <a href={doc.dataUrl} download={doc.name} style={{fontSize:11,color:'#6b5d55',fontWeight:600,textDecoration:'none',display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
+                              <Icon name="download" size={12}/> Download
+                            </a>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -8107,9 +8144,63 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 })}
               </div>
             )}
+            {selectedResident.status === 'Pending' && (
+              <div style={{background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:8,padding:12,marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <Icon name="clock" size={14}/>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:600}}>Awaiting approval</div>
+                    <div style={{fontSize:11,color:'#92400e'}}>This resident was added and is pending verification.</div>
+                  </div>
+                </div>
+                <button className="btn btn-sm btn-primary" onClick={()=>approveResident(selectedResident)} style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+                  <Icon name="check" size={12}/> Approve
+                </button>
+              </div>
+            )}
             <div className="grid-2" style={{marginTop:16}}>
               <button className="btn btn-primary" onClick={()=>setEditingResident({...selectedResident})}>Edit Profile</button>
               <button className="btn" onClick={()=>setSelectedResident(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewDoc && (
+        <div className="modal-overlay" onClick={()=>setPreviewDoc(null)} style={{zIndex:1001}}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:'90vw',width:'900px',maxHeight:'90vh',display:'flex',flexDirection:'column'}}>
+            <div className="modal-header">
+              <div>
+                <h2 style={{fontSize:15}}>{previewDoc.name}</h2>
+                <div style={{fontSize:11,color:'#a89a92',marginTop:2}}>{previewDoc.size} · {(previewDoc.type||'').toUpperCase()}</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <a href={previewDoc.dataUrl} download={previewDoc.name} className="btn btn-sm" style={{textDecoration:'none',display:'flex',alignItems:'center',gap:4}}>
+                  <Icon name="download" size={12}/> Download
+                </a>
+                <button className="modal-close" onClick={()=>setPreviewDoc(null)}>×</button>
+              </div>
+            </div>
+            <div style={{flex:1,minHeight:'60vh',background:'#f5f2ef',borderRadius:8,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              {(() => {
+                const t = (previewDoc.type || '').toLowerCase();
+                if (['jpg','jpeg','png','gif','webp','bmp','svg'].includes(t)) {
+                  return <img src={previewDoc.dataUrl} alt={previewDoc.name} style={{maxWidth:'100%',maxHeight:'70vh',objectFit:'contain'}}/>;
+                }
+                if (t === 'pdf') {
+                  return <iframe src={previewDoc.dataUrl} title={previewDoc.name} style={{width:'100%',height:'70vh',border:'none'}}/>;
+                }
+                return (
+                  <div style={{textAlign:'center',padding:40}}>
+                    <Icon name="file" size={32}/>
+                    <div style={{fontSize:13,marginTop:12,color:'#6b5d55'}}>Preview not available for .{t} files</div>
+                    <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>Please download the file to view it</div>
+                    <a href={previewDoc.dataUrl} download={previewDoc.name} className="btn btn-primary btn-sm" style={{marginTop:16,textDecoration:'none',display:'inline-flex',alignItems:'center',gap:4}}>
+                      <Icon name="download" size={12}/> Download {previewDoc.name}
+                    </a>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -8235,97 +8326,466 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 
       {/* Import Modal */}
       {showImport && (() => {
-        const downloadTemplate = (kind) => {
-          try {
-            let rows;
-            let sheetName;
-            let fileName;
-            if (kind === 'resident') {
-              sheetName = 'Residents';
-              fileName = 'Resident_Template.xlsx';
-              rows = [
-                { id: 'RES-101', name: 'Mr. Ahmed Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Pending', policy: 'Standard', absence: 'None' },
-                { id: 'RES-102', name: 'Ms. Fatima Al-Neyadi', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18-25 Mar' },
-              ];
-            } else {
-              sheetName = 'Properties';
-              fileName = 'Property_Template.xlsx';
-              rows = [
-                { name: 'The Pinnacle Residences', location: 'Al Reem Island', totalFlats: 1240, occupied: 1087 },
-                { name: 'Al Raha Gardens', location: 'Al Raha Beach', totalFlats: 680, occupied: 598 },
-              ];
+        // Property schema matches Dubai-style Title Deed: PROPERTY DETAILS + OWNER DETAILS per unit.
+        const PROPERTY_COLS = [
+          { key: 'certificateNo',   header: 'Certificate No' },
+          { key: 'zone',            header: 'Zone' },
+          { key: 'sector',          header: 'Sector' },
+          { key: 'plotNo',          header: 'Plot No' },
+          { key: 'buildingNo',      header: 'Building No' },
+          { key: 'floorNo',         header: 'Floor No' },
+          { key: 'unitNo',          header: 'Unit No' },
+          { key: 'useType',         header: 'Use Type' },
+          { key: 'mortgageStatus',  header: 'Mortgage Status' },
+          { key: 'projectName',     header: 'Project Name' },
+        ];
+        const OWNER_COLS = [
+          { key: 'ownerNo',          header: 'Owner #' },
+          { key: 'ownerName',        header: 'Owner Name / الاسم' },
+          { key: 'ownerIdNo',        header: 'EID / License / Passport No / رقم الهوية' },
+          { key: 'ownerNationality', header: 'Nationality / Source / الجنسية' },
+          { key: 'rightHoldType',    header: 'Right Hold Type / نوع الحق' },
+          { key: 'shareAcquisition', header: 'Share & Acquisition / الحصة والحيازة' },
+          { key: 'buyingShares',     header: 'Buying Shares % / نسبة الشراء' },
+        ];
+        const PROPERTY_FIELD_DESCRIPTIONS = [
+          ['PROPERTY DETAILS','Certificate No','Title Deed certificate number. Unique per unit (e.g., 202575000054442).'],
+          ['PROPERTY DETAILS','Zone','Municipality zone (e.g., Al Reem Island, Yas Island, Saadiyat).'],
+          ['PROPERTY DETAILS','Sector','Sector code within the zone (e.g., Sector 12, SE-4).'],
+          ['PROPERTY DETAILS','Plot No','Plot / parcel number registered with the Land Department.'],
+          ['PROPERTY DETAILS','Building No','Identifier for the building. Use the SAME value across all units in one building so the system groups them.'],
+          ['PROPERTY DETAILS','Floor No','Floor number. Use G for ground, M for mezzanine, integers otherwise.'],
+          ['PROPERTY DETAILS','Unit No','Unit / flat number as shown on the door (e.g., 101, A-204).'],
+          ['PROPERTY DETAILS','Use Type','One of: Residential, Commercial, Retail, Office, Mixed Use, Parking, Storage.'],
+          ['PROPERTY DETAILS','Mortgage Status','One of: None, Mortgaged, Released, Pending Release.'],
+          ['PROPERTY DETAILS','Project Name','Marketing name of the project / tower (e.g., The Pinnacle Residences).'],
+          ['OWNER DETAILS','Owner #','Sequential number when a unit has multiple owners (1, 2, 3...). Use 1 for single owner.'],
+          ['OWNER DETAILS','Owner Name','Full legal name of the owner as on the title deed.'],
+          ['OWNER DETAILS','EID / License / Passport No','Emirates ID, Trade License (for companies), or Passport number.'],
+          ['OWNER DETAILS','Nationality / Source','Country of nationality. For companies use country of incorporation.'],
+          ['OWNER DETAILS','Right Hold Type','One of: Freehold, Leasehold, Usufruct, Musataha.'],
+          ['OWNER DETAILS','Share & Acquisition','How the share was acquired (Purchase, Gift, Inheritance, Transfer).'],
+          ['OWNER DETAILS','Buying Shares %','Ownership percentage (number without % sign). 100 if sole owner. Must sum to 100 per unit.'],
+        ];
+        const PROPERTY_KEYS = [...PROPERTY_COLS, ...OWNER_COLS].map(c => c.key);
+        const PROPERTY_HEADERS = [...PROPERTY_COLS, ...OWNER_COLS].map(c => c.header);
+        const PROPERTY_WIDTHS = [18,16,12,12,12,10,10,14,17,26,9,28,26,22,22,22,17];
+
+        const buildPropertyTemplateRows = () => {
+          const owners = [
+            ['Mr. Ahmed Al-Mansoori','784-1985-1234567-1','Freehold','Purchase'],
+            ['Ms. Fatima Al-Neyadi','784-1990-2345678-2','Freehold','Purchase'],
+            ['Al Noor Holdings LLC','CN-1045678','Freehold','Purchase'],
+            ['Mr. Khalid Al-Hashimi','784-1978-3456789-3','Freehold','Inheritance'],
+            ['Ms. Mariam Al-Suwaidi','784-1992-4567890-4','Freehold','Gift'],
+            ['Mr. Omar Bin Sulayem','784-1982-5678901-5','Freehold','Purchase'],
+            ['Mr. Hamad Al-Dhaheri','784-1975-6789012-6','Leasehold','Purchase'],
+            ['Ms. Aisha Al-Kaabi','784-1988-7890123-7','Freehold','Purchase'],
+            ['Mr. Saif Al-Qubaisi','784-1980-8901234-8','Freehold','Transfer'],
+            ['Ms. Noura Al-Rumaithi','784-1995-9012345-9','Freehold','Purchase'],
+            ['Mr. Rashid Al-Falasi','784-1972-0123456-0','Freehold','Purchase'],
+            ['Ms. Hessa Al-Mazrouei','784-1986-1357924-1','Freehold','Purchase'],
+            ['Mr. Yousef Al-Shamsi','784-1979-2468013-2','Freehold','Inheritance'],
+            ['Ms. Latifa Al-Ameri','784-1991-3579124-3','Freehold','Purchase'],
+            ['Skyline Investments FZ-LLC','CN-2098765','Freehold','Purchase'],
+            ['Mr. Majid Al-Nuaimi','784-1983-4680235-4','Freehold','Purchase'],
+            ['Ms. Reem Al-Ketbi','784-1994-5791346-5','Freehold','Gift'],
+            ['Mr. Tariq Al-Blooshi','784-1976-6802457-6','Leasehold','Purchase'],
+            ['Ms. Shamma Al-Zaabi','784-1989-7913568-7','Freehold','Purchase'],
+            ['Mr. Abdulla Al-Darmaki','784-1981-8024679-8','Freehold','Purchase'],
+          ];
+          const useTypes = Array(18).fill('Residential').concat(['Retail','Commercial']);
+          const mortgage = ['None','None','Mortgaged','None','None','Released','None','None','Mortgaged','None','None','Pending Release','None','None','None','Mortgaged','None','None','None','None'];
+          const rows = []; let idx = 0; const baseCert = 202575000054000;
+          for (let floor = 1; floor <= 10; floor++) {
+            for (let slot = 1; slot <= 2; slot++) {
+              const o = owners[idx];
+              rows.push({
+                certificateNo: String(baseCert + idx + 1),
+                zone: 'Al Reem Island', sector: 'Sector 12', plotNo: 'PL-4421',
+                buildingNo: 'B-01', floorNo: floor, unitNo: String(floor) + String(slot).padStart(2,'0'),
+                useType: useTypes[idx], mortgageStatus: mortgage[idx],
+                projectName: 'The Pinnacle Residences',
+                ownerNo: 1, ownerName: o[0], ownerIdNo: o[1],
+                ownerNationality: 'United Arab Emirates',
+                rightHoldType: o[2], shareAcquisition: o[3], buyingShares: 100,
+              });
+              idx++;
             }
-            const ws = XLSX.utils.json_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            XLSX.writeFile(wb, fileName);
+          }
+          return rows;
+        };
+
+        // For exports: expand each tower's units (if present) back into unit rows with the detailed schema.
+        const expandTowersForExport = () => {
+          const out = [];
+          (data.towers || []).forEach(t => {
+            if (Array.isArray(t.units) && t.units.length > 0) {
+              t.units.forEach(u => { out.push({
+                certificateNo: u.certificateNo || '',
+                zone: u.zone || t.location || '',
+                sector: u.sector || '',
+                plotNo: u.plotNo || '',
+                buildingNo: u.buildingNo || t.name || '',
+                floorNo: u.floorNo ?? '',
+                unitNo: u.unitNo || '',
+                useType: u.useType || 'Residential',
+                mortgageStatus: u.mortgageStatus || 'None',
+                projectName: u.projectName || t.name || '',
+                ownerNo: u.ownerNo ?? 1,
+                ownerName: u.ownerName || '',
+                ownerIdNo: u.ownerIdNo || '',
+                ownerNationality: u.ownerNationality || '',
+                rightHoldType: u.rightHoldType || '',
+                shareAcquisition: u.shareAcquisition || '',
+                buyingShares: u.buyingShares ?? '',
+              }); });
+            } else {
+              // Summary row for towers without unit-level detail
+              out.push({
+                certificateNo: '', zone: t.location || '', sector: '', plotNo: '',
+                buildingNo: t.name || '', floorNo: '', unitNo: '',
+                useType: 'Residential', mortgageStatus: 'None',
+                projectName: t.name || '', ownerNo: '', ownerName: '', ownerIdNo: '',
+                ownerNationality: '', rightHoldType: '', shareAcquisition: '',
+                buyingShares: '',
+              });
+            }
+          });
+          return out;
+        };
+
+        const kindRows = (kind) => kind === 'property'
+          ? expandTowersForExport()
+          : data.residents.map(r => ({ id: r.id, name: r.name, flat: r.flat, coResidents: r.coResidents, contact: r.contact, status: r.status, policy: r.policy, absence: r.absence }));
+
+        const templateRows = (kind) => kind === 'property'
+          ? buildPropertyTemplateRows()
+          : [
+              { id: 'RES-101', name: 'Mr. Ahmed Al-Mansoori', flat: 'A-1204', coResidents: 2, contact: '+971 50 123 4567', status: 'Pending', policy: 'Standard', absence: 'None' },
+              { id: 'RES-102', name: 'Ms. Fatima Al-Neyadi', flat: 'B-0803', coResidents: 4, contact: '+971 52 234 5678', status: 'Verified', policy: 'Enhanced', absence: '18-25 Mar' },
+            ];
+
+        const downloadBlob = (blob, filename) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+          setTimeout(()=>URL.revokeObjectURL(url), 1000);
+        };
+
+        const downloadTemplate = (kind, format) => {
+          try {
+            const rows = templateRows(kind);
+            const sheetName = kind === 'property' ? 'Properties' : 'Residents';
+            const baseName = kind === 'property' ? 'Property_Template' : 'Resident_Template';
+            if (format === 'excel') {
+              const wb = XLSX.utils.book_new();
+              if (kind === 'property') {
+                // ----- Instructions sheet -----
+                const instr = [];
+                instr.push(['VARS — Property Import Template']);
+                instr.push(['Fill the "Properties" sheet with ONE ROW PER UNIT. Each row contains the unit\'s Property Details and Owner Details. The system groups units by Building No + Project Name to create buildings in the dashboard.']);
+                instr.push([]);
+                instr.push(['Key Rules']);
+                [
+                  '1. One row = one unit. A building with 10 floors × 2 units = 20 rows.',
+                  '2. Use the SAME Building No and Project Name across all units in the same building so they group correctly.',
+                  '3. If a unit has multiple owners, repeat the unit (same Building No + Unit No) once per owner. Increment Owner # (1, 2, 3...). Buying Shares % must sum to 100.',
+                  '4. Certificate No must be unique per unit.',
+                  '5. Use the exact dropdown values listed in the field descriptions.',
+                  '6. Floor No: use "G" for ground, "M" for mezzanine, integers otherwise.',
+                  '7. Percentages are numbers without the % sign (100 means 100%).',
+                  '8. Arabic labels in headers are informational — the system reads the English column keys.',
+                ].forEach(r => instr.push([r]));
+                instr.push([]);
+                instr.push(['Section','Column Header','Description']);
+                PROPERTY_FIELD_DESCRIPTIONS.forEach(r => instr.push(r));
+                const wsInstr = XLSX.utils.aoa_to_sheet(instr);
+                wsInstr['!cols'] = [{wch:22},{wch:42},{wch:90}];
+                wsInstr['!merges'] = [
+                  {s:{r:0,c:0},e:{r:0,c:2}}, {s:{r:1,c:0},e:{r:1,c:2}}, {s:{r:3,c:0},e:{r:3,c:2}},
+                ];
+                // Title style
+                const titleCell = wsInstr['A1']; if (titleCell) titleCell.s = { font:{bold:true,sz:14,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'6B5D55'}}, alignment:{horizontal:'center',vertical:'center'} };
+                const introCell = wsInstr['A2']; if (introCell) introCell.s = { font:{sz:10,color:{rgb:'1F2937'}}, alignment:{horizontal:'left',vertical:'center',wrapText:true} };
+                const rulesHdr = wsInstr['A4']; if (rulesHdr) rulesHdr.s = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'4A86E8'}}, alignment:{horizontal:'left',vertical:'center'} };
+                // Field-description header row
+                const fieldHdrRowIdx = 5 + 8 + 1; // title(0)+intro(1)+blank(2)+rulesHdr(3)+8 rules(4-11)+blank(12)+hdr(13)
+                ['A','B','C'].forEach((col,i) => {
+                  const addr = col + (fieldHdrRowIdx+1);
+                  if (wsInstr[addr]) wsInstr[addr].s = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1F3864'}}, alignment:{horizontal:'center',vertical:'center'}, border:{top:{style:'thin',color:{rgb:'BFBFBF'}},bottom:{style:'thin',color:{rgb:'BFBFBF'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+                });
+                // Style description rows
+                for (let i = 0; i < PROPERTY_FIELD_DESCRIPTIONS.length; i++) {
+                  const r = fieldHdrRowIdx + 1 + i;
+                  ['A','B','C'].forEach(col => {
+                    const addr = col + (r+1);
+                    const isSection = col === 'A';
+                    const isOwner = PROPERTY_FIELD_DESCRIPTIONS[i][0] === 'OWNER DETAILS';
+                    if (wsInstr[addr]) wsInstr[addr].s = {
+                      font:{ bold: isSection || col==='B', color:{rgb: isSection ? 'FFFFFF' : '1F2937'}, sz:10 },
+                      fill: isSection ? {fgColor:{rgb: isOwner ? '4A86E8' : '4A86E8'}} : {fgColor:{rgb: 'FFFFFF'}},
+                      alignment:{horizontal: isSection?'center':'left', vertical:'center', wrapText:true},
+                      border:{top:{style:'thin',color:{rgb:'BFBFBF'}},bottom:{style:'thin',color:{rgb:'BFBFBF'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}}
+                    };
+                  });
+                }
+                XLSX.utils.book_append_sheet(wb, wsInstr, 'Instructions');
+
+                // ----- Properties sheet -----
+                const aoa = [];
+                // Row 1: section banners
+                const banner = new Array(PROPERTY_KEYS.length).fill('');
+                banner[0] = 'PROPERTY DETAILS';
+                banner[PROPERTY_COLS.length] = 'OWNER DETAILS  |  تفاصيل المالك';
+                aoa.push(banner);
+                // Row 2: headers
+                aoa.push(PROPERTY_HEADERS.slice());
+                // Data
+                rows.forEach(row => aoa.push(PROPERTY_KEYS.map(k => row[k])));
+                const wsProps = XLSX.utils.aoa_to_sheet(aoa);
+                wsProps['!cols'] = PROPERTY_WIDTHS.map(w => ({ wch: w }));
+                wsProps['!merges'] = [
+                  { s:{r:0,c:0}, e:{r:0,c:PROPERTY_COLS.length-1} },
+                  { s:{r:0,c:PROPERTY_COLS.length}, e:{r:0,c:PROPERTY_KEYS.length-1} },
+                ];
+                wsProps['!freeze'] = { xSplit: 0, ySplit: 2 };
+                // Style banners
+                const bannerStyle = { font:{bold:true,color:{rgb:'FFFFFF'},sz:11}, fill:{fgColor:{rgb:'4A86E8'}}, alignment:{horizontal:'center',vertical:'center'} };
+                const hdrStyle = { font:{bold:true,color:{rgb:'FFFFFF'},sz:10}, fill:{fgColor:{rgb:'1F3864'}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}, border:{top:{style:'thin',color:{rgb:'BFBFBF'}},bottom:{style:'thin',color:{rgb:'BFBFBF'}},left:{style:'thin',color:{rgb:'BFBFBF'}},right:{style:'thin',color:{rgb:'BFBFBF'}}} };
+                for (let c = 0; c < PROPERTY_KEYS.length; c++) {
+                  const a1 = XLSX.utils.encode_cell({r:0,c});
+                  const a2 = XLSX.utils.encode_cell({r:1,c});
+                  if (wsProps[a1]) wsProps[a1].s = bannerStyle;
+                  if (wsProps[a2]) wsProps[a2].s = hdrStyle;
+                }
+                // Style data rows with alternating fill
+                for (let r = 0; r < rows.length; r++) {
+                  const alt = r % 2 === 1;
+                  for (let c = 0; c < PROPERTY_KEYS.length; c++) {
+                    const addr = XLSX.utils.encode_cell({r: r+2, c});
+                    if (wsProps[addr]) wsProps[addr].s = {
+                      font:{color:{rgb:'1F2937'},sz:10},
+                      fill:{fgColor:{rgb: alt ? 'F5F7FB' : 'FFFFFF'}},
+                      alignment:{horizontal:'left',vertical:'center'},
+                      border:{top:{style:'thin',color:{rgb:'E5E7EB'}},bottom:{style:'thin',color:{rgb:'E5E7EB'}},left:{style:'thin',color:{rgb:'E5E7EB'}},right:{style:'thin',color:{rgb:'E5E7EB'}}}
+                    };
+                  }
+                }
+                XLSX.utils.book_append_sheet(wb, wsProps, 'Properties');
+              } else {
+                const ws = XLSX.utils.json_to_sheet(rows);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+              }
+              XLSX.writeFile(wb, baseName + '.xlsx');
+            } else if (format === 'csv') {
+              const headers = kind === 'property' ? PROPERTY_KEYS : Object.keys(rows[0]);
+              const csv = [headers.join(','), ...rows.map(r => headers.map(h => '"' + String(r[h]??'') + '"').join(','))].join('\n');
+              downloadBlob(new Blob([csv], { type: 'text/csv' }), baseName + '.csv');
+            } else if (format === 'sql') {
+              const table = kind === 'property' ? 'properties' : 'residents';
+              const headers = kind === 'property' ? PROPERTY_KEYS : Object.keys(rows[0]);
+              const inserts = rows.map(r => `INSERT INTO ${table} (${headers.join(', ')}) VALUES (${headers.map(h => typeof r[h]==='number' ? r[h] : `'${String(r[h]??'').replace(/'/g,"''")}'`).join(', ')});`).join('\n');
+              downloadBlob(new Blob([inserts], { type: 'application/sql' }), baseName + '.sql');
+            }
           } catch(err) { showToast('Template download failed: ' + err.message); }
         };
 
-        const handleImportProperty = (file) => {
-          if (!file) { showToast('Please select a file'); return; }
+        const parseCSV = (text) => {
+          const lines = text.split(/\r?\n/).filter(l => l.trim());
+          if (lines.length < 2) return [];
+          const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
+          return lines.slice(1).map(line => {
+            const vals = line.split(',').map(v => v.replace(/"/g,'').trim());
+            const obj = {}; headers.forEach((h, i) => obj[h] = vals[i] || ''); return obj;
+          });
+        };
+
+        const parseSQL = (text) => {
+          // Parses INSERT INTO tbl (col1, col2) VALUES (v1, v2), (v3, v4);
+          const rows = [];
+          const re = /INSERT\s+INTO\s+\w+\s*\(([^)]+)\)\s*VALUES\s*([\s\S]+?);/gi;
+          let m;
+          while ((m = re.exec(text)) !== null) {
+            const cols = m[1].split(',').map(s => s.trim());
+            const vals = m[2];
+            const tuples = vals.match(/\([^)]*\)/g) || [];
+            tuples.forEach(tup => {
+              const inside = tup.slice(1, -1);
+              const parts = []; let cur = ''; let inStr = false;
+              for (let i = 0; i < inside.length; i++) {
+                const c = inside[i];
+                if (c === "'" && inside[i-1] !== '\\') { inStr = !inStr; cur += c; }
+                else if (c === ',' && !inStr) { parts.push(cur.trim()); cur = ''; }
+                else cur += c;
+              }
+              if (cur) parts.push(cur.trim());
+              const obj = {};
+              cols.forEach((c, i) => {
+                let v = (parts[i] || '').trim();
+                if (v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1).replace(/''/g, "'");
+                obj[c] = v;
+              });
+              rows.push(obj);
+            });
+          }
+          return rows;
+        };
+
+        const handleImport = (kind, format) => {
+          if (!importFile) { showToast('Please select a file'); return; }
           const reader = new FileReader();
           reader.onload = (e) => {
             try {
-              const wb = XLSX.read(e.target.result, { type: 'binary' });
-              const ws = wb.Sheets[wb.SheetNames[0]];
-              const jsonData = XLSX.utils.sheet_to_json(ws);
-              const newTowers = jsonData.filter(r => r.name).map(r => ({
-                name: r.name, location: r.location || '', totalFlats: parseInt(r.totalFlats)||0, occupied: parseInt(r.occupied)||0
-              }));
-              if (newTowers.length === 0) { showToast('No valid property rows found'); return; }
-              setData(prev => ({ ...prev, towers: [...newTowers, ...prev.towers] }));
-              showToast(`${newTowers.length} propert${newTowers.length!==1?'ies':'y'} imported`);
-              setShowImport(false); setImportFile(null);
+              let jsonData = [];
+              if (format === 'excel') {
+                const wb = XLSX.read(e.target.result, { type: 'binary' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                jsonData = XLSX.utils.sheet_to_json(ws);
+              } else if (format === 'csv') {
+                jsonData = parseCSV(e.target.result);
+              } else if (format === 'sql') {
+                jsonData = parseSQL(e.target.result);
+              }
+              if (kind === 'property') {
+                // Accept both detailed (buildingNo/unitNo) and legacy (name/location/totalFlats) formats.
+                const normalize = (r) => {
+                  const lower = {}; Object.keys(r).forEach(k => lower[k.toLowerCase().replace(/[^a-z0-9]/g,'')] = r[k]);
+                  const pick = (...keys) => { for (const k of keys) { if (lower[k] !== undefined && lower[k] !== '') return lower[k]; } return ''; };
+                  return {
+                    certificateNo: pick('certificateno','certno'),
+                    zone: pick('zone'),
+                    sector: pick('sector'),
+                    plotNo: pick('plotno','plot'),
+                    buildingNo: pick('buildingno','building'),
+                    floorNo: pick('floorno','floor'),
+                    unitNo: pick('unitno','unit','flat'),
+                    useType: pick('usetype','use'),
+                    mortgageStatus: pick('mortgagestatus','mortgage'),
+                    projectName: pick('projectname','project','name'),
+                    ownerNo: pick('ownerno','ownernumber'),
+                    ownerName: pick('ownername','owner'),
+                    ownerIdNo: pick('owneridno','eidlicensepassportnorقمالهوية','eid','passportno','licenseno'),
+                    ownerNationality: pick('ownernationality','nationalitysource','nationality'),
+                    rightHoldType: pick('rightholdtype','righttype'),
+                    shareAcquisition: pick('shareacquisition','shareandacquisition'),
+                    buyingShares: pick('buyingshares','share'),
+                  };
+                };
+                const units = jsonData.map(normalize).filter(u => u.buildingNo || u.projectName || u.unitNo);
+                if (units.length === 0) {
+                  // Fallback: legacy row format
+                  const newTowers = jsonData.filter(r => r.name).map(r => ({
+                    name: r.name, location: r.location || '', totalFlats: parseInt(r.totalFlats)||0, occupied: parseInt(r.occupied)||0, units: []
+                  }));
+                  if (newTowers.length === 0) { showToast('No valid property rows found'); return; }
+                  setData(prev => ({ ...prev, towers: [...newTowers, ...prev.towers] }));
+                  showToast(`${newTowers.length} propert${newTowers.length!==1?'ies':'y'} imported`);
+                } else {
+                  // Group by Building No + Project Name
+                  const groups = {};
+                  units.forEach(u => {
+                    const key = (u.buildingNo || '') + '||' + (u.projectName || '');
+                    if (!groups[key]) groups[key] = { buildingNo: u.buildingNo, projectName: u.projectName, zone: u.zone, sector: u.sector, units: [] };
+                    groups[key].units.push(u);
+                  });
+                  const newTowers = Object.values(groups).map(g => {
+                    // Unique units (distinct Unit No) — multi-owner rows collapse to one unit
+                    const uniqueUnits = {};
+                    g.units.forEach(u => { const k = u.unitNo || Math.random(); if (!uniqueUnits[k]) uniqueUnits[k] = []; uniqueUnits[k].push(u); });
+                    const totalUnits = Object.keys(uniqueUnits).length;
+                    const occupied = Object.values(uniqueUnits).filter(arr => arr.some(u => u.ownerName)).length;
+                    return {
+                      name: g.projectName || ('Building ' + (g.buildingNo || '')),
+                      location: [g.zone, g.sector].filter(Boolean).join(' · ') || '',
+                      totalFlats: totalUnits, occupied,
+                      units: g.units,
+                    };
+                  });
+                  setData(prev => ({ ...prev, towers: [...newTowers, ...prev.towers] }));
+                  showToast(`${newTowers.length} propert${newTowers.length!==1?'ies':'y'} imported`, `${units.length} unit rows across ${newTowers.length} building${newTowers.length!==1?'s':''}`);
+                }
+              } else {
+                const newResidents = jsonData.filter(r => r.name && r.flat).map((r, idx) => ({
+                  id: r.id || `RES-${String(data.residents.length + idx + 1).padStart(3,'0')}`,
+                  name: r.name, flat: r.flat, contact: r.contact || '', coResidents: parseInt(r.coResidents)||1,
+                  status: r.status || 'Pending', policy: r.policy || 'Standard', absence: r.absence || 'None'
+                }));
+                if (newResidents.length === 0) { showToast('No valid resident rows found'); return; }
+                setData(prev => ({ ...prev, residents: [...newResidents, ...prev.residents] }));
+                showToast(`${newResidents.length} resident${newResidents.length!==1?'s':''} imported`);
+              }
+              setShowImport(false); setImportFile(null); setIoFormat(null);
             } catch(err) { showToast('Import failed: ' + err.message); }
           };
-          reader.readAsBinaryString(file);
+          if (format === 'excel') reader.readAsBinaryString(importFile);
+          else reader.readAsText(importFile);
         };
 
-        const exportProperties = () => {
+        const exportData = (kind, format) => {
           try {
-            const ws = XLSX.utils.json_to_sheet(data.towers);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Properties');
-            XLSX.writeFile(wb, 'Properties_Database.xlsx');
-            showToast('Properties database exported');
-            setShowImport(false);
-          } catch(err) { showToast('Export failed: ' + err.message); }
-        };
-
-        const exportResidents = () => {
-          try {
-            const cleanRows = data.residents.map(r => ({
-              id: r.id, name: r.name, flat: r.flat, coResidents: r.coResidents, contact: r.contact,
-              status: r.status, policy: r.policy, absence: r.absence
-            }));
-            const ws = XLSX.utils.json_to_sheet(cleanRows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Residents');
-            XLSX.writeFile(wb, 'Residents_Database.xlsx');
-            showToast('Residents database exported');
-            setShowImport(false);
+            const rows = kindRows(kind);
+            const sheetName = kind === 'property' ? 'Properties' : 'Residents';
+            const baseName = kind === 'property' ? 'Properties_Database' : 'Residents_Database';
+            const title = kind === 'property' ? 'Properties Database' : 'Residents Database';
+            if (format === 'excel') {
+              const ws = XLSX.utils.json_to_sheet(rows);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, sheetName);
+              XLSX.writeFile(wb, baseName + '.xlsx');
+            } else if (format === 'csv') {
+              const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+              const csv = [headers.join(','), ...rows.map(r => headers.map(h => '"' + String(r[h]??'') + '"').join(','))].join('\n');
+              downloadBlob(new Blob([csv], { type: 'text/csv' }), baseName + '.csv');
+            } else if (format === 'pdf') {
+              const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+              if (!jsPDFCtor) { showToast('PDF library failed to load'); return; }
+              const doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+              doc.setFontSize(16); doc.setFont('helvetica','bold');
+              doc.text(title, 28, 36);
+              doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+              doc.text('Generated: ' + new Date().toLocaleString() + '  ·  ' + rows.length + ' records', 28, 52);
+              const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+              const body = rows.map(r => headers.map(h => String(r[h]??'')));
+              doc.autoTable({
+                head: [headers], body: body, startY: 68,
+                styles: { fontSize: 8, cellPadding: 4 },
+                headStyles: { fillColor: [107, 93, 85], textColor: 255 },
+                alternateRowStyles: { fillColor: [250, 247, 244] },
+              });
+              doc.save(baseName + '.pdf');
+            } else if (format === 'word') {
+              const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+              const tableHtml = `
+                <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt;width:100%">
+                  <thead><tr style="background:#6b5d55;color:#fff">${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+                  <tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td>${String(r[h]??'').replace(/</g,'&lt;')}</td>`).join('')}</tr>`).join('')}</tbody>
+                </table>`;
+              const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${title}</title></head><body><h1 style="font-family:Calibri,Arial,sans-serif">${title}</h1><p style="color:#777;font-family:Calibri,Arial,sans-serif">Generated: ${new Date().toLocaleString()} &middot; ${rows.length} records</p>${tableHtml}</body></html>`;
+              downloadBlob(new Blob(['\ufeff', html], { type: 'application/msword' }), baseName + '.doc');
+            }
+            showToast(`${title} exported as ${format.toUpperCase()}`);
+            setShowImport(false); setIoFormat(null);
           } catch(err) { showToast('Export failed: ' + err.message); }
         };
 
         const titleMap = {
           'action': 'Import / Export Database',
           'import-pick': 'Import — What to import?',
-          'import-property': 'Import Properties',
-          'import-resident': 'Import Residents',
+          'import-property': ioFormat ? `Import Properties · ${ioFormat.toUpperCase()}` : 'Import Properties — Choose format',
+          'import-resident': ioFormat ? `Import Residents · ${ioFormat.toUpperCase()}` : 'Import Residents — Choose format',
           'export-pick': 'Export — What to export?',
+          'export-property': 'Export Properties — Choose format',
+          'export-resident': 'Export Residents — Choose format',
         };
         const title = titleMap[showImport] || 'Import / Export Database';
 
         const renderUploadForm = (kind) => {
           const kindLabel = kind === 'property' ? 'Property' : 'Resident';
+          const kindPlural = kind === 'property' ? 'Properties' : 'Residents';
           const requiredCols = kind === 'property'
-            ? ['name','location','totalFlats','occupied']
+            ? ['certificateNo','zone','sector','plotNo','buildingNo','floorNo','unitNo','useType','mortgageStatus','projectName','ownerNo','ownerName','ownerIdNo','ownerNationality','rightHoldType','shareAcquisition','buyingShares']
             : ['id','name','flat','coResidents','contact','status','policy','absence'];
-          const handleImport = () => {
-            if (kind === 'property') handleImportProperty(importFile);
-            else handleImportFile(importFile, 'excel');
-          };
+          const acceptAttr = ioFormat === 'excel' ? '.xlsx,.xls' : ioFormat === 'csv' ? '.csv' : '.sql';
           return (
             <div>
               <div style={{border:'1px solid #e5e5e5',borderRadius:8,padding:16,marginBottom:12}}>
@@ -8336,16 +8796,16 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                   ))}
                 </div>
               </div>
-              <div onClick={()=>downloadTemplate(kind)}
+              <div onClick={()=>downloadTemplate(kind, ioFormat)}
                 style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:12,cursor:'pointer',background:'#faf7f4'}}>
                 <Icon name="download" size={16}/>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:600}}>Download example Excel template</div>
+                  <div style={{fontSize:13,fontWeight:600}}>Download example {ioFormat.toUpperCase()} template</div>
                   <div style={{fontSize:11,color:'#a89a92'}}>Sample file showing the required format</div>
                 </div>
               </div>
               <input type="file" ref={importFileRef} style={{display:'none'}}
-                accept=".xlsx,.xls,.csv"
+                accept={acceptAttr}
                 onChange={e => { if(e.target.files[0]) setImportFile(e.target.files[0]); }} />
               <div onClick={()=>importFileRef.current && importFileRef.current.click()}
                 onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='#1a1a1a'}}
@@ -8360,35 +8820,93 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 ) : (
                   <div>
                     <Icon name="upload" size={24}/>
-                    <div style={{fontSize:13,marginTop:8,color:'#1a1a1a'}}>Drop Excel or CSV file here</div>
+                    <div style={{fontSize:13,marginTop:8,color:'#1a1a1a'}}>Drop {ioFormat.toUpperCase()} file here</div>
                     <button className="btn btn-sm" style={{marginTop:10}} onClick={e => { e.stopPropagation(); importFileRef.current && importFileRef.current.click(); }}>Browse Files</button>
                   </div>
                 )}
               </div>
               <div style={{display:'flex',gap:8}}>
-                <button className="btn" style={{flex:1}} onClick={()=>{setShowImport('import-pick');setImportFile(null)}}>Back</button>
-                <button className="btn btn-primary" style={{flex:1}} onClick={handleImport}>Import {kindLabel}s</button>
+                <button className="btn" style={{flex:1}} onClick={()=>{setIoFormat(null);setImportFile(null)}}>Back</button>
+                <button className="btn btn-primary" style={{flex:1}} onClick={()=>handleImport(kind, ioFormat)}>Import {kindPlural}</button>
+              </div>
+            </div>
+          );
+        };
+
+        const renderImportFormatPicker = (kind) => {
+          const kindLabel = kind === 'property' ? 'Property' : 'Resident';
+          return (
+            <div>
+              <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Choose the format of your {kindLabel.toLowerCase()} data source.</p>
+              {[
+                {key:'excel', label:'Excel Spreadsheet', sub:'Microsoft Excel (.xlsx, .xls)'},
+                {key:'csv', label:'CSV File', sub:'Comma-separated values (.csv)'},
+                {key:'sql', label:'SQL Database', sub:'INSERT statements (.sql)'},
+              ].map(opt => (
+                <div key={opt.key} onClick={()=>{setIoFormat(opt.key);setImportFile(null)}}
+                  style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                    <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              ))}
+              <div style={{marginTop:12}}>
+                <button className="btn" style={{width:'100%'}} onClick={()=>setShowImport('import-pick')}>Back</button>
+              </div>
+            </div>
+          );
+        };
+
+        const renderExportFormatPicker = (kind) => {
+          const kindLabel = kind === 'property' ? 'properties' : 'residents';
+          const count = kind === 'property' ? data.towers.length : data.residents.length;
+          return (
+            <div>
+              <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Export {count} {kindLabel} — choose format.</p>
+              {[
+                {key:'excel', label:'Excel Spreadsheet', sub:'Formatted .xlsx with auto-width columns'},
+                {key:'csv', label:'CSV File', sub:'Universal format, works everywhere'},
+                {key:'pdf', label:'PDF Document', sub:'Branded print-ready table'},
+                {key:'word', label:'Word Document', sub:'Editable .doc file opens in Microsoft Word'},
+              ].map(opt => (
+                <div key={opt.key} onClick={()=>exportData(kind, opt.key)}
+                  style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
+                  <Icon name="download" size={16}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                    <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{marginTop:12}}>
+                <button className="btn" style={{width:'100%'}} onClick={()=>setShowImport('export-pick')}>Back</button>
               </div>
             </div>
           );
         };
 
         return (
-          <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null)}}>
+          <div className="modal-overlay" onClick={()=>{setShowImport(false);setImportFile(null);setIoFormat(null)}}>
             <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
               <div className="modal-header">
                 <div><h2 style={{fontSize:16}}>{title}</h2></div>
-                <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null)}}>×</button>
+                <button className="modal-close" onClick={()=>{setShowImport(false);setImportFile(null);setIoFormat(null)}}>×</button>
               </div>
 
               {showImport === 'action' && (
                 <div>
                   <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Choose an action.</p>
                   {[
-                    {key:'import-pick', label:'Import', sub:'Add properties or residents from Excel / CSV', icon:'upload'},
-                    {key:'export-pick', label:'Export', sub:'Download current database as Excel', icon:'download'},
+                    {key:'import-pick', label:'Import', sub:'Add properties or residents from Excel / CSV / SQL', icon:'upload'},
+                    {key:'export-pick', label:'Export', sub:'Download database as Excel / CSV / PDF / Word', icon:'download'},
                   ].map(opt => (
-                    <div key={opt.key} onClick={()=>setShowImport(opt.key)}
+                    <div key={opt.key} onClick={()=>{setIoFormat(null);setShowImport(opt.key)}}
                       style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
@@ -8410,7 +8928,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                     {key:'import-property', label:'Add Property list', sub:'Import a list of properties (towers)'},
                     {key:'import-resident', label:'Add Resident list', sub:'Import a list of residents'},
                   ].map(opt => (
-                    <div key={opt.key} onClick={()=>{setImportFile(null);setShowImport(opt.key)}}
+                    <div key={opt.key} onClick={()=>{setImportFile(null);setIoFormat(null);setShowImport(opt.key)}}
                       style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
@@ -8427,17 +8945,17 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 </div>
               )}
 
-              {showImport === 'import-property' && renderUploadForm('property')}
-              {showImport === 'import-resident' && renderUploadForm('resident')}
+              {showImport === 'import-property' && (ioFormat ? renderUploadForm('property') : renderImportFormatPicker('property'))}
+              {showImport === 'import-resident' && (ioFormat ? renderUploadForm('resident') : renderImportFormatPicker('resident'))}
 
               {showImport === 'export-pick' && (
                 <div>
                   <p style={{fontSize:13,color:'#8a7f76',marginBottom:16}}>Which database would you like to export?</p>
                   {[
-                    {key:'property', label:'Property database', sub:`Export ${data.towers.length} propert${data.towers.length!==1?'ies':'y'} to Excel`, fn: exportProperties},
-                    {key:'resident', label:'Resident database', sub:`Export ${data.residents.length} resident${data.residents.length!==1?'s':''} to Excel`, fn: exportResidents},
+                    {key:'export-property', label:'Property database', sub:`Export ${data.towers.length} propert${data.towers.length!==1?'ies':'y'}`},
+                    {key:'export-resident', label:'Resident database', sub:`Export ${data.residents.length} resident${data.residents.length!==1?'s':''}`},
                   ].map(opt => (
-                    <div key={opt.key} onClick={opt.fn}
+                    <div key={opt.key} onClick={()=>setShowImport(opt.key)}
                       style={{display:'flex',alignItems:'center',gap:14,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:8,cursor:'pointer',transition:'all 0.15s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='#1a1a1a'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='#e0e0e0'}>
@@ -8446,6 +8964,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                         <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
                         <div style={{fontSize:11,color:'#a89a92'}}>{opt.sub}</div>
                       </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   ))}
                   <div style={{marginTop:12}}>
@@ -8453,6 +8972,9 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                   </div>
                 </div>
               )}
+
+              {showImport === 'export-property' && renderExportFormatPicker('property')}
+              {showImport === 'export-resident' && renderExportFormatPicker('resident')}
             </div>
           </div>
         );
@@ -15910,11 +16432,13 @@ const App = () => {
             const mergedEntryLog = mergeById(localData.entryLog || [], cloudData.entryLog || [], 'id');
             const mergedAmenities = mergeById(localData.amenityBookings || [], cloudData.amenityBookings || [], 'id');
             const mergedPending = mergeById(localData.pendingApprovals || [], cloudData.pendingApprovals || [], 'id');
+            const mergedResidents = mergeById(localData.residents || [], cloudData.residents || [], 'id');
+            const mergedTowers = mergeById(localData.towers || [], cloudData.towers || [], 'name');
             // If data version changed, use fresh local SR/escalations instead of stale cloud
             const mergedSR = dataVersionChanged ? (initialData.serviceRequests || []) : mergeById(localData.serviceRequests || [], cloudData.serviceRequests || [], 'id');
             const mergedDismissedNotifs = [...new Set([...(localData.dismissedNotifIds || []), ...(cloudData.dismissedNotifIds || [])])];
             const mergedDismissedSecNotifs = [...new Set([...(localData.dismissedSecNotifIds || []), ...(cloudData.dismissedSecNotifIds || [])])];
-            const merged = { ...initialData, ...cloudData, visitors: mergedVisitors, entryLog: mergedEntryLog, amenityBookings: mergedAmenities, pendingApprovals: mergedPending, serviceRequests: mergedSR, dismissedNotifIds: mergedDismissedNotifs, dismissedSecNotifIds: mergedDismissedSecNotifs, _dataVersion: DATA_VERSION };
+            const merged = { ...initialData, ...cloudData, visitors: mergedVisitors, entryLog: mergedEntryLog, amenityBookings: mergedAmenities, pendingApprovals: mergedPending, residents: mergedResidents, towers: mergedTowers, serviceRequests: mergedSR, dismissedNotifIds: mergedDismissedNotifs, dismissedSecNotifIds: mergedDismissedSecNotifs, _dataVersion: DATA_VERSION };
             delete merged._forceCloudPush;
             setData(merged);
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
@@ -15927,9 +16451,11 @@ const App = () => {
               const mergedAmenities = mergeById(prev.amenityBookings || [], cloudData.amenityBookings || [], 'id');
               const mergedPending = mergeById(prev.pendingApprovals || [], cloudData.pendingApprovals || [], 'id');
               const mergedSR = mergeById(prev.serviceRequests || [], cloudData.serviceRequests || [], 'id');
+              const mergedResidents = mergeById(prev.residents || [], cloudData.residents || [], 'id');
+              const mergedTowers = mergeById(prev.towers || [], cloudData.towers || [], 'name');
               const mergedDismissedNotifs = [...new Set([...(prev.dismissedNotifIds || []), ...(cloudData.dismissedNotifIds || [])])];
               const mergedDismissedSecNotifs = [...new Set([...(prev.dismissedSecNotifIds || []), ...(cloudData.dismissedSecNotifIds || [])])];
-              const merged = { ...prev, ...cloudData, visitors: mergedVisitors, entryLog: mergedEntryLog, amenityBookings: mergedAmenities, pendingApprovals: mergedPending, serviceRequests: mergedSR, dismissedNotifIds: mergedDismissedNotifs, dismissedSecNotifIds: mergedDismissedSecNotifs };
+              const merged = { ...prev, ...cloudData, visitors: mergedVisitors, entryLog: mergedEntryLog, amenityBookings: mergedAmenities, pendingApprovals: mergedPending, residents: mergedResidents, towers: mergedTowers, serviceRequests: mergedSR, dismissedNotifIds: mergedDismissedNotifs, dismissedSecNotifIds: mergedDismissedSecNotifs };
               try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch(e) {}
               return merged;
             });
