@@ -7839,7 +7839,13 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [ioFormat, setIoFormat] = useState(null); // 'excel' | 'csv' | 'sql' | 'pdf' | 'word' | null
   const [showExport, setShowExport] = useState(false); // false | 'pick'
   const [showAddResident, setShowAddResident] = useState(false);
-  const [newRes, setNewRes] = useState({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
+  const [newRes, setNewRes] = useState({
+    name:'', flat:'', floor:'', contact:'', coResidents:1, policy:'Standard', tower:'',
+    tenure:'lease', contractNo:'',
+    // Owner-only fields (populated when tenure === 'own')
+    paymentStatus:'Fully Paid', ownerIdNo:'', ownerNationality:'', rightHoldType:'Freehold',
+    shareAcquisition:'Purchase', buyingShares:100,
+  });
   const [resSearch, setResSearch] = useState('');
   const [showOnlyPending, setShowOnlyPending] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -7886,9 +7892,27 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const handleAddResident = () => {
     if (!newRes.name || !newRes.flat) { showToast(t('pm.fillNameFlat')); return; }
     const id = `RES-${String(data.residents.length+1).padStart(3,'0')}`;
-    const entry = { id, name: newRes.name, flat: newRes.flat, contact: newRes.contact, coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy, absence: 'None', documents: residentDocs, createdAt: Date.now() };
+    const entry = {
+      id, name: newRes.name, flat: newRes.flat, floor: newRes.floor || '', contact: newRes.contact,
+      coResidents: parseInt(newRes.coResidents)||1, status: 'Pending', policy: newRes.policy,
+      tenure: newRes.tenure || 'lease', contractNo: newRes.contractNo || '',
+      absence: 'None', documents: residentDocs, createdAt: Date.now(),
+      ...(newRes.tenure === 'own' ? {
+        paymentStatus: newRes.paymentStatus || 'Fully Paid',
+        ownerIdNo: newRes.ownerIdNo || '',
+        ownerNationality: newRes.ownerNationality || '',
+        rightHoldType: newRes.rightHoldType || 'Freehold',
+        shareAcquisition: newRes.shareAcquisition || 'Purchase',
+        buyingShares: parseFloat(newRes.buyingShares) || 100,
+      } : {}),
+    };
     setData(prev => ({...prev, residents: [entry, ...prev.residents]}));
-    setNewRes({ name:'', flat:'', contact:'', coResidents:1, policy:'Standard', tower:'' });
+    setNewRes({
+      name:'', flat:'', floor:'', contact:'', coResidents:1, policy:'Standard', tower:'',
+      tenure:'lease', contractNo:'',
+      paymentStatus:'Fully Paid', ownerIdNo:'', ownerNationality:'', rightHoldType:'Freehold',
+      shareAcquisition:'Purchase', buyingShares:100,
+    });
     setShowAddResident(false);
     setResidentDocs([]);
     showToast(t('pm.residentAdded'));
@@ -8111,6 +8135,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
               <div style={{marginTop:16,marginBottom:16}}>
                 <div style={{fontWeight:600,marginBottom:8}}>Documents</div>
                 {[
+                  { key: 'titleDeed', label: 'Title Deed' },
                   { key: 'tenancy', label: 'Tenancy Contract' },
                   { key: 'layout', label: 'Unit Layout' },
                   { key: 'photos', label: 'Photos of the Unit' },
@@ -8246,6 +8271,9 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
                 </select>
               </div>
             </div>
+            <div className="form-group"><label>Floor</label>
+              <input className="form-input" placeholder="e.g. 12 (use G for Ground, M for Mezzanine)" value={newRes.floor} onChange={e=>setNewRes(p=>({...p,floor:e.target.value}))}/>
+            </div>
             <div className="form-group"><label>Mobile Number</label><input className="form-input" placeholder="+971 5X XXX XXXX" value={newRes.contact} onChange={e=>setNewRes(p=>({...p,contact:e.target.value}))}/></div>
             <div className="grid-2">
               <div className="form-group"><label>Co-Residents</label><input className="form-input" type="number" min="0" value={newRes.coResidents} onChange={e=>setNewRes(p=>({...p,coResidents:e.target.value}))}/></div>
@@ -8256,9 +8284,129 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
               </div>
             </div>
             <div className="form-group">
+              <label>Tenure</label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                {[
+                  { key:'lease', label:'Lease', sub:'Rented unit · Tenancy contract required',
+                    icon:(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>) },
+                  { key:'own', label:'Own', sub:'Owner-occupied · Title deed required',
+                    icon:(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>) },
+                ].map(opt => {
+                  const active = newRes.tenure === opt.key;
+                  return (
+                    <div key={opt.key} onClick={()=>setNewRes(p=>({...p,tenure:opt.key}))}
+                      style={{
+                        display:'flex',alignItems:'center',gap:10,padding:'12px 14px',
+                        border: active ? '2px solid #1a1a1a' : '1px solid #e0d8d0',
+                        borderRadius:8, cursor:'pointer',
+                        background: active ? '#1a1a1a' : '#faf7f4',
+                        color: active ? '#fff' : '#1a1a1a',
+                        transition:'all 0.15s'
+                      }}>
+                      <div style={{flexShrink:0}}>{opt.icon}</div>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:600}}>{opt.label}</div>
+                        <div style={{fontSize:10,color: active ? '#d0cac3' : '#8a7f76'}}>{opt.sub}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="form-group">
+              <label>{newRes.tenure === 'own' ? 'Title Deed Number' : 'Tenancy Contract Number'}</label>
+              <input className="form-input"
+                placeholder={newRes.tenure === 'own' ? 'e.g. 202575000054442' : 'e.g. EJ-0005241-2026'}
+                value={newRes.contractNo}
+                onChange={e=>setNewRes(p=>({...p,contractNo:e.target.value}))}/>
+            </div>
+            {newRes.tenure === 'own' && (
+              <div style={{
+                border:'1px solid #ebe7e3', borderRadius:10, padding:14, marginBottom:14,
+                background:'#faf7f4'
+              }}>
+                <div style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  marginBottom:10, paddingBottom:8, borderBottom:'1px solid #ebe7e3'
+                }}>
+                  <div style={{fontSize:12, fontWeight:700, color:'#1a1a1a', letterSpacing:0.5, textTransform:'uppercase'}}>
+                    Owner Details
+                  </div>
+                  <div style={{fontSize:11, color:'#8a7f76', direction:'rtl'}}>تفاصيل المالك</div>
+                </div>
+                <div className="form-group">
+                  <label>Payment Status</label>
+                  <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6}}>
+                    {['Fully Paid','Mortgage','Partially Paid'].map(ps => {
+                      const active = newRes.paymentStatus === ps;
+                      return (
+                        <div key={ps} onClick={()=>setNewRes(p=>({...p,paymentStatus:ps}))}
+                          style={{
+                            padding:'10px 8px', textAlign:'center', borderRadius:6, cursor:'pointer',
+                            fontSize:12, fontWeight:600,
+                            border: active ? '2px solid #1a1a1a' : '1px solid #e0d8d0',
+                            background: active ? '#1a1a1a' : '#fff',
+                            color: active ? '#fff' : '#1a1a1a',
+                          }}>
+                          {ps}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>EID / License / Passport No <span style={{color:'#a89a92',fontWeight:400}}>/ رقم الهوية</span></label>
+                    <input className="form-input" placeholder="e.g. 784-1985-1234567-1"
+                      value={newRes.ownerIdNo}
+                      onChange={e=>setNewRes(p=>({...p,ownerIdNo:e.target.value}))}/>
+                  </div>
+                  <div className="form-group">
+                    <label>Nationality / Source <span style={{color:'#a89a92',fontWeight:400}}>/ الجنسية</span></label>
+                    <input className="form-input" placeholder="e.g. United Arab Emirates"
+                      value={newRes.ownerNationality}
+                      onChange={e=>setNewRes(p=>({...p,ownerNationality:e.target.value}))}/>
+                  </div>
+                </div>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Right Hold Type <span style={{color:'#a89a92',fontWeight:400}}>/ نوع الحق</span></label>
+                    <select className="form-input"
+                      value={newRes.rightHoldType}
+                      onChange={e=>setNewRes(p=>({...p,rightHoldType:e.target.value}))}>
+                      <option value="Freehold">Freehold</option>
+                      <option value="Leasehold">Leasehold</option>
+                      <option value="Usufruct">Usufruct</option>
+                      <option value="Musataha">Musataha</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Share & Acquisition <span style={{color:'#a89a92',fontWeight:400}}>/ الحصة والحيازة</span></label>
+                    <select className="form-input"
+                      value={newRes.shareAcquisition}
+                      onChange={e=>setNewRes(p=>({...p,shareAcquisition:e.target.value}))}>
+                      <option value="Purchase">Purchase</option>
+                      <option value="Gift">Gift</option>
+                      <option value="Inheritance">Inheritance</option>
+                      <option value="Transfer">Transfer</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Buying Shares % <span style={{color:'#a89a92',fontWeight:400}}>/ نسبة الشراء</span></label>
+                  <input className="form-input" type="number" min="0" max="100" step="0.01"
+                    placeholder="100"
+                    value={newRes.buyingShares}
+                    onChange={e=>setNewRes(p=>({...p,buyingShares:e.target.value}))}/>
+                </div>
+              </div>
+            )}
+            <div className="form-group">
               <label>Documents</label>
               {[
-                { key: 'tenancy', label: 'Tenancy Contract' },
+                ...(newRes.tenure === 'own'
+                  ? [{ key: 'titleDeed', label: 'Title Deed' }]
+                  : [{ key: 'tenancy', label: 'Tenancy Contract' }]),
                 { key: 'layout', label: 'Unit Layout' },
                 { key: 'photos', label: 'Photos of the Unit' },
                 { key: 'resident', label: 'Resident Documents (Passport / Emirates ID)' },
