@@ -1951,7 +1951,7 @@ const TRANSLATIONS = {
     'pm.profileUpdated': 'Profile updated successfully.',
     // Modals - Settings
     'pm.settingsTitle': 'Settings',
-    'pm.settingsSubtitle': 'Appearance · Regional · Notifications · Security',
+    'pm.settingsSubtitle': 'Notifications · Security',
     'pm.appearance': 'Appearance',
     'pm.theme': 'Theme',
     'pm.density': 'Density',
@@ -2047,7 +2047,7 @@ const TRANSLATIONS = {
     'pm.statusScheduledAnn': 'Scheduled',
     'pm.statusSent': 'Sent',
     'pm.statusDraft': 'Draft',
-    'pm.ackRequired': 'Ack Required',
+    'pm.ackRequired': 'Acknowledgement Required',
     'pm.highPriority': 'High Priority',
     'pm.audience': 'Audience:',
     'pm.by': 'By:',
@@ -2325,7 +2325,7 @@ const TRANSLATIONS = {
     'pm.escFormSubmit': 'Create Escalation',
     // AnnouncementsPage - additional strings
     'pm.filterChipsAnn': 'Sent, Draft, Scheduled, Live, All',
-    'pm.ackRequiredLabel': 'Ack Required',
+    'pm.ackRequiredLabel': 'Acknowledgement Required',
     'pm.highPriorityLabel': 'High Priority',
     'pm.audienceLabel': 'Audience:',
     'pm.byLabel': 'By:',
@@ -4239,6 +4239,7 @@ const Icon = ({ name, size = 16 }) => {
     calendar: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     export: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
     upload: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+    audit: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/><line x1="9" y1="11" x2="10" y2="11"/></svg>,
   };
   return icons[name] || null;
 };
@@ -5111,49 +5112,6 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
                 </div>
               )}
 
-              {/* Appearance */}
-              <div style={{fontSize:10,letterSpacing:'0.1em',textTransform:'uppercase',color:'#8a8078',marginBottom:10,fontWeight:600}}>{t('pm.appearance')}</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:18}}>
-                <div>
-                  <label style={{display:'block',fontSize:11,color:'#5a5550',marginBottom:5,fontWeight:500}}>{t('pm.theme')}</label>
-                  <select value={settingsForm.theme} onChange={e=>setSettingsForm({...settingsForm,theme:e.target.value})} style={{width:'100%',padding:'10px 12px',fontSize:13,color:'#1a1a1a',background:'#fff',border:'1px solid #d5cfc8',borderRadius:8,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                    <option>Warm Light</option>
-                    <option>Dark</option>
-                    <option>System</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{display:'block',fontSize:11,color:'#5a5550',marginBottom:5,fontWeight:500}}>{t('pm.density')}</label>
-                  <select value={settingsForm.density} onChange={e=>setSettingsForm({...settingsForm,density:e.target.value})} style={{width:'100%',padding:'10px 12px',fontSize:13,color:'#1a1a1a',background:'#fff',border:'1px solid #d5cfc8',borderRadius:8,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                    <option>Comfortable</option>
-                    <option>Compact</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Regional */}
-              <div style={{fontSize:10,letterSpacing:'0.1em',textTransform:'uppercase',color:'#8a8078',marginBottom:10,fontWeight:600}}>{t('pm.regional')}</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:18}}>
-                <div>
-                  <label style={{display:'block',fontSize:11,color:'#5a5550',marginBottom:5,fontWeight:500}}>{t('pm.timezone')}</label>
-                  <select value={settingsForm.timezone} onChange={e=>setSettingsForm({...settingsForm,timezone:e.target.value})} style={{width:'100%',padding:'10px 12px',fontSize:13,color:'#1a1a1a',background:'#fff',border:'1px solid #d5cfc8',borderRadius:8,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                    <option>Asia/Dubai (GMT+4)</option>
-                    <option>Asia/Riyadh (GMT+3)</option>
-                    <option>Europe/London (GMT+0)</option>
-                    <option>Asia/Singapore (GMT+8)</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{display:'block',fontSize:11,color:'#5a5550',marginBottom:5,fontWeight:500}}>{t('pm.dateFormat')}</label>
-                  <select value={settingsForm.dateFormat} onChange={e=>setSettingsForm({...settingsForm,dateFormat:e.target.value})} style={{width:'100%',padding:'10px 12px',fontSize:13,color:'#1a1a1a',background:'#fff',border:'1px solid #d5cfc8',borderRadius:8,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                    <option>DD MMM YYYY</option>
-                    <option>DD/MM/YYYY</option>
-                    <option>MM/DD/YYYY</option>
-                    <option>YYYY-MM-DD</option>
-                  </select>
-                </div>
-              </div>
-
               {/* Notifications */}
               <div style={{fontSize:10,letterSpacing:'0.1em',textTransform:'uppercase',color:'#8a8078',marginBottom:10,fontWeight:600}}>{t('pm.notifications')}</div>
               <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:10,marginBottom:18}}>
@@ -5173,16 +5131,6 @@ const TopBar = ({ onCreateClick, onMenuToggle, onLogout, onSearchSelect }) => {
                   </div>
                 ))}
               </div>
-              <div style={{marginBottom:18}}>
-                <label style={{display:'block',fontSize:11,color:'#5a5550',marginBottom:5,fontWeight:500}}>{t('pm.notifyDigest')}</label>
-                <select value={settingsForm.notifyDigest} onChange={e=>setSettingsForm({...settingsForm,notifyDigest:e.target.value})} style={{width:'100%',padding:'10px 12px',fontSize:13,color:'#1a1a1a',background:'#fff',border:'1px solid #d5cfc8',borderRadius:8,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                  <option>Hourly</option>
-                  <option>Daily</option>
-                  <option>Weekly</option>
-                  <option>Off</option>
-                </select>
-              </div>
-
               {/* Security */}
               <div style={{fontSize:10,letterSpacing:'0.1em',textTransform:'uppercase',color:'#8a8078',marginBottom:10,fontWeight:600}}>{t('pm.security')}</div>
               <div style={{background:'#fff',border:'1px solid #ebe7e3',borderRadius:10,marginBottom:14}}>
@@ -5894,7 +5842,7 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
               const isInsideStatus = isInside(entry);
               const isScheduledStatus = isScheduled(entry);
               return (
-                <tr key={entry.id || idx}>
+                <tr key={entry.id || idx} style={{cursor:'pointer'}} onClick={() => setSelectedVisitor(entry.originalData)}>
                   <td style={{color:'#a89a92',fontSize:11}}>{rowNum}</td>
                   <td className="name-cell" style={{fontWeight:600}}>{entry.visitor || '\u2014'}</td>
                   <td>{entry.type || '\u2014'}</td>
@@ -5915,11 +5863,11 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
                     <div style={{display:'flex',gap:4}}>
                       {(isInsideStatus || isScheduledStatus) ? (
                         <>
-                          <button className="btn btn-sm btn-primary" onClick={() => handleApprove(entry.originalData)} style={{fontSize:10,padding:'4px 8px'}}><Icon name="check" size={10}/> Approve</button>
-                          <button className="btn btn-sm" onClick={() => handleReject(entry.originalData)} style={{fontSize:10,padding:'4px 8px'}}>Reject</button>
+                          <button className="btn btn-sm btn-primary" onClick={(e) => { e.stopPropagation(); handleApprove(entry.originalData); }} style={{fontSize:10,padding:'4px 8px'}}><Icon name="check" size={10}/> Approve</button>
+                          <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); handleReject(entry.originalData); }} style={{fontSize:10,padding:'4px 8px'}}>Reject</button>
                         </>
                       ) : (
-                        <button className="btn btn-sm" onClick={() => setSelectedVisitor(entry.originalData)}><Icon name="eye" size={12}/> View</button>
+                        <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); setSelectedVisitor(entry.originalData); }}><Icon name="eye" size={12}/> View</button>
                       )}
                     </div>
                   </td>
@@ -5956,57 +5904,126 @@ const VisitorsPage = ({ autoOpenForm, onFormOpened }) => {
         </div>
       </div>
 
-      {selectedVisitor && (
-        <div className="modal-overlay" onClick={()=>setSelectedVisitor(null)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <div><div className="modal-sub">{t('pm.visitorDetail')}</div><h2>{t('pm.visitorDetailModal')}</h2></div>
-              <button className="modal-close" onClick={()=>setSelectedVisitor(null)}>×</button>
-            </div>
-            <div style={{display:'flex',gap:16,marginBottom:20}}>
-              <div style={{width:60,height:60,background:'#e8e3de',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#a89a92'}}>{t('pm.visitorPhoto')}</div>
-              <div>
-                <h3 style={{fontSize:18,fontWeight:600}}>{selectedVisitor.name}</h3>
-                <div style={{color:'#8a7f76',fontSize:13}}>{selectedVisitor.contact}</div>
-                <div style={{display:'flex',gap:6,marginTop:4}}><StatusBadge status={selectedVisitor.type}/><StatusBadge status={selectedVisitor.status}/></div>
+      {selectedVisitor && (() => {
+        const v = selectedVisitor;
+        const vName = v.name || v.visitor || '\u2014';
+        const dash = '\u2014';
+        const sts = getStatusStyle(v.status || '');
+        const fieldRow = (label, value) => (
+          <div style={{padding:'10px 0',borderBottom:'1px solid #f0ece8',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
+            <span style={{fontSize:11,color:'#a89a92',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.04em',flexShrink:0,minWidth:140}}>{label}</span>
+            <span style={{fontSize:13,color:'#1a1a1a',fontWeight:500,textAlign:'right',wordBreak:'break-word'}}>{value || dash}</span>
+          </div>
+        );
+        return (
+          <div className="modal-overlay" onClick={()=>setSelectedVisitor(null)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div className="modal" onClick={e=>e.stopPropagation()} style={{background:'#fff',borderRadius:8,maxWidth:720,width:'95vw',maxHeight:'90vh',overflow:'auto',padding:0}}>
+              {/* Header */}
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid #ebe7e3'}}>
+                <div>
+                  <div style={{fontSize:11,color:'#a89a92',fontWeight:500,letterSpacing:'0.04em',textTransform:'uppercase'}}>Visitor Record \u00b7 Linked to Security App</div>
+                  <h2 style={{fontSize:18,fontWeight:700,color:'#1a1a1a',margin:'4px 0 0'}}>{vName}</h2>
+                </div>
+                <button onClick={()=>setSelectedVisitor(null)} style={{background:'none',border:'none',cursor:'pointer',color:'#8a8a8a',fontSize:24,lineHeight:1,padding:0}}>{'\u00d7'}</button>
+              </div>
+
+              {/* Summary Card */}
+              <div style={{padding:'18px 24px',background:'#faf7f2',borderBottom:'1px solid #ebe7e3'}}>
+                <div style={{display:'flex',gap:16,alignItems:'center'}}>
+                  <div style={{width:64,height:64,background:'#e8e3de',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,fontWeight:700,color:'#a89a92',flexShrink:0}}>
+                    {(vName[0] || 'V').toUpperCase()}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:6}}>
+                      <span style={{background:sts.bg,color:sts.color,border:'1px solid '+(sts.border||sts.bg),padding:'3px 10px',borderRadius:4,fontSize:10,fontWeight:700,letterSpacing:'0.03em'}}>{sts.label}</span>
+                      {v.type && <span style={{background:'#fff',border:'1px solid #d5cfc8',padding:'3px 10px',borderRadius:4,fontSize:11,color:'#6a5a45',fontWeight:500}}>{v.type}</span>}
+                      {v.entryType && <span style={{background:'#fff',border:'1px solid #d5cfc8',padding:'3px 10px',borderRadius:4,fontSize:11,color:'#6a5a45',fontWeight:500}}>{v.entryType}</span>}
+                    </div>
+                    <div style={{fontSize:13,color:'#1a1a1a',fontWeight:600}}>{v.flat || dash} \u00b7 Host: {v.resident || v.host || dash}</div>
+                    <div style={{fontSize:12,color:'#8a7f76'}}>{v.contact || dash}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Details Sections */}
+              <div style={{padding:'8px 24px 20px'}}>
+                {/* Identity */}
+                <div style={{fontSize:11,fontWeight:700,color:'#928989',letterSpacing:'0.06em',textTransform:'uppercase',marginTop:16,marginBottom:4,paddingBottom:6,borderBottom:'2px solid #928989'}}>Identity</div>
+                {fieldRow('Full Name', vName)}
+                {fieldRow('Contact', v.contact)}
+                {fieldRow('Visitor Type', v.type)}
+                {fieldRow('Entry Type', v.entryType)}
+                {fieldRow('ID Document', v.idDoc)}
+                {fieldRow('Vehicle', v.vehicle)}
+                {fieldRow('Additional Visitors', (typeof v.additionalVisitors === 'number' ? v.additionalVisitors : v.additionalVisitors) || '0')}
+
+                {/* Visit */}
+                <div style={{fontSize:11,fontWeight:700,color:'#928989',letterSpacing:'0.06em',textTransform:'uppercase',marginTop:20,marginBottom:4,paddingBottom:6,borderBottom:'2px solid #928989'}}>Visit Details</div>
+                {fieldRow('Flat / Unit', v.flat)}
+                {fieldRow('Host / Resident', v.resident || v.host)}
+                {fieldRow('Purpose', v.purpose)}
+                {fieldRow('Gate', v.gate || v.gateUsed)}
+                {fieldRow('Date In', v.dateIn || v.date)}
+                {fieldRow('Time In', v.time || v.timeIn)}
+                {fieldRow('Date Out', v.dateOut)}
+                {fieldRow('Time Out', v.timeOut)}
+                {fieldRow('Duration', v.duration)}
+                {fieldRow('Repeater', v.repeater)}
+
+                {/* Security */}
+                <div style={{fontSize:11,fontWeight:700,color:'#928989',letterSpacing:'0.06em',textTransform:'uppercase',marginTop:20,marginBottom:4,paddingBottom:6,borderBottom:'2px solid #928989'}}>Security & Access</div>
+                {fieldRow('Permit Reference', v.permitRef || v.refId)}
+                {fieldRow('QR Code', v.qrCode)}
+                {fieldRow('Valid Until', v.validUntil)}
+                {fieldRow('Current Status', sts.label)}
+                {fieldRow('Company', v.company)}
+
+                {/* Notes */}
+                {v.notes && (
+                  <>
+                    <div style={{fontSize:11,fontWeight:700,color:'#928989',letterSpacing:'0.06em',textTransform:'uppercase',marginTop:20,marginBottom:4,paddingBottom:6,borderBottom:'2px solid #928989'}}>Notes</div>
+                    <div style={{padding:'10px 12px',background:'#faf7f2',borderRadius:6,fontSize:13,color:'#1a1a1a',marginTop:8,lineHeight:1.5}}>{v.notes}</div>
+                  </>
+                )}
+
+                {/* Approval History */}
+                <div style={{fontSize:11,fontWeight:700,color:'#928989',letterSpacing:'0.06em',textTransform:'uppercase',marginTop:20,marginBottom:4,paddingBottom:6,borderBottom:'2px solid #928989'}}>Activity Timeline</div>
+                <div style={{padding:'12px 0'}}>
+                  <div style={{fontSize:13,color:'#1a1a1a',marginBottom:6}}>{'\u2713'} Pre-Approved by resident \u2014 {v.flat || dash} \u2014 {v.time || dash}</div>
+                  <div style={{fontSize:13,color:'#8a7f76'}}>{'\u25f7'} Guard scanned QR \u2014 Entry Point: {v.gate || v.gateUsed || 'Main Gate'} \u2014 {v.time || v.timeIn || dash}</div>
+                </div>
+              </div>
+
+              {/* Action Footer */}
+              <div style={{display:'flex',gap:8,padding:'16px 24px',borderTop:'1px solid #ebe7e3',background:'#fafaf8'}}>
+                {(() => {
+                  const vDate = v.date || v.dateIn;
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  let isFuture = false;
+                  if (vDate) {
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(vDate)) isFuture = vDate > todayStr;
+                    else { const p = vDate.split('/'); if (p.length === 3) isFuture = (p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0')) > todayStr; }
+                  }
+                  if (isFuture && (v.status === 'Pre-Approved' || v.status === 'Scheduled')) {
+                    return (
+                      <div style={{flex:1,textAlign:'center',padding:'10px 16px',background:'#f5f0ec',borderRadius:6,color:'#7a6f66',fontSize:12,fontWeight:500}}>
+                        Pre-approved for {v.date || v.dateIn}. Actions available on visit day.
+                      </div>
+                    );
+                  }
+                  return (
+                    <>
+                      <button className="btn btn-sm" onClick={()=>setSelectedVisitor(null)} style={{marginRight:'auto'}}>Close</button>
+                      <button className="btn btn-sm btn-primary" onClick={()=>{handleApprove(v);setSelectedVisitor(null);}}><Icon name="check" size={12}/> Approve</button>
+                      <button className="btn btn-sm" onClick={()=>{handleReject(v);setSelectedVisitor(null);}}>Reject</button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
-            <div className="grid-2" style={{marginBottom:16}}>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.flatUnit')}</div><div style={{fontWeight:600}}>{selectedVisitor.flat}</div></div>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.checkInTime')}</div><div style={{fontWeight:600}}>{t('pm.todayLabel')}, {selectedVisitor.time}</div></div>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.residentName')}</div><div style={{fontWeight:600}}>{selectedVisitor.resident}</div></div>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.permitRef')}</div><div style={{fontWeight:600}}>{selectedVisitor.permitRef}</div></div>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.expectedDuration')}</div><div style={{fontWeight:600}}>{selectedVisitor.duration}</div></div>
-              <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.qrCode')}</div><div style={{fontWeight:600}}>{selectedVisitor.qrCode} ✓</div></div>
-            </div>
-            <div style={{background:'#f5f2ef',borderRadius:8,padding:24,textAlign:'center',color:'#a89a92',fontSize:12,marginBottom:16}}>{t('pm.qrCodePlaceholder')}</div>
-            <div style={{marginBottom:16}}>
-              <div style={{fontWeight:600,marginBottom:8}}>{t('pm.approvalHistory')}</div>
-              <div style={{fontSize:13,color:'#8a7f76'}}>✓ {t('pm.preApprovedByResident')} — {selectedVisitor.flat} — 09:00</div>
-              <div style={{fontSize:13,color:'#8a7f76'}}>◷ {t('pm.guardScannedQr')} — {t('pm.entryPoint')}: Main Gate — {selectedVisitor.time}</div>
-            </div>
-            {(() => {
-              const vDate = selectedVisitor.date;
-              const todayStr = new Date().toISOString().split('T')[0];
-              let isFuture = false;
-              if (vDate) {
-                if (/^\d{4}-\d{2}-\d{2}$/.test(vDate)) isFuture = vDate > todayStr;
-                else { const p = vDate.split('/'); if (p.length === 3) isFuture = (p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0')) > todayStr; }
-              }
-              return isFuture && (selectedVisitor.status === 'Pre-Approved' || selectedVisitor.status === 'Scheduled') ? (
-                <div style={{textAlign:'center',padding:'12px 16px',background:'#f5f0ec',borderRadius:8,color:'#7a6f66',fontSize:12,fontWeight:500,marginTop:8}}>
-                  {t('pm.preApprovedFor')} {selectedVisitor.date}. {t('pm.actionsAvailableVisitDay')}.
-                </div>
-              ) : (
-                <div className="grid-2">
-                  <button className="btn btn-primary"><Icon name="phone" size={14}/> {t('pm.callResident')}</button>
-                  <button className="btn" onClick={()=>{handleReject(selectedVisitor);setSelectedVisitor(null);}}>{t('pm.rejectVisitor')}</button>
-                </div>
-              );
-            })()}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {showManualEntry && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#f2efec',zIndex:1000,overflowY:'auto'}} onClick={() => {resetPmcVisitorForm(); setShowManualEntry(false);}}>
@@ -6314,6 +6331,9 @@ const ServiceRequestsPage = () => {
   const [selectedPersonnel, setSelectedPersonnel] = useState(null);
   const [newSR, setNewSR] = useState({ flat:'', type:'', resident:'', dateTime:'', sla:'', notes:'' });
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showSRFilter, setShowSRFilter] = useState(false);
+  const [srFilters, setSRFilters] = useState({ status:'All', type:'All', resident:'All', flat:'All' });
+  const [editSR, setEditSR] = useState(null);
 
   // Enrich SR data with SLA
   const srWithSLA = data.serviceRequests.map(r => ({
@@ -6370,10 +6390,24 @@ const ServiceRequestsPage = () => {
   const selD = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
   const selDay = selD.getDate();
   const selMonth = selD.getMonth();
-  const dayRequests = srWithSLA.filter(r => {
+  const dayRequestsAll = srWithSLA.filter(r => {
     const p = parseSRDate(r.date);
     return p && p.day === selDay && p.month === selMonth;
   });
+  const dayRequests = dayRequestsAll.filter(r =>
+    (srFilters.status === 'All'   || r.status === srFilters.status) &&
+    (srFilters.type === 'All'     || r.type === srFilters.type) &&
+    (srFilters.resident === 'All' || r.resident === srFilters.resident) &&
+    (srFilters.flat === 'All'     || r.flat === srFilters.flat)
+  );
+  const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+  const srFilterOptions = {
+    status:   ['All', ...uniq(srWithSLA.map(r => r.status))],
+    type:     ['All', ...uniq(srWithSLA.map(r => r.type))],
+    resident: ['All', ...uniq(srWithSLA.map(r => r.resident))],
+    flat:     ['All', ...uniq(srWithSLA.map(r => r.flat))],
+  };
+  const activeFilterCount = ['status','type','resident','flat'].filter(k => srFilters[k] !== 'All').length;
 
   // Sort: upcoming (non-completed) first by date ascending, then completed by date descending
   const srDateVal = (r) => {
@@ -6394,15 +6428,87 @@ const ServiceRequestsPage = () => {
   const srStart = (srPage - 1) * srPageSize + 1;
   const srEnd = Math.min(srPage * srPageSize, totalSR);
 
-  // Validation checklist for expanded request
-  const getChecklist = (r) => {
-    const base = [
-      { label: 'ID verification complete', done: r.status !== 'Pending Approval' },
-      { label: 'Work permit issued', done: r.status === 'Scheduled' || r.status === 'Completed' },
-      { label: 'Resident approval received', done: r.status === 'Scheduled' || r.status === 'Completed' },
-      { label: 'Safety briefing acknowledged', done: r.status === 'Completed' }
-    ];
-    return base;
+  // Validation checklist — interactive items persisted on the request
+  const SR_CHECKLIST_ITEMS = [
+    { key: 'idVerification',    label: 'ID verification complete' },
+    { key: 'workPermit',        label: 'Work permit issued' },
+    { key: 'residentApproval',  label: 'Resident approval received' },
+    { key: 'safetyBriefing',    label: 'Safety briefing acknowledged' },
+  ];
+  const [srPreviewDoc, setSRPreviewDoc] = useState(null);
+
+  const getChecklistState = (r) => {
+    const cl = r.checklist || {};
+    // Derive default `done` from status for backwards compatibility
+    const defaults = {
+      idVerification:   r.status !== 'Pending Approval',
+      workPermit:       r.status === 'Scheduled' || r.status === 'Completed',
+      residentApproval: r.status === 'Scheduled' || r.status === 'Completed',
+      safetyBriefing:   r.status === 'Completed',
+    };
+    const out = {};
+    SR_CHECKLIST_ITEMS.forEach(it => {
+      const existing = cl[it.key] || {};
+      out[it.key] = {
+        done: existing.done !== undefined ? existing.done : defaults[it.key],
+        docs: Array.isArray(existing.docs) ? existing.docs : [],
+      };
+    });
+    return out;
+  };
+
+  const updateSRChecklist = (reqId, updater) => {
+    setData(prev => ({
+      ...prev,
+      serviceRequests: prev.serviceRequests.map(sr => {
+        if (sr.id !== reqId) return sr;
+        const current = getChecklistState(sr);
+        const next = updater(current);
+        return { ...sr, checklist: next };
+      }),
+    }));
+    // Keep the expanded view in sync
+    if (expandedSR && expandedSR.id === reqId) {
+      const current = getChecklistState(expandedSR);
+      setExpandedSR({ ...expandedSR, checklist: updater(current) });
+    }
+  };
+
+  const toggleChecklistItem = (r, key) => {
+    updateSRChecklist(r.id, (state) => ({
+      ...state,
+      [key]: { ...state[key], done: !state[key].done },
+    }));
+  };
+
+  const attachChecklistDocs = (r, key, fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const readers = files.map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = ev => resolve({
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        type: (file.name.split('.').pop() || '').toLowerCase(),
+        dataUrl: ev.target.result,
+        uploadedAt: Date.now(),
+      });
+      reader.readAsDataURL(file);
+    }));
+    Promise.all(readers).then(newDocs => {
+      updateSRChecklist(r.id, (state) => ({
+        ...state,
+        [key]: { ...state[key], docs: [...(state[key].docs || []), ...newDocs] },
+      }));
+      showToast(`${newDocs.length} document${newDocs.length!==1?'s':''} attached`);
+    });
+  };
+
+  const removeChecklistDoc = (r, key, idx) => {
+    updateSRChecklist(r.id, (state) => ({
+      ...state,
+      [key]: { ...state[key], docs: state[key].docs.filter((_, i) => i !== idx) },
+    }));
   };
 
   return (
@@ -6414,14 +6520,6 @@ const ServiceRequestsPage = () => {
           <div className="subtitle">{activeCount} active · {pendingCount} pending approval · {escalatedCount} escalated</div>
         </div>
         <div style={{display:'flex',gap:12,alignItems:'center'}}>
-          <div style={{display:'flex',border:'1px solid #d5cfc8',borderRadius:6,overflow:'hidden'}}>
-            {[t('pm.calendarView'),t('pm.listView')].map(v => (
-              <button key={v} onClick={() => setViewMode(v)}
-                style={{padding:'8px 20px',fontSize:13,fontWeight:viewMode===v?600:400,background:viewMode===v?'#1a1a1a':'#fff',color:viewMode===v?'#fff':'#1a1a1a',border:'none',cursor:'pointer'}}>
-                {v}
-              </button>
-            ))}
-          </div>
           <button className="btn btn-primary" onClick={()=>setShowNewRequest(true)}>{t('pm.newRequestBtn')}</button>
         </div>
       </div>
@@ -6444,10 +6542,54 @@ const ServiceRequestsPage = () => {
           <div className="card">
             <div className="card-header">
               <div style={{display:'flex',alignItems:'center',gap:12}}>
-                <h3>{formatDate(selectedDate)} — {dayRequests.length} requests</h3>
+                <h3>{formatDate(selectedDate)} — {dayRequests.length}{activeFilterCount>0 ? ` of ${dayRequestsAll.length}` : ''} requests</h3>
                 <input type="date" value={selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : new Date(selectedDate).toISOString().split('T')[0]} onChange={e=>{ const d = new Date(e.target.value + 'T12:00:00'); if (!isNaN(d)) setSelectedDate(d); }} style={{padding:'6px 12px',border:'1px solid #d5cfc8',borderRadius:6,fontSize:13}}/>
               </div>
-              <button className="btn btn-sm" style={{display:'flex',alignItems:'center',gap:4}}><Icon name="filter" size={12}/> {t('pm.filterBtn')}</button>
+              <div style={{position:'relative'}}>
+                <button className="btn btn-sm" style={{display:'flex',alignItems:'center',gap:4}} onClick={()=>setShowSRFilter(s=>!s)}>
+                  <Icon name="filter" size={12}/> {t('pm.filterBtn')}
+                  {activeFilterCount > 0 && (
+                    <span style={{background:'#1a1a1a',color:'#fff',borderRadius:10,padding:'1px 7px',fontSize:10,fontWeight:700,marginLeft:2}}>
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {showSRFilter && (
+                  <>
+                    <div onClick={()=>setShowSRFilter(false)} style={{position:'fixed',inset:0,zIndex:20,background:'transparent'}}/>
+                    <div style={{
+                      position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:21,
+                      background:'#fff', border:'1px solid #ebe7e3', borderRadius:10,
+                      boxShadow:'0 8px 24px rgba(0,0,0,0.08)', padding:14, width:300
+                    }}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                        <div style={{fontSize:12,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#1a1a1a'}}>Filter Requests</div>
+                        <button onClick={()=>setSRFilters({status:'All',type:'All',resident:'All',flat:'All'})}
+                          style={{background:'none',border:'none',fontSize:11,color:'#928989',cursor:'pointer',fontWeight:600}}>
+                          Clear all
+                        </button>
+                      </div>
+                      {[
+                        {key:'status',   label:'Status'},
+                        {key:'type',     label:'Type of Service'},
+                        {key:'resident', label:'Resident'},
+                        {key:'flat',     label:'Flat'},
+                      ].map(f => (
+                        <div key={f.key} style={{marginBottom:10}}>
+                          <label style={{display:'block',fontSize:10,color:'#8a7f76',fontWeight:600,letterSpacing:0.4,textTransform:'uppercase',marginBottom:4}}>{f.label}</label>
+                          <select value={srFilters[f.key]} onChange={e=>setSRFilters(p=>({...p,[f.key]:e.target.value}))}
+                            style={{width:'100%',padding:'8px 10px',fontSize:12,border:'1px solid #d5cfc8',borderRadius:6,background:'#fff',cursor:'pointer',outline:'none'}}>
+                            {srFilterOptions[f.key].map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        </div>
+                      ))}
+                      <div style={{display:'flex',gap:6,marginTop:12,paddingTop:10,borderTop:'1px solid #ebe7e3'}}>
+                        <button className="btn btn-sm" style={{flex:1}} onClick={()=>setShowSRFilter(false)}>Close</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {dayRequests.map(r => (
@@ -6483,42 +6625,95 @@ const ServiceRequestsPage = () => {
                           <div><div style={{fontSize:10,color:'#a89a92',letterSpacing:'0.04em',textTransform:'uppercase',marginBottom:4}}>Documents</div><div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>1 attached</div></div>
                         </div>
 
-                        {/* Validation Checklist */}
+                        {/* Validation Checklist — interactive */}
                         <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',marginBottom:8}}>{t('pm.validationChecklist')}</div>
-                        {getChecklist(r).map((c, ci) => (
-                          <div key={ci} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                            {c.done ? (
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#1a1a1a"/><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            ) : (
-                              <div style={{width:16,height:16,border:'1.5px solid #d0d0d0',borderRadius:4}}/>
-                            )}
-                            <span style={{fontSize:12,color: c.done ? '#1a1a1a' : '#8a8a8a'}}>{c.label}</span>
-                          </div>
-                        ))}
+                        {(() => {
+                          const state = getChecklistState(r);
+                          return SR_CHECKLIST_ITEMS.map((it) => {
+                            const s = state[it.key];
+                            const inputId = `sr-${r.id}-${it.key}`;
+                            return (
+                              <div key={it.key} style={{marginBottom:10,padding:'8px 10px',border:'1px solid #f0ece5',borderRadius:8,background:'#fff'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                  <div onClick={(e)=>{e.stopPropagation();toggleChecklistItem(r,it.key);}} style={{cursor:'pointer',lineHeight:0}}>
+                                    {s.done ? (
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#1a1a1a"/><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    ) : (
+                                      <div style={{width:18,height:18,border:'1.5px solid #d0d0d0',borderRadius:4}}/>
+                                    )}
+                                  </div>
+                                  <span onClick={(e)=>{e.stopPropagation();toggleChecklistItem(r,it.key);}} style={{fontSize:12,color: s.done ? '#1a1a1a' : '#8a8a8a',flex:1,cursor:'pointer',fontWeight: s.done?500:400}}>
+                                    {it.label}
+                                  </span>
+                                  <input type="file" id={inputId} multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    style={{display:'none'}}
+                                    onChange={(e)=>{ attachChecklistDocs(r, it.key, e.target.files); e.target.value=''; }}/>
+                                  <button onClick={(e)=>{e.stopPropagation();document.getElementById(inputId).click();}}
+                                    style={{background:'none',border:'1px solid #d5cfc8',borderRadius:6,padding:'4px 10px',fontSize:11,color:'#1a1a1a',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                                    <Icon name="upload" size={11}/> Attach
+                                  </button>
+                                </div>
+                                {s.docs.length > 0 && (
+                                  <div style={{marginTop:8,paddingTop:8,borderTop:'1px dashed #ebe7e3'}}>
+                                    {s.docs.map((doc, di) => (
+                                      <div key={di} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',fontSize:11}}>
+                                        <span style={{background:'#f0ece5',padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:700,textTransform:'uppercase',color:'#6b5d55'}}>{doc.type || 'file'}</span>
+                                        <span style={{flex:1,fontWeight:500,color:'#1a1a1a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{doc.name}</span>
+                                        <span style={{color:'#a89a92',fontSize:10}}>{doc.size}</span>
+                                        <button onClick={(e)=>{e.stopPropagation();setSRPreviewDoc(doc);}}
+                                          style={{background:'none',border:'none',color:'#6b5d55',cursor:'pointer',fontSize:11,fontWeight:600,display:'flex',alignItems:'center',gap:3,padding:0}}>
+                                          <Icon name="eye" size={11}/> Preview
+                                        </button>
+                                        <a href={doc.dataUrl} download={doc.name} onClick={(e)=>e.stopPropagation()}
+                                          style={{color:'#6b5d55',textDecoration:'none',fontSize:11,fontWeight:600,display:'flex',alignItems:'center',gap:3}}>
+                                          <Icon name="download" size={11}/>
+                                        </a>
+                                        <button onClick={(e)=>{e.stopPropagation();removeChecklistDoc(r,it.key,di);}}
+                                          style={{background:'none',border:'none',color:'#a89a92',cursor:'pointer',fontSize:14,padding:0,lineHeight:1}}>×</button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
 
-                      {/* Right: Documents + Actions */}
+                      {/* Right: Resident Approval + Actions */}
                       <div style={{gridColumn:'3'}}>
-                        <div style={{border:'1px solid #ebe7e3',borderRadius:6,padding:20,textAlign:'center',marginBottom:16}}>
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5" style={{marginBottom:8}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15l3-3 3 3"/></svg>
-                          <div style={{fontSize:12,color:'#a89a92'}}>{t('pm.documentsLabel')} (1)</div>
-                        </div>
-
                         <div style={{border:'1px solid #ebe7e3',borderRadius:6,padding:16,marginBottom:16}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                             <span style={{fontSize:12,fontWeight:600,color:'#1a1a1a'}}>{t('pm.residentApprovalLabel')}</span>
                           </div>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                             <span style={{fontSize:12,color:'#a89a92'}}>{t('pm.overrideApproval')}</span>
-                            <div style={{width:36,height:20,borderRadius:10,background: r.status === 'Scheduled' || r.status === 'Completed' ? '#1a1a1a' : '#d0d0d0',position:'relative',cursor:'pointer'}}>
-                              <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left: r.status === 'Scheduled' || r.status === 'Completed' ? 18 : 2,transition:'left 0.2s'}}/>
-                            </div>
+                            {(() => {
+                              const overridden = !!(r.checklist && r.checklist.residentApproval && r.checklist.residentApproval.done) || r.status === 'Scheduled' || r.status === 'Completed';
+                              return (
+                                <div onClick={()=>{
+                                  const next = !overridden;
+                                  updateSRChecklist(r.id, prev => ({
+                                    ...prev,
+                                    residentApproval: { ...(prev.residentApproval||{docs:[]}), done: next }
+                                  }));
+                                  setData(prev => ({...prev, serviceRequests: prev.serviceRequests.map(sr => sr.id === r.id ? {...sr, status: next ? 'Scheduled' : 'Pending Approval'} : sr)}));
+                                  showToast(next ? 'Approval overridden · scheduled' : 'Approval reset · pending');
+                                }}
+                                  style={{width:36,height:20,borderRadius:10,background: overridden ? '#1a1a1a' : '#d0d0d0',position:'relative',cursor:'pointer',transition:'background 0.2s'}}>
+                                  <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',position:'absolute',top:2,left: overridden ? 18 : 2,transition:'left 0.2s'}}/>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        <button className="btn btn-primary" style={{width:'100%',padding:'12px 0',fontSize:13,fontWeight:600}} onClick={()=>setShowSchedule(r)}>
-                          {t('pm.reschedule')}
-                        </button>
+                        <div style={{display:'flex',justifyContent:'center',marginTop:8}}>
+                          <button className="btn btn-sm btn-primary" style={{display:'inline-flex',alignItems:'center',gap:6,padding:'8px 16px',fontSize:12,fontWeight:600}} onClick={()=>setShowSchedule(r)}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {t('pm.reschedule')}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -6552,11 +6747,7 @@ const ServiceRequestsPage = () => {
                     <td style={{color:'#a89a92'}}>{r.sla || '4h'}</td>
                     <td>
                       <div style={{display:'flex',gap:6}}>
-                        <button className="btn btn-sm" onClick={() => setExpandedSR(expandedSR?.id === r.id ? null : r)}>{t('pm.expandBtn')}</button>
-                        <button className="btn btn-sm btn-primary" onClick={() => {
-                          setData(prev => ({...prev, serviceRequests: prev.serviceRequests.map(sr => sr.id === r.id ? {...sr, status: 'Scheduled'} : sr)}));
-                          showToast(r.id + ' ' + t('pm.approveBtn').toLowerCase());
-                        }}>Approve</button>
+                        <button className="btn btn-sm btn-primary" onClick={() => setEditSR({...r, _location: r.flat || ''})}>Edit</button>
                       </div>
                     </td>
                   </tr>
@@ -6646,6 +6837,101 @@ const ServiceRequestsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Service Request Modal */}
+      {editSR && (
+        <div className="modal-overlay" onClick={()=>setEditSR(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:480}}>
+            <div className="modal-header">
+              <div><div className="modal-sub">modal/edit · {editSR.id}</div><h2>Edit Service Request</h2></div>
+              <button className="modal-close" onClick={()=>setEditSR(null)}>×</button>
+            </div>
+            <div style={{background:'#f2efec',borderRadius:6,padding:'14px 16px',marginBottom:20}}>
+              <div style={{fontWeight:600,color:'#1a1a1a',fontSize:14}}>{editSR.type} — {editSR.resident}</div>
+              <div style={{fontSize:12,color:'#a89a92',marginTop:2}}>{editSR.id}</div>
+            </div>
+            <div className="form-group">
+              <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Status</label>
+              <select className="form-input" value={editSR.status} onChange={e=>setEditSR(p=>({...p,status:e.target.value}))}>
+                <option>Pending Approval</option>
+                <option>Scheduled</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+                <option>Escalated</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Service Type</label>
+              <input className="form-input" value={editSR.type||''} onChange={e=>setEditSR(p=>({...p,type:e.target.value}))}/>
+            </div>
+            <div className="form-group">
+              <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Location (Flat / Unit)</label>
+              <input className="form-input" value={editSR._location||''} onChange={e=>setEditSR(p=>({...p,_location:e.target.value}))} placeholder="e.g. A-1204"/>
+            </div>
+            <div className="grid-2" style={{gap:8}}>
+              <div className="form-group" style={{marginBottom:12}}>
+                <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Date</label>
+                <input className="form-input" type="date" value={(editSR.date||'').match(/^\d{4}-\d{2}-\d{2}$/)?editSR.date:''} onChange={e=>setEditSR(p=>({...p,date:e.target.value}))}/>
+              </div>
+              <div className="form-group" style={{marginBottom:12}}>
+                <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Time</label>
+                <input className="form-input" type="time" value={editSR.time||''} onChange={e=>setEditSR(p=>({...p,time:e.target.value}))}/>
+              </div>
+            </div>
+            <div className="form-group">
+              <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>Resident</label>
+              <input className="form-input" value={editSR.resident||''} onChange={e=>setEditSR(p=>({...p,resident:e.target.value}))}/>
+            </div>
+            <div className="form-group">
+              <label style={{fontSize:13,fontWeight:500,color:'#1a1a1a'}}>SLA</label>
+              <input className="form-input" value={editSR.sla||''} onChange={e=>setEditSR(p=>({...p,sla:e.target.value}))} placeholder="e.g. 4h"/>
+            </div>
+            <div className="grid-2" style={{marginTop:8}}>
+              <button className="btn btn-primary" onClick={()=>{
+                const { _location, ...rest } = editSR;
+                const updated = { ...rest, flat: _location };
+                setData(prev => ({...prev, serviceRequests: prev.serviceRequests.map(sr => sr.id === updated.id ? updated : sr)}));
+                setEditSR(null);
+                showToast(updated.id + ' updated');
+              }}>Save Changes</button>
+              <button className="btn" onClick={()=>setEditSR(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checklist Document Preview Modal */}
+      {srPreviewDoc && (
+        <div className="modal-overlay" onClick={()=>setSRPreviewDoc(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:820,width:'90vw',maxHeight:'90vh',display:'flex',flexDirection:'column'}}>
+            <div className="modal-header">
+              <div><div className="modal-sub">preview · {srPreviewDoc.type || 'document'}</div><h2 style={{fontSize:16,wordBreak:'break-all'}}>{srPreviewDoc.name || 'Document'}</h2></div>
+              <button className="modal-close" onClick={()=>setSRPreviewDoc(null)}>×</button>
+            </div>
+            <div style={{flex:1,overflow:'auto',background:'#f5f5f5',borderRadius:6,padding:12,minHeight:400}}>
+              {srPreviewDoc.data && srPreviewDoc.type && srPreviewDoc.type.startsWith('image/') ? (
+                <img src={srPreviewDoc.data} alt={srPreviewDoc.name} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
+              ) : srPreviewDoc.data && srPreviewDoc.type === 'application/pdf' ? (
+                <iframe src={srPreviewDoc.data} style={{width:'100%',height:'70vh',border:'none',background:'#fff'}} title={srPreviewDoc.name}/>
+              ) : srPreviewDoc.data ? (
+                <div style={{textAlign:'center',padding:40}}>
+                  <div style={{fontSize:13,color:'#8a8a8a',marginBottom:16}}>Preview not available for this file type.</div>
+                  <a href={srPreviewDoc.data} download={srPreviewDoc.name} className="btn btn-primary" style={{textDecoration:'none',display:'inline-block'}}>Download</a>
+                </div>
+              ) : (
+                <div style={{textAlign:'center',padding:40,color:'#a89a92'}}>No preview available</div>
+              )}
+            </div>
+            {srPreviewDoc.data && (
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:12}}>
+                <a href={srPreviewDoc.data} download={srPreviewDoc.name} className="btn btn-sm" style={{textDecoration:'none'}}>Download</a>
+                <button className="btn btn-sm" onClick={()=>setSRPreviewDoc(null)}>Close</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -6658,9 +6944,10 @@ const AnnouncementsPage = () => {
   const [composerStep, setComposerStep] = useState(1);
   const [showDelete, setShowDelete] = useState(null);
   const [editingAnn, setEditingAnn] = useState(null);
-  const [annForm, setAnnForm] = useState({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '' });
+  const [annForm, setAnnForm] = useState({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '', attachments: [] });
+  const [annPreviewDoc, setAnnPreviewDoc] = useState(null);
 
-  const resetForm = () => setAnnForm({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '' });
+  const resetForm = () => setAnnForm({ title: '', body: '', priority: 'Normal', audience: 'All Residents', publishMode: 'now', ackRequired: false, scheduleDate: '', scheduleTime: '', attachments: [] });
 
   const liveCount = data.announcements.filter(a => a.status === 'Live').length;
   const scheduledCount = data.announcements.filter(a => a.status === 'Scheduled').length;
@@ -6681,7 +6968,7 @@ const AnnouncementsPage = () => {
         ...prev,
         announcements: prev.announcements.map(a => a.id === editingAnn.id ? {
           ...a, title: annForm.title, audience: annForm.audience, priority: annForm.priority, ackRequired: annForm.ackRequired, status: status, body: annForm.body,
-          scheduleDate: annForm.scheduleDate, scheduleTime: annForm.scheduleTime
+          scheduleDate: annForm.scheduleDate, scheduleTime: annForm.scheduleTime, attachments: annForm.attachments
         } : a)
       }));
       showToast('Announcement updated');
@@ -6700,7 +6987,8 @@ const AnnouncementsPage = () => {
         read: 0,
         acknowledged: 0,
         scheduleDate: annForm.scheduleDate,
-        scheduleTime: annForm.scheduleTime
+        scheduleTime: annForm.scheduleTime,
+        attachments: annForm.attachments
       };
       setData(prev => ({ ...prev, announcements: [newAnn, ...prev.announcements] }));
       showToast('Announcement ' + (status === 'Live' ? 'published — visible to residents now' : status === 'Scheduled' ? 'scheduled for ' + annForm.scheduleDate + ' ' + annForm.scheduleTime : 'saved as draft'));
@@ -6718,9 +7006,27 @@ const AnnouncementsPage = () => {
 
   const handleEdit = (ann) => {
     setEditingAnn(ann);
-    setAnnForm({ title: ann.title, body: ann.body || '', priority: ann.priority, audience: ann.audience, publishMode: ann.status === 'Scheduled' ? 'schedule' : ann.status === 'Draft' ? 'draft' : 'now', ackRequired: ann.ackRequired, scheduleDate: ann.scheduleDate || '', scheduleTime: ann.scheduleTime || '' });
+    setAnnForm({ title: ann.title, body: ann.body || '', priority: ann.priority, audience: ann.audience, publishMode: ann.status === 'Scheduled' ? 'schedule' : ann.status === 'Draft' ? 'draft' : 'now', ackRequired: ann.ackRequired, scheduleDate: ann.scheduleDate || '', scheduleTime: ann.scheduleTime || '', attachments: ann.attachments || [] });
     setComposerStep(1);
     setShowComposer(true);
+  };
+
+  const handleAnnAttach = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    files.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) { showToast(file.name + ' exceeds 10MB'); return; }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setAnnForm(p => ({...p, attachments: [...(p.attachments||[]), { name: file.name, type: file.type, size: file.size, data: ev.target.result }]}));
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const removeAnnAttachment = (idx) => {
+    setAnnForm(p => ({...p, attachments: (p.attachments||[]).filter((_,i) => i !== idx)}));
   };
 
   // Simple toolbar button
@@ -6739,25 +7045,23 @@ const AnnouncementsPage = () => {
       </div>
       {filtered.length === 0 && <div style={{textAlign:'center',color:'#a89a92',padding:40,fontSize:13}}>{t('pm.noAnnouncementsCat')}</div>}
       {filtered.map(a => (
-        <div key={a.id} className="announcement-card">
+        <div key={a.id} className="announcement-card" onClick={()=>handleEdit(a)} style={{cursor:'pointer'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
             <div style={{flex:1}}>
               <div className="tags">
                 <StatusBadge status={a.status}/>
                 {a.priority==='High' && <span style={{fontSize:11,color:'#8a7f76',border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px'}}>△ {t('pm.markHighPriority')}</span>}
-                {a.ackRequired && <span style={{fontSize:11,color:'#8a7f76',border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px'}}>{t('pm.ackRequiredLabel')} {t('pm.requireAck')}</span>}
+                {a.ackRequired && <span style={{fontSize:11,color:'#8a7f76',border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px'}}>{t('pm.ackRequiredLabel')}</span>}
               </div>
               <h3 style={{fontSize:16,fontWeight:600,marginBottom:6}}>{a.title}</h3>
               {a.body && <p style={{fontSize:13,color:'#7a6f66',margin:'4px 0 8px',lineHeight:1.5}}>{a.body}</p>}
               <div className="meta">{t('pm.announceAudience')} <strong>{a.audience}</strong> &nbsp; {t('pm.announceBy')} {a.author} &nbsp; {t('pm.announceCreated')} {a.created}</div>
             </div>
             <div style={{display:'flex',gap:6,flexShrink:0,marginLeft:16}}>
-              {a.status !== 'Sent' && a.status !== 'Live' && (
-                <button className="btn btn-sm" onClick={()=>handleEdit(a)} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
-                  <Icon name="edit" size={14}/>
-                </button>
-              )}
-              <button className="btn btn-sm" onClick={()=>setShowDelete(a)} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
+              <button className="btn btn-sm" onClick={(e)=>{e.stopPropagation();handleEdit(a);}} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
+                <Icon name="edit" size={14}/>
+              </button>
+              <button className="btn btn-sm" onClick={(e)=>{e.stopPropagation();setShowDelete(a);}} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>
                 <Icon name="trash" size={14}/>
               </button>
             </div>
@@ -6780,7 +7084,7 @@ const AnnouncementsPage = () => {
       {/* Composer Modal */}
       {showComposer && (
         <div className="modal-overlay" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>
-          <div className="modal" style={{maxWidth:480}} onClick={e=>e.stopPropagation()}>
+          <div className="modal" style={{maxWidth:620,width:'95vw'}} onClick={e=>e.stopPropagation()}>
             <div className="modal-header" style={{marginBottom:4}}>
               <div><div className="modal-sub">Announcement Composer</div><h2 style={{fontSize:18}}>{editingAnn ? t('pm.composerEditTitle') : t('pm.composerTitle')}</h2></div>
               <button className="modal-close" onClick={()=>{setShowComposer(false);setEditingAnn(null)}}>×</button>
@@ -6798,8 +7102,8 @@ const AnnouncementsPage = () => {
                     {i > 0 && <span style={{color:'#d0d0d0',fontSize:11}}>›</span>}
                     <span onClick={() => { if (isCompleted || isActive) setComposerStep(stepNum); }}
                       style={{padding:'6px 14px',borderRadius:20,cursor: isActive || isCompleted ? 'pointer' : 'default',fontWeight: isActive ? 600 : 400,
-                        background: isActive ? '#1a1a1a' : 'transparent',
-                        color: isActive ? '#fff' : isCompleted ? '#1a1a1a' : '#8a8a8a',
+                        background: isActive ? '#928989' : 'transparent',
+                        color: isActive ? '#fff' : isCompleted ? '#928989' : '#8a8a8a',
                         border: isActive ? 'none' : '1px solid transparent',fontSize:12,letterSpacing:'0.02em',whiteSpace:'nowrap'}}>
                       {circled} {s}
                     </span>
@@ -6830,21 +7134,38 @@ const AnnouncementsPage = () => {
                 <label style={{fontSize:11,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase',color:'#1a1a1a',display:'block',marginBottom:8}}>{t('pm.announcePriority')}</label>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                   <div onClick={() => setAnnForm(p => ({...p, priority:'Normal'}))}
-                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='Normal' ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:8,cursor:'pointer',background: annForm.priority==='Normal' ? '#1a1a1a' : '#fff',color: annForm.priority==='Normal' ? '#fff' : '#1a1a1a',fontWeight:600,fontSize:13}}>
+                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='Normal' ? '1.5px solid #928989' : '1px solid #d0d0d0',borderRadius:8,cursor:'pointer',background: annForm.priority==='Normal' ? '#928989' : '#fff',color: annForm.priority==='Normal' ? '#fff' : '#1a1a1a',fontWeight:600,fontSize:13}}>
                     {t('pm.normalPriority')}
                   </div>
                   <div onClick={() => setAnnForm(p => ({...p, priority:'High'}))}
-                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='High' ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:8,cursor:'pointer',background: annForm.priority==='High' ? '#1a1a1a' : '#fff',color: annForm.priority==='High' ? '#fff' : '#1a1a1a',fontWeight:600,fontSize:13}}>
+                    style={{padding:'12px 16px',textAlign:'center',border: annForm.priority==='High' ? '1.5px solid #928989' : '1px solid #d0d0d0',borderRadius:8,cursor:'pointer',background: annForm.priority==='High' ? '#928989' : '#fff',color: annForm.priority==='High' ? '#fff' : '#1a1a1a',fontWeight:600,fontSize:13}}>
                     △ {t('pm.highPriorityLabel')}
                   </div>
                 </div>
               </div>
               <div style={{marginBottom:20}}>
                 <label style={{fontSize:11,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase',color:'#1a1a1a',display:'block',marginBottom:8}}>{t('pm.announceAttachment')}</label>
-                <div style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',border:'1px solid #ebe7e3',borderRadius:8,background:'#fff'}}>
+                <label style={{display:'flex',alignItems:'center',gap:10,padding:'14px 16px',border:'1px dashed #d5cfc8',borderRadius:8,background:'#fff',cursor:'pointer'}}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                  <span style={{color:'#a89a92',fontSize:12}}>Upload image or document<br/>JPG, PNG, PDF up to 10MB</span>
-                </div>
+                  <span style={{color:'#a89a92',fontSize:12}}>Upload image or document<br/>JPG, PNG, PDF, DOC, DOCX up to 10MB</span>
+                  <input type="file" accept="image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onChange={handleAnnAttach} style={{display:'none'}}/>
+                </label>
+                {annForm.attachments && annForm.attachments.length > 0 && (
+                  <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
+                    {annForm.attachments.map((f,fi) => (
+                      <div key={fi} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#f5f3f0',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#928989" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontWeight:500,color:'#1a1a1a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.name}</div>
+                          <div style={{fontSize:10,color:'#a89a92'}}>{(f.size/1024).toFixed(1)} KB</div>
+                        </div>
+                        <button type="button" className="btn btn-sm" onClick={()=>setAnnPreviewDoc(f)} style={{padding:'2px 8px',fontSize:11}}>Preview</button>
+                        <a href={f.data} download={f.name} className="btn btn-sm" style={{padding:'2px 8px',fontSize:11,textDecoration:'none'}}>Download</a>
+                        <button type="button" onClick={()=>removeAnnAttachment(fi)} style={{background:'none',border:'none',color:'#a89a92',cursor:'pointer',fontSize:14,padding:0,lineHeight:1}}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
                 <div>
@@ -6853,7 +7174,9 @@ const AnnouncementsPage = () => {
                 </div>
                 <Toggle value={annForm.ackRequired} onChange={() => setAnnForm(p => ({...p, ackRequired: !p.ackRequired}))}/>
               </div>
-              <button className="btn btn-primary" style={{width:'100%',padding:'14px 0',fontSize:14,fontWeight:600,borderRadius:8}} onClick={()=>setComposerStep(2)}>{t('pm.continueAudience')}</button>
+              <div style={{display:'flex',justifyContent:'center',marginTop:16}}>
+                <button className="btn btn-primary" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'12px 32px',fontSize:13,fontWeight:600,borderRadius:8}} onClick={()=>setComposerStep(2)}>{t('pm.continueAudience')}</button>
+              </div>
             </div>)}
 
             {/* Step 2: Audience */}
@@ -6868,15 +7191,15 @@ const AnnouncementsPage = () => {
                 {label:t('pm.ownersOnly'),sub:'Property owners',val:'Owners Only'}
               ].map((a,i) => (
                 <div key={i} onClick={() => setAnnForm(p => ({...p, audience: a.val}))}
-                  style={{display:'flex',alignItems:'center',gap:12,marginBottom:8,cursor:'pointer',background: annForm.audience===a.val ? '#f5f5f5' : '#fff',borderRadius:6,padding:'12px 14px',border: annForm.audience===a.val ? '1.5px solid #1a1a1a' : '1px solid #e0e0e0',transition:'all 0.15s'}}>
-                  <div style={{width:34,height:34,background: annForm.audience===a.val ? '#1a1a1a' : '#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  style={{display:'flex',alignItems:'center',gap:12,marginBottom:8,cursor:'pointer',background: annForm.audience===a.val ? '#f5f3f0' : '#fff',borderRadius:6,padding:'12px 14px',border: annForm.audience===a.val ? '1.5px solid #928989' : '1px solid #e0e0e0',transition:'all 0.15s'}}>
+                  <div style={{width:34,height:34,background: annForm.audience===a.val ? '#928989' : '#f0f0f0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={annForm.audience===a.val ? '#fff' : '#8a8a8a'} strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:13,fontWeight: annForm.audience===a.val ? 600 : 400,color:'#1a1a1a'}}>{a.label}</div>
                     <div style={{fontSize:11,color:'#a89a92'}}>{a.sub}</div>
                   </div>
-                  {annForm.audience===a.val && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>}
+                  {annForm.audience===a.val && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#928989" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>}
                 </div>
               ))}
               <div className="grid-2" style={{marginTop:20}}>
@@ -6895,8 +7218,8 @@ const AnnouncementsPage = () => {
                   {key:'draft',label:t('pm.saveAsDraft'),sub:t('pm.editLater')}
                 ].map(opt => (
                   <div key={opt.key} onClick={() => setAnnForm(p => ({...p, publishMode: opt.key}))}
-                    style={{padding:'16px 12px',textAlign:'center',border: annForm.publishMode===opt.key ? '1.5px solid #1a1a1a' : '1px solid #d0d0d0',borderRadius:6,cursor:'pointer',
-                      background: annForm.publishMode===opt.key ? '#1a1a1a' : '#fff',
+                    style={{padding:'16px 12px',textAlign:'center',border: annForm.publishMode===opt.key ? '1.5px solid #928989' : '1px solid #d0d0d0',borderRadius:6,cursor:'pointer',
+                      background: annForm.publishMode===opt.key ? '#928989' : '#fff',
                       color: annForm.publishMode===opt.key ? '#fff' : '#1a1a1a',transition:'all 0.15s'}}>
                     <div style={{fontWeight:600,fontSize:13,marginBottom:2}}>{opt.label}</div>
                     <div style={{fontSize:11,opacity:0.7}}>{opt.sub}</div>
@@ -6932,7 +7255,7 @@ const AnnouncementsPage = () => {
                 <div style={{display:'flex',gap:6,marginBottom:8}}>
                   <StatusBadge status={annForm.publishMode==='now'?'Live':annForm.publishMode==='schedule'?'Scheduled':'Draft'}/>
                   {annForm.priority==='High' && <span style={{fontSize:11,border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px',background:'#fff'}}>△ High Priority</span>}
-                  {annForm.ackRequired && <span style={{fontSize:11,border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px',background:'#fff'}}>Ack Required</span>}
+                  {annForm.ackRequired && <span style={{fontSize:11,border:'1px solid #d5cfc8',borderRadius:3,padding:'1px 8px',background:'#fff'}}>Acknowledgement Required</span>}
                 </div>
                 <div style={{fontWeight:600,fontSize:15,marginBottom:4}}>{annForm.title || '[Untitled]'}</div>
                 {annForm.body && <p style={{fontSize:13,color:'#7a6f66',margin:'0 0 8px',lineHeight:1.5}}>{annForm.body}</p>}
@@ -6981,6 +7304,40 @@ const AnnouncementsPage = () => {
               <button className="btn btn-primary" onClick={()=>handleDelete(showDelete)}>Delete</button>
               <button className="btn" onClick={()=>setShowDelete(null)}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Announcement Attachment Preview Modal */}
+      {annPreviewDoc && (
+        <div className="modal-overlay" onClick={()=>setAnnPreviewDoc(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:820,width:'90vw',maxHeight:'90vh',display:'flex',flexDirection:'column'}}>
+            <div className="modal-header">
+              <div><div className="modal-sub">preview · {annPreviewDoc.type || 'document'}</div><h2 style={{fontSize:16,wordBreak:'break-all'}}>{annPreviewDoc.name || 'Document'}</h2></div>
+              <button className="modal-close" onClick={()=>setAnnPreviewDoc(null)}>×</button>
+            </div>
+            <div style={{flex:1,overflow:'auto',background:'#f5f5f5',borderRadius:6,padding:12,minHeight:400}}>
+              {annPreviewDoc.data && annPreviewDoc.type && annPreviewDoc.type.startsWith('image/') ? (
+                <img src={annPreviewDoc.data} alt={annPreviewDoc.name} style={{maxWidth:'100%',display:'block',margin:'0 auto'}}/>
+              ) : annPreviewDoc.data && annPreviewDoc.type === 'application/pdf' ? (
+                <iframe src={annPreviewDoc.data} style={{width:'100%',height:'70vh',border:'none',background:'#fff'}} title={annPreviewDoc.name}/>
+              ) : annPreviewDoc.data ? (
+                <div style={{textAlign:'center',padding:40}}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#928989" strokeWidth="1.5" style={{marginBottom:12}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                  <div style={{fontSize:13,color:'#8a8a8a',marginBottom:4}}>{annPreviewDoc.name}</div>
+                  <div style={{fontSize:12,color:'#a89a92',marginBottom:16}}>Inline preview not available for Word / Office documents. Please download to view.</div>
+                  <a href={annPreviewDoc.data} download={annPreviewDoc.name} className="btn btn-primary" style={{textDecoration:'none',display:'inline-block'}}>Download</a>
+                </div>
+              ) : (
+                <div style={{textAlign:'center',padding:40,color:'#a89a92'}}>No preview available</div>
+              )}
+            </div>
+            {annPreviewDoc.data && (
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:12}}>
+                <a href={annPreviewDoc.data} download={annPreviewDoc.name} className="btn btn-sm" style={{textDecoration:'none'}}>Download</a>
+                <button className="btn btn-sm" onClick={()=>setAnnPreviewDoc(null)}>Close</button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -9164,7 +9521,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
 // ==================== ESCALATIONS PAGE ====================
 const EscalationsPage = () => {
   const { data, setData, showToast, t } = useApp();
-  const [selected, setSelected] = useState(null);
+  const [editEsc, setEditEsc] = useState(null);
   const [showNewEscalation, setShowNewEscalation] = useState(false);
   const [escForm, setEscForm] = useState({ title: '', type: 'SLA Breach', severity: 'High', flat: '', description: '', assigned: '' });
   const unresolved = data.escalations.filter(e => e.status !== 'Resolved');
@@ -9184,58 +9541,98 @@ const EscalationsPage = () => {
         <div className="kpi-card"><div className="label">{t('pm.complianceFlagsCard')}</div><span className="value">1</span></div>
       </div>
 
-      <div className="page-with-panel">
-        <div>
-          <div className="card">
-            <div className="card-header"><h3>⚠ {t('pm.unresolvedHeading')} ({unresolved.length})</h3><button className="btn btn-sm"><Icon name="filter" size={12}/> {t('pm.filterBtn')}</button></div>
-            {unresolved.map(e => (
-              <div key={e.id} className="escalation-item" onClick={()=>setSelected(e)}>
-                <div style={{display:'flex',gap:6,marginBottom:6}}>
-                  {e.severity && <StatusBadge status={e.severity}/>}
-                  <span style={{fontSize:12,background:'#e8e3de',padding:'2px 8px',borderRadius:4}}>{e.type}</span>
-                  <span style={{fontSize:11,color:'#a89a92'}}>{e.id}</span>
-                </div>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div><div style={{fontWeight:600}}>{e.title}</div><div style={{fontSize:12,color:'#a89a92'}}>{e.flat && `${t('pm.flatLabel')} ${e.flat} · `}{t('pm.createdLabel')} {e.created} &nbsp; {t('pm.assignedLabel')} {e.assigned}</div></div>
-                  <div style={{textAlign:'right'}}><div style={{fontSize:12,color:'#a89a92'}}>⏱ {e.sla}</div><StatusBadge status={e.status}/></div>
-                </div>
-              </div>
-            ))}
+      <div className="card">
+        <div className="card-header"><h3>⚠ {t('pm.unresolvedHeading')} ({unresolved.length})</h3><button className="btn btn-sm"><Icon name="filter" size={12}/> {t('pm.filterBtn')}</button></div>
+        {unresolved.map(e => (
+          <div key={e.id} className="escalation-item" onClick={()=>setEditEsc({...e})} style={{cursor:'pointer'}}>
+            <div style={{display:'flex',gap:6,marginBottom:6}}>
+              {e.severity && <StatusBadge status={e.severity}/>}
+              <span style={{fontSize:12,background:'#e8e3de',padding:'2px 8px',borderRadius:4}}>{e.type}</span>
+              <span style={{fontSize:11,color:'#a89a92'}}>{e.id}</span>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><div style={{fontWeight:600}}>{e.title}</div><div style={{fontSize:12,color:'#a89a92'}}>{e.flat && `${t('pm.flatLabel')} ${e.flat} · `}{t('pm.createdLabel')} {e.created} &nbsp; {t('pm.assignedLabel')} {e.assigned}</div></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:12,color:'#a89a92'}}>⏱ {e.sla}</div><StatusBadge status={e.status}/></div>
+            </div>
           </div>
-          <div className="card">
-            <h3>✓ {t('pm.resolvedHeading')} ({resolved.length})</h3>
-            {resolved.map(e => (
-              <div key={e.id} style={{padding:'12px 0',borderBottom:'1px solid #ebe7e3',opacity:0.6}}>
-                <div style={{display:'flex',gap:6,marginBottom:4}}><span style={{fontSize:12,background:'#e8e3de',padding:'2px 8px',borderRadius:4}}>{e.type}</span><span style={{fontSize:11,color:'#a89a92'}}>{e.id}</span></div>
-                <div>{e.title}</div><div style={{fontSize:12,color:'#a89a92'}}>{t('pm.createdLabel')} {e.created} · {t('pm.resolvedLabel')}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="right-panel">
-          <div className="card">
-            <h3>{t('pm.escalationDetail')}</h3>
-            {selected ? (
-              <div style={{marginTop:12}}>
-                <StatusBadge status={selected.severity}/><h3 style={{marginTop:8}}>{selected.title}</h3>
-                <p style={{fontSize:12,color:'#a89a92',marginTop:4}}>{t('pm.assignedToLabel')} {selected.assigned}</p>
-                <p style={{fontSize:12,color:'#a89a92'}}>{t('pm.slaSuffix')}: {selected.sla}</p>
-                <button className="btn btn-primary btn-sm" style={{marginTop:12}}>{t('pm.resolveBtn')}</button>
-              </div>
-            ) : (<p style={{color:'#a89a92',textAlign:'center',marginTop:24}}>{t('pm.selectEscalation')}</p>)}
-          </div>
-          <div className="card">
-            <h3>{t('pm.slaTrackerLabel')}</h3>
-            {data.escalations.filter(e=>e.status!=='Resolved').map(e => (
-              <div key={e.id} className="sla-item">
-                <span>{e.id}</span>
-                <div className="sla-bar"><div className="sla-fill" style={{width: e.sla.includes('overdue') ? '100%' : e.sla.includes('remaining') ? '70%' : '40%'}}/></div>
-                <span style={{fontSize:11,color:'#a89a92',whiteSpace:'nowrap'}}>{e.sla}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
+
+      <div className="card">
+        <h3>{t('pm.slaTrackerLabel')}</h3>
+        {data.escalations.filter(e=>e.status!=='Resolved').map(e => (
+          <div key={e.id} className="sla-item">
+            <span>{e.id}</span>
+            <div className="sla-bar"><div className="sla-fill" style={{width: e.sla.includes('overdue') ? '100%' : e.sla.includes('remaining') ? '70%' : '40%'}}/></div>
+            <span style={{fontSize:11,color:'#a89a92',whiteSpace:'nowrap'}}>{e.sla}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h3>✓ {t('pm.resolvedHeading')} ({resolved.length})</h3>
+        {resolved.map(e => (
+          <div key={e.id} style={{padding:'12px 0',borderBottom:'1px solid #ebe7e3',opacity:0.7,cursor:'pointer'}} onClick={()=>setEditEsc({...e})}>
+            <div style={{display:'flex',gap:6,marginBottom:4}}><span style={{fontSize:12,background:'#e8e3de',padding:'2px 8px',borderRadius:4}}>{e.type}</span><span style={{fontSize:11,color:'#a89a92'}}>{e.id}</span></div>
+            <div>{e.title}</div><div style={{fontSize:12,color:'#a89a92'}}>{t('pm.createdLabel')} {e.created} · {t('pm.resolvedLabel')}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Edit Escalation Modal */}
+      {editEsc && (
+        <div className="modal-overlay" onClick={()=>setEditEsc(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:520}}>
+            <div className="modal-header">
+              <div><div className="modal-sub">modal/escalation/edit · {editEsc.id}</div><h2>Edit Escalation</h2></div>
+              <button className="modal-close" onClick={()=>setEditEsc(null)}>×</button>
+            </div>
+            <div className="form-group"><label>Title *</label><input className="form-input" value={editEsc.title||''} onChange={e=>setEditEsc(p=>({...p,title:e.target.value}))}/></div>
+            <div className="grid-2">
+              <div className="form-group"><label>Type</label>
+                <select className="form-input" value={editEsc.type||'SLA Breach'} onChange={e=>setEditEsc(p=>({...p,type:e.target.value}))}>
+                  <option>SLA Breach</option><option>Security</option><option>Compliance</option><option>Maintenance</option><option>Safety</option>
+                </select>
+              </div>
+              <div className="form-group"><label>Severity</label>
+                <select className="form-input" value={editEsc.severity||'High'} onChange={e=>setEditEsc(p=>({...p,severity:e.target.value}))}>
+                  <option>Critical</option><option>High</option><option>Low</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid-2">
+              <div className="form-group"><label>Flat / Unit</label><input className="form-input" value={editEsc.flat||''} onChange={e=>setEditEsc(p=>({...p,flat:e.target.value}))}/></div>
+              <div className="form-group"><label>Assigned To</label><input className="form-input" value={editEsc.assigned||''} onChange={e=>setEditEsc(p=>({...p,assigned:e.target.value}))}/></div>
+            </div>
+            <div className="grid-2">
+              <div className="form-group"><label>Status</label>
+                <select className="form-input" value={editEsc.status||'Open'} onChange={e=>setEditEsc(p=>({...p,status:e.target.value}))}>
+                  <option>Open</option><option>Unresolved</option><option>In Review</option><option>Active</option><option>Resolved</option>
+                </select>
+              </div>
+              <div className="form-group"><label>SLA</label><input className="form-input" value={editEsc.sla||''} onChange={e=>setEditEsc(p=>({...p,sla:e.target.value}))} placeholder="e.g. 48h remaining"/></div>
+            </div>
+            <div className="form-group"><label>Description</label><textarea className="form-input" rows={3} value={editEsc.description||''} onChange={e=>setEditEsc(p=>({...p,description:e.target.value}))} style={{resize:'vertical',fontFamily:'inherit'}}/></div>
+            <div className="grid-2" style={{marginTop:8}}>
+              <button className="btn btn-primary" onClick={()=>{
+                if (!editEsc.title) { showToast('Please enter a title'); return; }
+                setData(prev => ({...prev, escalations: prev.escalations.map(x => x.id === editEsc.id ? editEsc : x)}));
+                setEditEsc(null);
+                showToast(editEsc.id + ' updated');
+              }}>Save Changes</button>
+              <button className="btn" onClick={()=>setEditEsc(null)}>Cancel</button>
+            </div>
+            <div style={{marginTop:8}}>
+              <button className="btn btn-sm" style={{width:'100%',color:'#c62828',borderColor:'#e8c5c5'}} onClick={()=>{
+                if (!confirm('Delete ' + editEsc.id + '?')) return;
+                setData(prev => ({...prev, escalations: prev.escalations.filter(x => x.id !== editEsc.id)}));
+                setEditEsc(null);
+                showToast('Escalation deleted');
+              }}>Delete Escalation</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showNewEscalation && (
         <div className="modal-overlay" onClick={() => setShowNewEscalation(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -9279,7 +9676,7 @@ const EscalationsPage = () => {
                 setShowNewEscalation(false);
                 showToast('Escalation created', newEsc.title);
               }}>{t('pm.escFormSubmit') || 'Create Escalation'}</button>
-              <button className="btn" onClick={() => setShowNewEscalation(false)}>{t('pm.cancelBtn') || 'Cancel'}</button>
+              <button className="btn" onClick={() => setShowNewEscalation(false)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -9662,9 +10059,132 @@ const PaymentSummaryPage = () => {
   const [filter, setFilter] = useState('All');
   const [selectedResident, setSelectedResident] = useState(null);
   const [search, setSearch] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportCfg, setExportCfg] = useState({
+    format: 'xlsx',
+    dateFrom: '',
+    dateTo: '',
+    chargeTypes: { serviceCharge: true, parking: true, water: true, maintenance: true, penalty: true },
+    statuses: { Paid: true, Unpaid: true, Overdue: true, Partial: true },
+    residentQuery: ''
+  });
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderCfg, setReminderCfg] = useState({
+    audience: 'all',          // 'all' | 'overdue' | 'unpaid' | 'custom'
+    overdueMin: 0,            // minimum days overdue for 'custom'
+    channel: { email: true, sms: true, push: false },
+    message: ''
+  });
 
   const fmt = (n) => n.toLocaleString();
   const isAr = t('pm.paymentSummary') !== 'Payment Summary';
+
+  const handleDownloadStatement = (r, format) => {
+    if (!r) return;
+    const fmtN = (n) => (typeof n === 'number' ? n.toLocaleString() : (n || '-'));
+    const fileBase = `Statement_${r.name.replace(/[^a-zA-Z0-9]/g,'_')}_${r.flat}`;
+    const totalCurrent = (r.scMonthly||0) + (r.parkingStatus !== 'N/A' ? (r.parking||0) : 0) + (r.water||0) + (r.maintenance||0) + (r.penalty||0);
+    const paidCurrent = (r.scStatus==='Paid'?(r.scMonthly||0):0) + (r.parkingStatus==='Paid'?(r.parking||0):0) + (r.waterStatus==='Paid'?(r.water||0):0) + (r.maintenance||0);
+    const today = new Date().toLocaleDateString('en-GB');
+
+    if (format === 'pdf') {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(18); doc.setFont(undefined,'bold');
+        doc.text('Resident Payment Statement', 14, 20);
+        doc.setFontSize(10); doc.setFont(undefined,'normal');
+        doc.text(`Generated: ${today}`, 14, 27);
+        doc.setDrawColor(200); doc.line(14, 31, 196, 31);
+
+        doc.setFontSize(13); doc.setFont(undefined,'bold');
+        doc.text(r.name, 14, 40);
+        doc.setFontSize(10); doc.setFont(undefined,'normal');
+        doc.text(`${r.flat} · ${r.tower || ''}`, 14, 46);
+        doc.text(`Resident ID: ${r.id}    Payment Method: ${r.method || '—'}    Status: ${r.scStatus}`, 14, 52);
+
+        doc.autoTable({
+          startY: 60,
+          head: [['Billing Item','Due Date','Paid Date','Amount (AED)','Status']],
+          body: [
+            ['Service Charge', r.scDueDate||'—', r.scPaidDate||'—', fmtN(r.scMonthly), r.scStatus],
+            ...(r.parkingStatus !== 'N/A' ? [['Parking', r.scDueDate||'—', r.parkingStatus==='Paid'?(r.scPaidDate||'—'):'—', fmtN(r.parking), r.parkingStatus]] : []),
+            ['Water / Utilities', r.scDueDate||'—', r.waterStatus==='Paid'?(r.scPaidDate||'—'):'—', fmtN(r.water), r.waterStatus],
+            ...(r.maintenance>0 ? [['Maintenance','—','—', fmtN(r.maintenance), 'Paid']] : []),
+            ...(r.penalty>0 ? [['Late Penalty','—','—', fmtN(r.penalty), 'Outstanding']] : []),
+          ],
+          theme: 'grid',
+          headStyles: { fillColor: [26,26,26], textColor: 255, fontSize: 10 },
+          bodyStyles: { fontSize: 10 },
+          columnStyles: { 3: { halign: 'right' } },
+        });
+
+        let y = doc.lastAutoTable.finalY + 10;
+        doc.setFont(undefined,'bold'); doc.setFontSize(11);
+        doc.text('Summary', 14, y); y += 7;
+        doc.setFont(undefined,'normal'); doc.setFontSize(10);
+        doc.text(`Total Current Charges: AED ${fmtN(totalCurrent)}`, 14, y); y += 6;
+        doc.text(`Total Paid to Date: AED ${fmtN(paidCurrent)}`, 14, y); y += 6;
+        doc.text(`Outstanding Balance: AED ${fmtN(r.balance)}`, 14, y); y += 10;
+
+        doc.setFont(undefined,'bold'); doc.setFontSize(11);
+        doc.text('Payment History (3 months)', 14, y); y += 3;
+        doc.autoTable({
+          startY: y,
+          head: [['Month','Amount (AED)','Status']],
+          body: (r.history||[]).map(h => [`${h.m} 2026`, fmtN(h.a), h.s]),
+          theme: 'grid',
+          headStyles: { fillColor: [26,26,26], textColor: 255, fontSize: 10 },
+          bodyStyles: { fontSize: 10 },
+          columnStyles: { 1: { halign: 'right' } },
+        });
+
+        doc.setFontSize(8); doc.setTextColor(150);
+        doc.text('This statement is generated automatically. For queries contact Property Management.', 14, 285);
+        doc.save(`${fileBase}.pdf`);
+        showToast('PDF statement downloaded');
+      } catch(e) { showToast('PDF download failed: ' + e.message); }
+      return;
+    }
+
+    // Excel format
+    try {
+      const wb = XLSX.utils.book_new();
+      const info = [
+        ['RESIDENT PAYMENT STATEMENT'],
+        [`Generated: ${today}`],
+        [],
+        ['Name', r.name],
+        ['Resident ID', r.id],
+        ['Flat / Unit', r.flat],
+        ['Tower', r.tower || ''],
+        ['Payment Method', r.method || ''],
+        ['Overall Status', r.scStatus],
+        [],
+        ['CURRENT CHARGES'],
+        ['Billing Item','Due Date','Paid Date','Amount (AED)','Status'],
+        ['Service Charge', r.scDueDate||'', r.scPaidDate||'', r.scMonthly||0, r.scStatus],
+        ...(r.parkingStatus !== 'N/A' ? [['Parking', r.scDueDate||'', r.parkingStatus==='Paid'?(r.scPaidDate||''):'', r.parking||0, r.parkingStatus]] : []),
+        ['Water / Utilities', r.scDueDate||'', r.waterStatus==='Paid'?(r.scPaidDate||''):'', r.water||0, r.waterStatus],
+        ...(r.maintenance>0 ? [['Maintenance','','', r.maintenance, 'Paid']] : []),
+        ...(r.penalty>0 ? [['Late Penalty','','', r.penalty, 'Outstanding']] : []),
+        [],
+        ['SUMMARY'],
+        ['Total Current Charges', '', '', totalCurrent, ''],
+        ['Total Paid to Date', '', '', paidCurrent, ''],
+        ['Outstanding Balance', '', '', r.balance || 0, r.balance > 0 ? 'Outstanding' : 'Cleared'],
+        [],
+        ['PAYMENT HISTORY (3 MONTHS)'],
+        ['Month','Amount (AED)','Status'],
+        ...((r.history||[]).map(h => [`${h.m} 2026`, h.a, h.s])),
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(info);
+      ws['!cols'] = [{wch:28},{wch:14},{wch:14},{wch:18},{wch:14}];
+      XLSX.utils.book_append_sheet(wb, ws, 'Statement');
+      XLSX.writeFile(wb, `${fileBase}.xlsx`);
+      showToast('Excel statement downloaded');
+    } catch(e) { showToast('Excel download failed: ' + e.message); }
+  };
 
   // Resident payment data — comprehensive list
   const residentPayments = React.useMemo(() => [
@@ -9710,8 +10230,8 @@ const PaymentSummaryPage = () => {
           <div className="subtitle">{t('pm.payBillingCycle')}: {t('pm.monthApr')} 2026 · {residentPayments.length} {t('pm.payResidents')}</div>
         </div>
         <div className="btn-group">
-          <button className="btn" onClick={() => showToast(t('pm.payStatementGenerated'))}><Icon name="download" size={14}/> {t('pm.payExportStatement')}</button>
-          <button className="btn btn-primary" onClick={() => showToast(t('pm.payRemindersQueued'))}><Icon name="announcements" size={14}/> {t('pm.paySendReminders')}</button>
+          <button className="btn" onClick={() => setShowExportModal(true)}><Icon name="download" size={14}/> {t('pm.payExportStatement')}</button>
+          <button className="btn btn-primary" onClick={() => setShowReminderModal(true)}><Icon name="audit" size={14}/> {t('pm.paySendReminders')}</button>
         </div>
       </div>
 
@@ -9763,13 +10283,10 @@ const PaymentSummaryPage = () => {
                   <th>{t('pm.payResident')}</th>
                   <th>{t('pm.flat')}</th>
                   <th>{t('pm.payScCharge')}</th>
-                  <th>{t('pm.payParking')}</th>
-                  <th>{t('pm.payWater')}</th>
                   <th>{t('pm.payMaint')}</th>
                   <th>{t('pm.payPenalty')}</th>
                   <th>{t('pm.payBalance')}</th>
                   <th>{t('pm.tableHeaderStatus')}</th>
-                  <th>{t('pm.tableHeaderActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -9778,18 +10295,10 @@ const PaymentSummaryPage = () => {
                     <td><strong>{r.name}</strong></td>
                     <td>{r.flat}</td>
                     <td>AED {fmt(r.scMonthly)}</td>
-                    <td>{r.parkingStatus === 'N/A' ? '—' : 'AED ' + fmt(r.parking)}</td>
-                    <td>AED {fmt(r.water)}</td>
                     <td>{r.maintenance > 0 ? 'AED ' + fmt(r.maintenance) : '—'}</td>
                     <td style={{color: r.penalty > 0 ? '#c62828' : 'inherit'}}>{r.penalty > 0 ? 'AED ' + fmt(r.penalty) : '—'}</td>
                     <td style={{fontWeight:600,color: r.balance > 0 ? '#c62828' : '#2e7d32'}}>{r.balance > 0 ? 'AED ' + fmt(r.balance) : '✓'}</td>
                     <td><span style={{fontSize:11,padding:'3px 10px',borderRadius:12,background:statusBg(r.scStatus),color:statusColor(r.scStatus),fontWeight:600}}>{r.scStatus}</span></td>
-                    <td>
-                      <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setSelectedResident(r); }}><Icon name="eye" size={12}/></button>
-                      {(r.scStatus === 'Overdue' || r.scStatus === 'Unpaid') && (
-                        <button className="btn btn-sm" style={{marginLeft:4}} onClick={e => { e.stopPropagation(); showToast(t('pm.payReminderSent') + ' ' + r.name); }}><Icon name="announcements" size={12}/></button>
-                      )}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -9815,8 +10324,6 @@ const PaymentSummaryPage = () => {
               <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',marginBottom:8}}>{t('pm.payBreakdown')}</div>
               {[
                 [t('pm.payScCharge'), selectedResident.scMonthly, selectedResident.scStatus],
-                [t('pm.payParking'), selectedResident.parkingStatus !== 'N/A' ? selectedResident.parking : null, selectedResident.parkingStatus],
-                [t('pm.payWater'), selectedResident.water, selectedResident.waterStatus],
                 ...(selectedResident.maintenance > 0 ? [[t('pm.payMaint'), selectedResident.maintenance, 'Paid']] : []),
                 ...(selectedResident.penalty > 0 ? [[t('pm.payPenalty'), selectedResident.penalty, 'Penalty']] : []),
               ].filter(r => r[1] !== null).map(([label, amount, status], i) => (
@@ -9846,11 +10353,19 @@ const PaymentSummaryPage = () => {
               ))}
 
               {/* Actions */}
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:16}}>
+              <div style={{marginTop:16}}>
                 {selectedResident.balance > 0 && (
-                  <button className="btn btn-primary btn-sm" onClick={() => showToast(t('pm.payReminderSent') + ' ' + selectedResident.name)}>{t('pm.paySendReminder')}</button>
+                  <button className="btn btn-primary btn-sm" style={{width:'100%',marginBottom:8}} onClick={() => showToast(t('pm.payReminderSent') + ' ' + selectedResident.name)}>{t('pm.paySendReminder')}</button>
                 )}
-                <button className="btn btn-sm" onClick={() => showToast(t('pm.payStatementGenerated'))}>{t('pm.payDownloadStmt')}</button>
+                <div style={{fontSize:11,color:'#a89a92',marginBottom:6,fontWeight:500}}>{t('pm.payDownloadStmt')}</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  <button className="btn btn-sm" onClick={() => handleDownloadStatement(selectedResident, 'xlsx')}>
+                    <Icon name="download" size={12}/> Excel
+                  </button>
+                  <button className="btn btn-sm" onClick={() => handleDownloadStatement(selectedResident, 'pdf')}>
+                    <Icon name="download" size={12}/> PDF
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -9861,6 +10376,352 @@ const PaymentSummaryPage = () => {
           )}
         </div>
       </div>
+
+      {showExportModal && (
+        <div className="modal-overlay" onClick={()=>setShowExportModal(false)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{background:'#fff',borderRadius:8,maxWidth:620,width:'95vw',maxHeight:'90vh',overflow:'auto',padding:0}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid #ebe7e3'}}>
+              <div>
+                <div style={{fontSize:16,fontWeight:700,color:'#1a1a1a'}}>Export Payment Summary</div>
+                <div style={{fontSize:12,color:'#a89a92',marginTop:2}}>Select format, date range, charges, status and residents</div>
+              </div>
+              <button onClick={()=>setShowExportModal(false)} style={{background:'none',border:'none',cursor:'pointer',color:'#8a8a8a',fontSize:24,lineHeight:1,padding:0}}>{'\u00d7'}</button>
+            </div>
+            <div style={{padding:'20px 24px'}}>
+              {/* Format */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Format</div>
+                <div style={{display:'flex',gap:8}}>
+                  {[{key:'xlsx',label:'Excel (.xlsx)'},{key:'pdf',label:'PDF (.pdf)'}].map(f => (
+                    <button key={f.key} onClick={()=>setExportCfg(prev=>({...prev,format:f.key}))}
+                      style={{flex:1,padding:'10px 12px',fontSize:12,fontWeight:600,border:'1px solid '+(exportCfg.format===f.key?'#928989':'#d5cfc8'),borderRadius:6,background:exportCfg.format===f.key?'#928989':'#fff',color:exportCfg.format===f.key?'#fff':'#1a1a1a',cursor:'pointer'}}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Date Range (Due Date)</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  <div>
+                    <div style={{fontSize:11,color:'#8a8a8a',marginBottom:4}}>From</div>
+                    <input type="date" value={exportCfg.dateFrom} onChange={e=>setExportCfg(prev=>({...prev,dateFrom:e.target.value}))}
+                      style={{width:'100%',padding:'8px 10px',border:'1px solid #d5cfc8',borderRadius:4,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:'#8a8a8a',marginBottom:4}}>To</div>
+                    <input type="date" value={exportCfg.dateTo} onChange={e=>setExportCfg(prev=>({...prev,dateTo:e.target.value}))}
+                      style={{width:'100%',padding:'8px 10px',border:'1px solid #d5cfc8',borderRadius:4,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charge Types */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Charge Types</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                  {[
+                    {key:'serviceCharge',label:'Service Charge'},
+                    {key:'parking',label:'Parking'},
+                    {key:'water',label:'Water / Utilities'},
+                    {key:'maintenance',label:'Maintenance'},
+                    {key:'penalty',label:'Penalty'}
+                  ].map(c => {
+                    const active = exportCfg.chargeTypes[c.key];
+                    return (
+                      <button key={c.key} onClick={()=>setExportCfg(prev=>({...prev,chargeTypes:{...prev.chargeTypes,[c.key]:!active}}))}
+                        style={{padding:'6px 12px',fontSize:11,fontWeight:600,border:'1px solid '+(active?'#928989':'#d5cfc8'),borderRadius:20,background:active?'#928989':'#fff',color:active?'#fff':'#8a8a8a',cursor:'pointer'}}>
+                        {active ? '\u2713 ' : ''}{c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Payment Status</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                  {['Paid','Unpaid','Overdue','Partial'].map(s => {
+                    const active = exportCfg.statuses[s];
+                    return (
+                      <button key={s} onClick={()=>setExportCfg(prev=>({...prev,statuses:{...prev.statuses,[s]:!active}}))}
+                        style={{padding:'6px 12px',fontSize:11,fontWeight:600,border:'1px solid '+(active?'#928989':'#d5cfc8'),borderRadius:20,background:active?'#928989':'#fff',color:active?'#fff':'#8a8a8a',cursor:'pointer'}}>
+                        {active ? '\u2713 ' : ''}{s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Resident Filter */}
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Resident Name or Flat Number (optional)</div>
+                <input type="text" value={exportCfg.residentQuery} onChange={e=>setExportCfg(prev=>({...prev,residentQuery:e.target.value}))}
+                  placeholder="e.g. Fatima Al-Suwaidi, A-0301"
+                  style={{width:'100%',padding:'8px 12px',border:'1px solid #d5cfc8',borderRadius:4,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+              </div>
+
+              {/* Preview Count */}
+              {(() => {
+                const matched = residentPayments.filter(r => {
+                  if (!exportCfg.statuses[r.scStatus]) return false;
+                  if (exportCfg.residentQuery.trim()) {
+                    const q = exportCfg.residentQuery.trim().toLowerCase();
+                    if (!r.name.toLowerCase().includes(q) && !r.flat.toLowerCase().includes(q)) return false;
+                  }
+                  if (exportCfg.dateFrom || exportCfg.dateTo) {
+                    try {
+                      const d = new Date(r.scDueDate);
+                      if (exportCfg.dateFrom && d < new Date(exportCfg.dateFrom)) return false;
+                      if (exportCfg.dateTo && d > new Date(exportCfg.dateTo)) return false;
+                    } catch(e){}
+                  }
+                  return true;
+                });
+                return (
+                  <div style={{padding:'10px 12px',background:'#f7f4ee',borderRadius:6,fontSize:12,color:'#6a5a45',marginBottom:4}}>
+                    <strong>{matched.length}</strong> resident{matched.length!==1?'s':''} matched by current filters
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div style={{display:'flex',justifyContent:'flex-end',gap:8,padding:'16px 24px',borderTop:'1px solid #ebe7e3',background:'#fafaf8'}}>
+              <button onClick={()=>setShowExportModal(false)} className="btn btn-sm">Cancel</button>
+              <button className="btn btn-sm btn-primary" onClick={() => {
+                const matched = residentPayments.filter(r => {
+                  if (!exportCfg.statuses[r.scStatus]) return false;
+                  if (exportCfg.residentQuery.trim()) {
+                    const q = exportCfg.residentQuery.trim().toLowerCase();
+                    if (!r.name.toLowerCase().includes(q) && !r.flat.toLowerCase().includes(q)) return false;
+                  }
+                  if (exportCfg.dateFrom || exportCfg.dateTo) {
+                    try {
+                      const d = new Date(r.scDueDate);
+                      if (exportCfg.dateFrom && d < new Date(exportCfg.dateFrom)) return false;
+                      if (exportCfg.dateTo && d > new Date(exportCfg.dateTo)) return false;
+                    } catch(e){}
+                  }
+                  return true;
+                });
+                if (matched.length === 0) { showToast('No residents match the selected filters'); return; }
+                const types = exportCfg.chargeTypes;
+                const today = new Date().toLocaleDateString('en-GB');
+                const dateRangeLabel = (exportCfg.dateFrom||exportCfg.dateTo) ? `${exportCfg.dateFrom||'*'} \u2013 ${exportCfg.dateTo||'*'}` : 'All dates';
+                const columns = ['Resident','Flat','Tower','Due Date','Paid Date','Payment Method','Status'];
+                if (types.serviceCharge) columns.push('Service Charge (AED)');
+                if (types.parking) columns.push('Parking (AED)');
+                if (types.water) columns.push('Water (AED)');
+                if (types.maintenance) columns.push('Maintenance (AED)');
+                if (types.penalty) columns.push('Penalty (AED)');
+                columns.push('Balance (AED)');
+
+                const rowForResident = (r) => {
+                  const row = [r.name, r.flat, r.tower || '', r.scDueDate || '', r.scPaidDate || '', r.method || '', r.scStatus];
+                  if (types.serviceCharge) row.push(r.scMonthly || 0);
+                  if (types.parking) row.push(r.parkingStatus === 'N/A' ? '—' : (r.parking || 0));
+                  if (types.water) row.push(r.water || 0);
+                  if (types.maintenance) row.push(r.maintenance || 0);
+                  if (types.penalty) row.push(r.penalty || 0);
+                  row.push(r.balance || 0);
+                  return row;
+                };
+
+                const fileBase = `Payment_Summary_Export_${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+
+                if (exportCfg.format === 'pdf') {
+                  try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({orientation:'landscape'});
+                    doc.setFontSize(16); doc.setFont(undefined,'bold');
+                    doc.text('Payment Summary Export', 14, 16);
+                    doc.setFontSize(9); doc.setFont(undefined,'normal');
+                    doc.text(`Generated: ${today}  |  Date Range: ${dateRangeLabel}  |  Residents: ${matched.length}`, 14, 22);
+                    const activeCharges = Object.entries(types).filter(([,v])=>v).map(([k])=>k).join(', ');
+                    const activeStatuses = Object.entries(exportCfg.statuses).filter(([,v])=>v).map(([k])=>k).join(', ');
+                    doc.text(`Charges: ${activeCharges}  |  Status: ${activeStatuses}`, 14, 27);
+                    doc.autoTable({
+                      startY: 32,
+                      head: [columns],
+                      body: matched.map(rowForResident),
+                      theme: 'grid',
+                      headStyles: { fillColor: [146,137,137], textColor: 255, fontSize: 9 },
+                      bodyStyles: { fontSize: 8 },
+                      styles: { cellPadding: 2 }
+                    });
+                    doc.save(`${fileBase}.pdf`);
+                    showToast(`PDF exported \u00b7 ${matched.length} residents`);
+                  } catch(e) { showToast('PDF export failed: ' + e.message); }
+                } else {
+                  try {
+                    const wb = XLSX.utils.book_new();
+                    const header = [
+                      ['PAYMENT SUMMARY EXPORT'],
+                      [`Generated: ${today}`],
+                      [`Date Range: ${dateRangeLabel}`],
+                      [`Charges: ${Object.entries(types).filter(([,v])=>v).map(([k])=>k).join(', ')}`],
+                      [`Status: ${Object.entries(exportCfg.statuses).filter(([,v])=>v).map(([k])=>k).join(', ')}`],
+                      [`Residents: ${matched.length}`],
+                      [],
+                      columns,
+                      ...matched.map(rowForResident)
+                    ];
+                    const ws = XLSX.utils.aoa_to_sheet(header);
+                    ws['!cols'] = columns.map(() => ({wch: 16}));
+                    XLSX.utils.book_append_sheet(wb, ws, 'Payment Summary');
+                    XLSX.writeFile(wb, `${fileBase}.xlsx`);
+                    showToast(`Excel exported \u00b7 ${matched.length} residents`);
+                  } catch(e) { showToast('Excel export failed: ' + e.message); }
+                }
+                setShowExportModal(false);
+              }}>
+                <Icon name="download" size={12}/> Export ({exportCfg.format.toUpperCase()})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReminderModal && (() => {
+        // Helper: figure out days overdue for a resident
+        const todayD = new Date('2026-04-19');
+        const daysOverdue = (r) => {
+          if (r.scStatus === 'Paid') return 0;
+          try {
+            const parts = (r.scDueDate || '').split(' ');
+            if (parts.length === 3) {
+              const monthMap = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+              const d = new Date(parseInt(parts[2]), monthMap[parts[1]] || 0, parseInt(parts[0]));
+              const diff = Math.floor((todayD - d) / (1000 * 60 * 60 * 24));
+              return diff > 0 ? diff : 0;
+            }
+          } catch(e){}
+          return r.scStatus === 'Overdue' ? 10 : (r.scStatus === 'Partial' ? 3 : 0);
+        };
+
+        const matched = residentPayments.filter(r => {
+          if (reminderCfg.audience === 'all') return true;
+          if (reminderCfg.audience === 'unpaid') return r.scStatus !== 'Paid';
+          if (reminderCfg.audience === 'overdue') return r.scStatus === 'Overdue';
+          if (reminderCfg.audience === 'custom') return daysOverdue(r) >= (reminderCfg.overdueMin || 0) && r.scStatus !== 'Paid';
+          return false;
+        });
+
+        const audienceOptions = [
+          { key: 'all', label: 'All Residents', sub: `Send to all ${residentPayments.length} residents` },
+          { key: 'unpaid', label: 'All Unpaid Residents', sub: 'Residents with any outstanding balance' },
+          { key: 'overdue', label: 'Overdue Residents', sub: 'Residents past due date' },
+          { key: 'custom', label: 'Selected by Overdue Time', sub: 'Customize minimum days overdue' }
+        ];
+
+        return (
+          <div onClick={()=>setShowReminderModal(false)} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:'#fff',borderRadius:8,maxWidth:620,width:'95vw',maxHeight:'90vh',overflow:'auto'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px',borderBottom:'1px solid #ebe7e3'}}>
+                <div>
+                  <div style={{fontSize:16,fontWeight:700,color:'#1a1a1a'}}>Send Payment Reminders</div>
+                  <div style={{fontSize:12,color:'#a89a92',marginTop:2}}>Choose recipients and send reminders</div>
+                </div>
+                <button onClick={()=>setShowReminderModal(false)} style={{background:'none',border:'none',cursor:'pointer',color:'#8a8a8a',fontSize:24,lineHeight:1,padding:0}}>{'\u00d7'}</button>
+              </div>
+
+              <div style={{padding:'20px 24px'}}>
+                {/* Audience choice */}
+                <div style={{marginBottom:18}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Recipients</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {audienceOptions.map(opt => {
+                      const active = reminderCfg.audience === opt.key;
+                      return (
+                        <div key={opt.key} onClick={()=>setReminderCfg(prev=>({...prev,audience:opt.key}))}
+                          style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',border:'1px solid '+(active?'#928989':'#d5cfc8'),borderRadius:6,background:active?'#faf7f2':'#fff',cursor:'pointer'}}>
+                          <div style={{width:18,height:18,borderRadius:'50%',border:'2px solid '+(active?'#928989':'#d5cfc8'),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            {active && <div style={{width:8,height:8,borderRadius:'50%',background:'#928989'}}/>}
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{opt.label}</div>
+                            <div style={{fontSize:11,color:'#8a7f76',marginTop:2}}>{opt.sub}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom overdue days */}
+                {reminderCfg.audience === 'custom' && (
+                  <div style={{marginBottom:18,padding:'12px 14px',background:'#faf7f2',borderRadius:6,border:'1px solid #ebe7e3'}}>
+                    <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Minimum Days Overdue</div>
+                    <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
+                      {[1,3,7,14,30].map(d => (
+                        <button key={d} onClick={()=>setReminderCfg(prev=>({...prev,overdueMin:d}))}
+                          style={{padding:'6px 12px',fontSize:11,fontWeight:600,border:'1px solid '+(reminderCfg.overdueMin===d?'#928989':'#d5cfc8'),borderRadius:20,background:reminderCfg.overdueMin===d?'#928989':'#fff',color:reminderCfg.overdueMin===d?'#fff':'#8a8a8a',cursor:'pointer'}}>
+                          {d}+ days
+                        </button>
+                      ))}
+                    </div>
+                    <input type="number" min="0" value={reminderCfg.overdueMin} onChange={e=>setReminderCfg(prev=>({...prev,overdueMin:parseInt(e.target.value)||0}))}
+                      placeholder="Or enter custom number"
+                      style={{width:'100%',padding:'8px 12px',border:'1px solid #d5cfc8',borderRadius:4,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+                  </div>
+                )}
+
+                {/* Channels */}
+                <div style={{marginBottom:18}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Channels</div>
+                  <div style={{display:'flex',gap:6}}>
+                    {[{key:'email',label:'Email'},{key:'sms',label:'SMS'},{key:'push',label:'Push'}].map(c => {
+                      const active = reminderCfg.channel[c.key];
+                      return (
+                        <button key={c.key} onClick={()=>setReminderCfg(prev=>({...prev,channel:{...prev.channel,[c.key]:!active}}))}
+                          style={{padding:'6px 14px',fontSize:11,fontWeight:600,border:'1px solid '+(active?'#928989':'#d5cfc8'),borderRadius:20,background:active?'#928989':'#fff',color:active?'#fff':'#8a8a8a',cursor:'pointer'}}>
+                          {active ? '\u2713 ' : ''}{c.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional Message */}
+                <div style={{marginBottom:18}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'#1a1a1a',letterSpacing:'0.05em',marginBottom:8,textTransform:'uppercase'}}>Message (optional)</div>
+                  <textarea value={reminderCfg.message} onChange={e=>setReminderCfg(prev=>({...prev,message:e.target.value}))}
+                    placeholder="Leave blank to use standard template..."
+                    rows={3}
+                    style={{width:'100%',padding:'10px 12px',border:'1px solid #d5cfc8',borderRadius:4,fontSize:12,outline:'none',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
+                </div>
+
+                {/* Preview count */}
+                <div style={{padding:'10px 12px',background:'#f7f4ee',borderRadius:6,fontSize:12,color:'#6a5a45'}}>
+                  <strong>{matched.length}</strong> resident{matched.length!==1?'s':''} will receive a reminder
+                  {matched.length > 0 && (
+                    <div style={{marginTop:6,fontSize:11,color:'#8a7f76',maxHeight:60,overflow:'auto'}}>
+                      {matched.slice(0,6).map(r => r.name + ' (' + r.flat + ')').join(', ')}{matched.length>6?` +${matched.length-6} more`:''}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8,padding:'16px 24px',borderTop:'1px solid #ebe7e3',background:'#fafaf8'}}>
+                <button onClick={()=>setShowReminderModal(false)} className="btn btn-sm">Cancel</button>
+                <button className="btn btn-sm btn-primary" disabled={matched.length===0} onClick={() => {
+                  if (matched.length === 0) { showToast('No residents match the selected audience'); return; }
+                  const activeChannels = Object.entries(reminderCfg.channel).filter(([,v])=>v).map(([k])=>k);
+                  if (activeChannels.length === 0) { showToast('Please select at least one channel'); return; }
+                  showToast(`Reminders queued \u00b7 ${matched.length} resident${matched.length!==1?'s':''} via ${activeChannels.join(', ')}`);
+                  setShowReminderModal(false);
+                }}>
+                  <Icon name="audit" size={12}/> Send ({matched.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
