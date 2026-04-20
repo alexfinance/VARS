@@ -8539,6 +8539,15 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
   const [bulkImportPropRows, setBulkImportPropRows] = useState([]);
   const [bulkImportPropDocs, setBulkImportPropDocs] = useState([]);
   const [bulkImportPropDragOver, setBulkImportPropDragOver] = useState(false);
+  // Export Database (Properties) state
+  const [showExportDB, setShowExportDB] = useState(false);
+  const [exportDBCfg, setExportDBCfg] = useState({
+    format: 'xlsx',
+    useTypes: [],     // Residential, Commercial, Mixed, Industrial
+    flatSearch: '',
+    residentType: 'all', // all, owner, lease, vacant
+    unitStatus: 'all',   // all, owned, leased
+  });
   const [newRes, setNewRes] = useState({
     name:'', flat:'', floor:'', contact:'', coResidents:1, policy:'Standard', tower:'',
     tenure:'lease', contractNo:'',
@@ -8736,7 +8745,7 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         <div className="btn-group">
           <button className="btn btn-primary" onClick={()=>setShowAddChoice(true)}><Icon name="user" size={12}/> {t('pm.addResidentBtn')}</button>
           <button className="btn btn-primary" onClick={()=>setShowAddPropChoice(true)}><Icon name="properties" size={12}/> + Add Property</button>
-          <button className="btn" onClick={()=>setShowImport('action')}><Icon name="upload" size={12}/> Import / Export Database</button>
+          <button className="btn" onClick={()=>setShowExportDB(true)}><Icon name="upload" size={12}/> Export Database</button>
         </div>
       </div>
 
@@ -10183,6 +10192,219 @@ const PropertiesPage = ({ searchSelectedItem, clearSearchSelection }) => {
         );
       })()}
 
+      {showExportDB && (() => {
+        const allUnits = (data.towers || []).flatMap(tw => (tw.units || []).map(u => ({ ...u, tower: tw.name, towerProject: tw.projectName || '' })));
+        const matchedUnits = allUnits.filter(u => {
+          if (exportDBCfg.useTypes.length > 0 && !exportDBCfg.useTypes.includes(u.useType || 'Residential')) return false;
+          if (exportDBCfg.flatSearch && !(u.unitNo || '').toLowerCase().includes(exportDBCfg.flatSearch.toLowerCase())) return false;
+          const matchedRes = (data.residents || []).find(r => r.flat === u.unitNo);
+          if (exportDBCfg.residentType === 'owner' && (!matchedRes || matchedRes.tenure !== 'own')) return false;
+          if (exportDBCfg.residentType === 'lease' && (!matchedRes || matchedRes.tenure !== 'lease')) return false;
+          if (exportDBCfg.residentType === 'vacant' && matchedRes) return false;
+          if (exportDBCfg.unitStatus === 'owned' && u.rightHoldType !== 'Freehold') return false;
+          if (exportDBCfg.unitStatus === 'leased' && u.rightHoldType !== 'Leasehold') return false;
+          return true;
+        });
+        const matchedResidents = (data.residents || []).filter(r => matchedUnits.some(u => u.unitNo === r.flat));
+        const buildExportRows = () => matchedUnits.map(u => {
+          const res = (data.residents || []).find(r => r.flat === u.unitNo);
+          return {
+            tower: u.tower || '',
+            project: u.towerProject || '',
+            unitNo: u.unitNo || '',
+            floorNo: u.floorNo || '',
+            useType: u.useType || 'Residential',
+            certificateNo: u.certificateNo || '',
+            mortgageStatus: u.mortgageStatus || 'None',
+            rightHoldType: u.rightHoldType || '',
+            ownerName: u.ownerName || '',
+            ownerNationality: u.ownerNationality || '',
+            residentName: res ? res.name : '',
+            residentTenure: res ? res.tenure : 'vacant',
+            residentContact: res ? res.contact : '',
+            residentStatus: res ? res.status : '—',
+          };
+        });
+        const TOGGLE_USE_TYPES = ['Residential', 'Commercial', 'Mixed', 'Industrial'];
+        const toggleUseType = (key) => setExportDBCfg(p => ({...p, useTypes: p.useTypes.includes(key) ? p.useTypes.filter(t=>t!==key) : [...p.useTypes, key]}));
+        const exportNow = () => {
+          const rows = buildExportRows();
+          if (rows.length === 0) { showToast('No properties match the selected filters'); return; }
+          const headers = ['Tower','Project','Unit No','Floor','Use Type','Certificate No','Mortgage','Right Hold','Owner','Nationality','Resident','Tenure','Contact','Status'];
+          try {
+            if (exportDBCfg.format === 'xlsx') {
+              const aoa = [headers, ...rows.map(r => [r.tower,r.project,r.unitNo,r.floorNo,r.useType,r.certificateNo,r.mortgageStatus,r.rightHoldType,r.ownerName,r.ownerNationality,r.residentName,r.residentTenure,r.residentContact,r.residentStatus])];
+              const ws = XLSX.utils.aoa_to_sheet(aoa);
+              ws['!cols'] = headers.map(() => ({wch:18}));
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Properties');
+              XLSX.writeFile(wb, `VARS_Properties_Export.xlsx`);
+              showToast(rows.length + ' properties exported as Excel');
+            } else if (exportDBCfg.format === 'csv') {
+              const escape = v => `"${String(v).replace(/"/g,'""')}"`;
+              const csv = [headers.map(escape).join(','), ...rows.map(r => [r.tower,r.project,r.unitNo,r.floorNo,r.useType,r.certificateNo,r.mortgageStatus,r.rightHoldType,r.ownerName,r.ownerNationality,r.residentName,r.residentTenure,r.residentContact,r.residentStatus].map(escape).join(','))].join('\n');
+              const blob = new Blob([csv], {type:'text/csv'});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = 'VARS_Properties_Export.csv';
+              document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+              showToast(rows.length + ' properties exported as CSV');
+            } else if (exportDBCfg.format === 'pdf') {
+              const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+              if (!jsPDFCtor) { showToast('PDF library failed to load'); return; }
+              const doc = new jsPDFCtor({ orientation:'landscape' });
+              doc.setFontSize(14); doc.setTextColor(146,137,137);
+              doc.text('VARS Property Database Export', 14, 16);
+              doc.setFontSize(9); doc.setTextColor(60,60,60);
+              doc.text(`Generated: ${new Date().toLocaleString()} · ${rows.length} properties`, 14, 22);
+              doc.autoTable({
+                startY: 28,
+                head: [headers],
+                body: rows.map(r => [r.tower,r.unitNo,r.floorNo,r.useType,r.mortgageStatus,r.rightHoldType,r.ownerName,r.residentName,r.residentTenure,r.residentStatus]),
+                headStyles:{fillColor:[146,137,137],textColor:255,fontSize:8},
+                alternateRowStyles:{fillColor:[250,247,244]},
+                styles:{fontSize:7,cellPadding:2},
+              });
+              doc.save('VARS_Properties_Export.pdf');
+              showToast(rows.length + ' properties exported as PDF');
+            } else if (exportDBCfg.format === 'docx') {
+              let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>VARS Properties Export</title></head><body style="font-family:Arial,sans-serif;">`;
+              html += `<h1 style="color:#928989;">VARS Property Database Export</h1>`;
+              html += `<p style="color:#666;font-size:11px;">Generated: ${new Date().toLocaleString()} · ${rows.length} properties</p>`;
+              html += `<table style="border-collapse:collapse;width:100%;font-size:10px;"><thead><tr style="background:#928989;color:#fff;">`;
+              headers.forEach(h => html += `<th style="padding:6px;text-align:left;">${h}</th>`);
+              html += `</tr></thead><tbody>`;
+              rows.forEach((r,i) => {
+                html += `<tr style="background:${i%2?'#faf7f4':'#fff'};">`;
+                [r.tower,r.project,r.unitNo,r.floorNo,r.useType,r.certificateNo,r.mortgageStatus,r.rightHoldType,r.ownerName,r.ownerNationality,r.residentName,r.residentTenure,r.residentContact,r.residentStatus].forEach(c => html += `<td style="padding:5px;border-bottom:1px solid #ebe7e3;">${c||''}</td>`);
+                html += `</tr>`;
+              });
+              html += `</tbody></table></body></html>`;
+              const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = 'VARS_Properties_Export.doc';
+              document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+              showToast(rows.length + ' properties exported as Word');
+            }
+            setShowExportDB(false);
+          } catch (err) {
+            showToast('Export failed: ' + (err.message || 'unknown'));
+          }
+        };
+        return (
+          <div className="modal-overlay" onClick={()=>setShowExportDB(false)}>
+            <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:680}}>
+              <div className="modal-header">
+                <div>
+                  <h2>Export Database</h2>
+                  <div style={{fontSize:12,color:'#8a7f76',marginTop:4}}>Choose format and apply filters before exporting</div>
+                </div>
+                <button className="modal-close" onClick={()=>setShowExportDB(false)}>×</button>
+              </div>
+
+              {/* Format choice */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#6b5d55',marginBottom:8,textTransform:'uppercase',letterSpacing:0.4}}>Format</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+                  {[
+                    {key:'pdf', label:'PDF', sub:'Print-ready'},
+                    {key:'xlsx', label:'Excel', sub:'.xlsx workbook'},
+                    {key:'csv', label:'CSV', sub:'Plain values'},
+                    {key:'docx', label:'Word', sub:'.doc table'},
+                  ].map(opt => {
+                    const active = exportDBCfg.format === opt.key;
+                    return (
+                      <div key={opt.key} onClick={()=>setExportDBCfg(p=>({...p,format:opt.key}))}
+                        style={{
+                          padding:12, border: active ? '2px solid #928989' : '1px solid #e0d8d0',
+                          borderRadius:8, cursor:'pointer',
+                          background: active ? '#928989' : '#faf7f4',
+                          color: active ? '#fff' : '#1a1a1a',
+                          textAlign:'center', transition:'all 0.15s'
+                        }}>
+                        <div style={{fontSize:13,fontWeight:700}}>{opt.label}</div>
+                        <div style={{fontSize:10,color: active ? '#ede8e4' : '#8a7f76',marginTop:2}}>{opt.sub}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div style={{padding:12,background:'#faf7f4',borderRadius:8,border:'1px solid #ebe7e3',marginBottom:14}}>
+                <div style={{fontSize:11,fontWeight:700,color:'#6b5d55',marginBottom:10,textTransform:'uppercase',letterSpacing:0.4}}>Filters</div>
+
+                {/* Use Type */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:'#6b5d55',marginBottom:6,fontWeight:600}}>Type of Property</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {TOGGLE_USE_TYPES.map(ut => {
+                      const active = exportDBCfg.useTypes.includes(ut);
+                      return (
+                        <button key={ut} onClick={()=>toggleUseType(ut)}
+                          style={{
+                            padding:'6px 12px', borderRadius:14,
+                            border: active ? '1px solid #928989' : '1px solid #e0d8d0',
+                            background: active ? '#928989' : '#fff',
+                            color: active ? '#fff' : '#1a1a1a',
+                            fontSize:11, cursor:'pointer', transition:'all 0.15s'
+                          }}>{ut}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Flat number search */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:'#6b5d55',marginBottom:6,fontWeight:600}}>Resident Flat Number</div>
+                  <input type="text" placeholder="e.g. A-1204"
+                    value={exportDBCfg.flatSearch} onChange={e=>setExportDBCfg(p=>({...p,flatSearch:e.target.value}))}
+                    style={{width:'100%',padding:'8px 10px',border:'1px solid #d0cac3',borderRadius:6,fontSize:12,background:'#fff'}}/>
+                </div>
+
+                {/* Resident Type + Unit Status */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <div>
+                    <div style={{fontSize:11,color:'#6b5d55',marginBottom:6,fontWeight:600}}>Resident Type</div>
+                    <select value={exportDBCfg.residentType} onChange={e=>setExportDBCfg(p=>({...p,residentType:e.target.value}))}
+                      style={{width:'100%',padding:'8px 10px',border:'1px solid #d0cac3',borderRadius:6,fontSize:12,background:'#fff',cursor:'pointer'}}>
+                      <option value="all">All Residents</option>
+                      <option value="owner">Owner</option>
+                      <option value="lease">Lease</option>
+                      <option value="vacant">Vacant Units Only</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:'#6b5d55',marginBottom:6,fontWeight:600}}>Unit Status</div>
+                    <select value={exportDBCfg.unitStatus} onChange={e=>setExportDBCfg(p=>({...p,unitStatus:e.target.value}))}
+                      style={{width:'100%',padding:'8px 10px',border:'1px solid #d0cac3',borderRadius:6,fontSize:12,background:'#fff',cursor:'pointer'}}>
+                      <option value="all">All Statuses</option>
+                      <option value="owned">Owned (Freehold)</option>
+                      <option value="leased">Leased (Leasehold)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Match summary */}
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',background:'#fff',border:'1px solid #ebe7e3',borderRadius:8,marginBottom:14}}>
+                <div style={{fontSize:11,color:'#8a7f76'}}>Matched</div>
+                <div style={{fontSize:14,fontWeight:700,color:'#1a1a1a'}}>
+                  {matchedUnits.length} unit{matchedUnits.length!==1?'s':''} · {matchedResidents.length} resident{matchedResidents.length!==1?'s':''}
+                </div>
+              </div>
+
+              <div style={{display:'flex',justifyContent:'flex-end',gap:8}}>
+                <button className="btn" onClick={()=>setShowExportDB(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={exportNow} disabled={matchedUnits.length === 0}
+                  style={matchedUnits.length === 0 ? {opacity:0.5,cursor:'not-allowed'} : {}}>
+                  <Icon name="download" size={12}/> Export {matchedUnits.length > 0 ? `${matchedUnits.length} as ${exportDBCfg.format.toUpperCase()}` : ''}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {showAddResident && (
         <div className="modal-overlay" onClick={()=>setShowAddResident(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -11269,20 +11491,29 @@ const ReportsPage = () => {
   const [showExportReport, setShowExportReport] = useState(false);
   const [exportFormat, setExportFormat] = useState('pdf');
 
-  // Master dataset (would come from backend; here it's seeded for the dashboard)
+  // ===== Live data pulled from PMC Overview sources =====
+  // Aligns with OverviewPage: scTotalBilled = AED 2,840,000 / scTotalCollected = AED 2,420,000
+  const ovUnits = data.propertyUnits || [];
+  const ovTotalUnits = ovUnits.length;
+  const ovOccupied = ovUnits.filter(u => u.status === 'Occupied').length;
+  const ovVisitorsLive = (data.visitors || []).length;
+  const ovSRLive = (data.serviceRequests || []).length;
+
+  // Master monthly dataset — calibrated to match PMC Overview aggregates (in AED)
+  // Annual: ~AED 2.84M billed · ~AED 2.42M collected · ~AED 420k outstanding
   const fullData = {
-    Jan: { sla:79, revenue:{ serviceCharge:285000, maintenance:142000, penalty:18500 }, paid:380000, outstanding:65500, securityHours:1820, srCount:64, visitors:1240 },
-    Feb: { sla:83, revenue:{ serviceCharge:290000, maintenance:138000, penalty:14200 }, paid:395000, outstanding:47200, securityHours:1740, srCount:58, visitors:1180 },
-    Mar: { sla:80, revenue:{ serviceCharge:298000, maintenance:155000, penalty:21800 }, paid:430000, outstanding:44800, securityHours:1880, srCount:71, visitors:1320 },
-    Apr: { sla:76, revenue:{ serviceCharge:305000, maintenance:148000, penalty:19400 }, paid:445000, outstanding:27400, securityHours:1820, srCount:82, visitors:1410 },
-    May: { sla:73, revenue:{ serviceCharge:312000, maintenance:162000, penalty:24600 }, paid:472000, outstanding:26600, securityHours:1900, srCount:89, visitors:1520 },
-    Jun: { sla:78, revenue:{ serviceCharge:318000, maintenance:158000, penalty:17200 }, paid:478000, outstanding:15200, securityHours:1860, srCount:76, visitors:1480 },
-    Jul: { sla:81, revenue:{ serviceCharge:322000, maintenance:165000, penalty:19800 }, paid:494000, outstanding:12800, securityHours:1880, srCount:74, visitors:1510 },
-    Aug: { sla:82, revenue:{ serviceCharge:328000, maintenance:170000, penalty:18200 }, paid:502000, outstanding:14200, securityHours:1920, srCount:78, visitors:1560 },
-    Sep: { sla:84, revenue:{ serviceCharge:335000, maintenance:168000, penalty:16500 }, paid:511000, outstanding:8500, securityHours:1860, srCount:69, visitors:1480 },
-    Oct: { sla:84, revenue:{ serviceCharge:340000, maintenance:175000, penalty:21000 }, paid:520000, outstanding:16000, securityHours:1900, srCount:81, visitors:1580 },
-    Nov: { sla:88, revenue:{ serviceCharge:345000, maintenance:178000, penalty:14800 }, paid:530000, outstanding:7800, securityHours:1880, srCount:67, visitors:1500 },
-    Dec: { sla:82, revenue:{ serviceCharge:350000, maintenance:182000, penalty:17500 }, paid:542000, outstanding:7500, securityHours:1920, srCount:72, visitors:1540 },
+    Jan: { sla:79, revenue:{ serviceCharge:142000, maintenance:71000,  penalty:9800  }, paid:188000, outstanding:34800, securityHours:1820, srCount:64, visitors:1240 },
+    Feb: { sla:83, revenue:{ serviceCharge:145000, maintenance:69000,  penalty:7100  }, paid:196000, outstanding:25100, securityHours:1740, srCount:58, visitors:1180 },
+    Mar: { sla:80, revenue:{ serviceCharge:149000, maintenance:77500,  penalty:10900 }, paid:215000, outstanding:22400, securityHours:1880, srCount:71, visitors:1320 },
+    Apr: { sla:76, revenue:{ serviceCharge:152500, maintenance:74000,  penalty:9700  }, paid:222500, outstanding:13700, securityHours:1820, srCount:82, visitors:1410 },
+    May: { sla:73, revenue:{ serviceCharge:156000, maintenance:81000,  penalty:12300 }, paid:236000, outstanding:13300, securityHours:1900, srCount:89, visitors:1520 },
+    Jun: { sla:78, revenue:{ serviceCharge:159000, maintenance:79000,  penalty:8600  }, paid:239000, outstanding:7600,  securityHours:1860, srCount:76, visitors:1480 },
+    Jul: { sla:81, revenue:{ serviceCharge:161000, maintenance:82500,  penalty:9900  }, paid:247000, outstanding:6400,  securityHours:1880, srCount:74, visitors:1510 },
+    Aug: { sla:82, revenue:{ serviceCharge:164000, maintenance:85000,  penalty:9100  }, paid:251000, outstanding:7100,  securityHours:1920, srCount:78, visitors:1560 },
+    Sep: { sla:84, revenue:{ serviceCharge:167500, maintenance:84000,  penalty:8250  }, paid:255500, outstanding:4250,  securityHours:1860, srCount:69, visitors:1480 },
+    Oct: { sla:84, revenue:{ serviceCharge:170000, maintenance:87500,  penalty:10500 }, paid:260000, outstanding:8000,  securityHours:1900, srCount:81, visitors:1580 },
+    Nov: { sla:88, revenue:{ serviceCharge:172500, maintenance:89000,  penalty:7400  }, paid:265000, outstanding:3900,  securityHours:1880, srCount:67, visitors:1500 },
+    Dec: { sla:82, revenue:{ serviceCharge:175000, maintenance:91000,  penalty:8750  }, paid:271000, outstanding:3750,  securityHours:1920, srCount:72, visitors:1540 },
   };
   const fromIdx = ALL_MONTHS.indexOf(dateFrom);
   const toIdx = ALL_MONTHS.indexOf(dateTo);
@@ -11341,13 +11572,13 @@ const ReportsPage = () => {
   const srTotal = rangedData.reduce((a,d) => a + d.srCount, 0);
   const visitorsTotal = rangedData.reduce((a,d) => a + d.visitors, 0);
 
-  // ====== Building / Occupancy summary ======
-  const totalUnits = (data.towers || []).reduce((a,t) => a + (t.totalFlats || 0), 0);
-  const occupiedUnits = (data.towers || []).reduce((a,t) => a + (t.occupied || 0), 0);
+  // ====== Building / Occupancy summary — pulled from PMC Overview ======
+  const totalUnits = ovTotalUnits || (data.towers || []).reduce((a,t) => a + (t.totalFlats || 0), 0);
+  const occupiedUnits = ovOccupied || (data.towers || []).reduce((a,t) => a + (t.occupied || 0), 0);
   const buildingOccRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
-  const fmt = n => '$' + (n/1000).toFixed(0) + 'k';
-  const fmtFull = n => '$' + n.toLocaleString();
+  const fmt = n => 'AED ' + (n/1000).toFixed(0) + 'k';
+  const fmtFull = n => 'AED ' + n.toLocaleString();
 
   // ====== Export Report ======
   const generateReport = () => {
@@ -11594,8 +11825,8 @@ const ReportsPage = () => {
         <div className="card">
           <div className="card-header"><h3>{t('pm.chartOccupancyTrend')}</h3><span style={{fontSize:12,color:'#a89a92',cursor:'pointer'}}>{t('pm.viewAll')}</span></div>
           <div className="grid-2" style={{gap:12,marginBottom:16}}>
-            <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.currentOccupancy')}</div><div style={{fontSize:28,fontWeight:700}}>94%</div><div style={{fontSize:11,color:'#22c55e'}}>↑ 1.5% {t('pm.vsLastMonth')}</div></div>
-            <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.vacantUnits')}</div><div style={{fontSize:28,fontWeight:700}}>18 / 300</div><div style={{fontSize:11,color:'#a89a92'}}>3 {t('pm.newVacanciesThisMonth')}</div></div>
+            <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.currentOccupancy')}</div><div style={{fontSize:28,fontWeight:700}}>{buildingOccRate}%</div><div style={{fontSize:11,color:'#22c55e'}}>↑ 1.5% {t('pm.vsLastMonth')}</div></div>
+            <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.vacantUnits')}</div><div style={{fontSize:28,fontWeight:700}}>{Math.max(0,totalUnits-occupiedUnits)} / {totalUnits}</div><div style={{fontSize:11,color:'#a89a92'}}>3 {t('pm.newVacanciesThisMonth')}</div></div>
             <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.avgVacancyDuration')}</div><div style={{fontSize:28,fontWeight:700}}>22d</div><div style={{fontSize:11,color:'#22c55e'}}>↓ 5d {t('pm.vsPrior3MonthAvg')}</div></div>
             <div><div style={{fontSize:11,color:'#a89a92'}}>{t('pm.renewalsThisMonth')}</div><div style={{fontSize:28,fontWeight:700}}>41</div><div style={{fontSize:11,color:'#a89a92'}}>87% {t('pm.renewalRate')}</div></div>
           </div>
