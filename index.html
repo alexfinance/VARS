@@ -21251,11 +21251,9 @@ const FmHelpers = {
   },
   // Returns the FmTechnician page name to render for a given woStatus
   techPageForStatus: (st) => {
-    if (st === 'Accepted' || st === 'En route') return 'enroute';
-    if (st === 'Arrived') return 'assessment';
-    if (st === 'Assessment shared') return 'execution';
-    if (st === 'In Progress' || st === 'On Hold') return 'execution';
-    if (['Completed','Closed','Confirmed','Done'].includes(st)) return 'detail';
+    // Streamlined flow: Detail (with prominent CTA) → Execution → Close-out
+    // The detail screen handles Assigned (accept/reject) and Accepted (I have arrived)
+    if (st === 'In Progress' || st === 'On Hold' || st === 'Arrived' || st === 'Assessment shared') return 'execution';
     return 'detail';
   },
   timeAgo: (iso) => {
@@ -21389,10 +21387,10 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
     const duringPhotos = duringPhotosByWo[wo.id] || [];
     setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {
       ...s,
-      status:'Completed',
+      status:'Done',
       completedAt: new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}),
       workDone: closeoutForm.workDone,
-      materialsUsed: executionMaterials[wo.id] || [],
+      materialsUsed: (executionMaterials[wo.id] || []).filter(m => m && m.name && m.name.trim()),
       // Resident sees Before + After only (per spec)
       completionPhotos: [...beforePhotos, ...afterPhotos],
       // Internal-only photos preserved separately
@@ -21401,7 +21399,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
       fmTechnician: { name: user.name, role: user.specialty, phone: user.phone, expectedArrival: s.time || '—' }
     } : s)}));
     setCloseoutForm({workDone:''});
-    showToast('Close-out submitted — resident notified');
+    showToast('Service request closed — resident notified');
     setPage('success');
   };
 
@@ -21489,6 +21487,12 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
     const tpl = (data.fmCategoryTemplates || {})[wo.type] || {defaultMinutes:60, slaMinutes:240, checklist:[]};
     // Mock unit history — last 5 SRs from same flat
     const unitHistory = (data.serviceRequests || []).filter(x => x.flat === wo.flat && x.id !== wo.id).slice(0,5);
+    // Arrival lock — only after Accept; disable "I have arrived" for first 60 sec
+    const acceptedAtMs = wo.acceptedAt ? new Date(wo.acceptedAt).getTime() : 0;
+    const arriveLockMs = 60 * 1000;
+    const arriveSinceAccept = now - acceptedAtMs;
+    const arriveCanTap = acceptedAtMs > 0 && arriveSinceAccept >= arriveLockMs;
+    const arriveCountdown = Math.max(0, Math.ceil((arriveLockMs - arriveSinceAccept)/1000));
     return (
       <div style={{padding:'12px 16px',paddingBottom:120}}>
         {/* Back + WO ref */}
@@ -21591,19 +21595,23 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
 
         {/* Action buttons — depend on woStatus */}
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
-          {['Assigned','New','Pending Approval'].includes(wo.woStatus) ? (
+          {wo.woStatus === 'Assigned' ? (
             <>
               <button onClick={() => setShowRejectModal(true)} style={{flex:1,padding:14,background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Reject task</button>
               <button onClick={() => setShowAcceptConfirm(true)} style={{flex:2,padding:14,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Accept task</button>
             </>
           ) : ['Accepted','En route'].includes(wo.woStatus) ? (
-            <button onClick={() => setPage('enroute')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Continue to en route</button>
-          ) : wo.woStatus === 'Arrived' ? (
-            <button onClick={() => setPage('assessment')} style={{flex:1,padding:14,background:'#3a5a8a',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Continue to assessment</button>
-          ) : ['Assessment shared','In Progress','On Hold'].includes(wo.woStatus) ? (
-            <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>{wo.woStatus === 'On Hold' ? 'Resume work' : 'Continue execution'}</button>
-          ) : ['Completed','Closed','Confirmed'].includes(wo.woStatus) ? (
-            <div style={{flex:1,padding:14,background:'#eef0eb',color:'#2d6a4f',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>WO #{wo.id.replace('SR-','')} closed</div>
+            <button disabled={!arriveCanTap} onClick={() => {
+              setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, status:'Arrived', arrivedAt: new Date().toISOString()} : s)}));
+              showToast('Marked as arrived — resident notified');
+              setPage('execution');
+            }} style={{flex:1,padding:16,background: arriveCanTap ? '#3a5a8a' : '#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:15,fontWeight:600,cursor: arriveCanTap ? 'pointer':'default',letterSpacing:'-0.01em'}}>
+              {arriveCanTap ? 'I have arrived' : 'I have arrived (' + arriveCountdown + 's)'}
+            </button>
+          ) : ['Arrived','Assessment shared','In Progress','On Hold'].includes(wo.woStatus) ? (
+            <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>{wo.woStatus === 'On Hold' ? 'Resume work' : 'Continue to checklist'}</button>
+          ) : ['Completed','Closed','Confirmed','Done'].includes(wo.woStatus) ? (
+            <div style={{flex:1,padding:14,background:'#eef0eb',color:'#2d6a4f',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>{wo.id} · Done</div>
           ) : (
             <div style={{flex:1,padding:14,background:'#fbeeec',color:'#8b3a30',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>Status: {wo.woStatus}</div>
           )}
@@ -21640,7 +21648,6 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
                   setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, status:'Accepted', acceptedAt: new Date().toISOString()} : s)}));
                   setShowAcceptConfirm(false);
                   showToast('Task accepted — resident notified');
-                  setPage('enroute');
                 }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm</button>
               </div>
             </div>
@@ -21891,10 +21898,10 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           <div style={{fontSize:11,opacity:0.85,marginTop:6}}>SLA window: {fmt(tpl.slaMinutes)}</div>
         </div>
 
-        {/* Start work CTA when assessment was just shared */}
-        {wo.woStatus === 'Assessment shared' && (
+        {/* Start work CTA when arrived (or assessment shared, for legacy flow) */}
+        {(wo.woStatus === 'Arrived' || wo.woStatus === 'Assessment shared') && (
           <div style={{background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:14,padding:14,marginBottom:12,textAlign:'center'}}>
-            <div style={{fontSize:13,color:'#7a6040',marginBottom:10}}>Assessment was shared with the resident. Start the work when ready.</div>
+            <div style={{fontSize:13,color:'#7a6040',marginBottom:10}}>You have arrived at the unit. Start the work to begin the timer.</div>
             <button onClick={() => startWork(wo)} style={{width:'100%',padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Start work</button>
           </div>
         )}
@@ -21934,7 +21941,18 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
             <span style={{fontSize:9,color:'#a89a92',padding:'2px 6px',borderRadius:4,background:'#f5f3f0',fontWeight:500}}>Internal only</span>
           </div>
           <div style={{fontSize:11,color:'#a89a92',marginBottom:10}}>Tagged "During" — for supervisor and audit. Not visible to the resident.</div>
-          <input type="file" id={'fm-during-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
+          {(() => {
+            const handleFiles = (files) => {
+              const readers = files.map(file => new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = ev => resolve({id:'DP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'During', capturedAt: new Date().toISOString()});
+                reader.readAsDataURL(file);
+              }));
+              Promise.all(readers).then(items => setDuringPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            };
+            return null;
+          })()}
+          <input type="file" id={'fm-during-camera-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
             const files = Array.from(e.target.files || []);
             const readers = files.map(file => new Promise(resolve => {
               const reader = new FileReader();
@@ -21944,10 +21962,26 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
             Promise.all(readers).then(items => setDuringPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
             e.target.value = '';
           }}/>
-          <button onClick={() => document.getElementById('fm-during-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Add photo
-          </button>
+          <input type="file" id={'fm-during-upload-'+wo.id} accept="image/*" multiple style={{display:'none'}} onChange={e => {
+            const files = Array.from(e.target.files || []);
+            const readers = files.map(file => new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = ev => resolve({id:'DP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'During', capturedAt: new Date().toISOString()});
+              reader.readAsDataURL(file);
+            }));
+            Promise.all(readers).then(items => setDuringPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            e.target.value = '';
+          }}/>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <button onClick={() => document.getElementById('fm-during-camera-'+wo.id).click()} style={{padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Take photo
+            </button>
+            <button onClick={() => document.getElementById('fm-during-upload-'+wo.id).click()} style={{padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload from phone
+            </button>
+          </div>
           {(duringPhotosByWo[wo.id] || []).length > 0 && (
             <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6,marginTop:10}}>
               {(duringPhotosByWo[wo.id] || []).map((p, idx) => (
@@ -21963,34 +21997,32 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
 
         {/* Materials log */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Materials Used</div>
-          {materials.length > 0 && (
-            <div style={{marginBottom:10}}>
-              {materials.map((m, idx) => (
-                <div key={idx} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:'#faf8f6',borderRadius:6,marginBottom:4,fontSize:12}}>
-                  <span>{m.name} <span style={{color:'#a89a92'}}>· {m.qty} {m.unit}</span></span>
-                  <button onClick={() => setExecutionMaterials(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)}))} style={{background:'none',border:'none',color:'#c0392b',cursor:'pointer',fontSize:14,padding:'0 4px'}}>×</button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr auto',gap:6}}>
-            <input value={materialDraft.name} onChange={e => setMaterialDraft({...materialDraft, name: e.target.value})} placeholder="Item name" style={{padding:'8px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none'}}/>
-            <input type="number" value={materialDraft.qty} min={1} onChange={e => setMaterialDraft({...materialDraft, qty: parseInt(e.target.value)||1})} style={{padding:'8px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none'}}/>
-            <select value={materialDraft.unit} onChange={e => setMaterialDraft({...materialDraft, unit: e.target.value})} style={{padding:'8px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none'}}>
-              <option>pc</option><option>m</option><option>kg</option><option>L</option><option>set</option>
-            </select>
-            <button onClick={() => {
-              if (!materialDraft.name.trim()) { showToast('Enter item name'); return; }
-              setExecutionMaterials(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), materialDraft]}));
-              setMaterialDraft({name:'', qty:1, unit:'pc'});
-            }} style={{padding:'8px 12px',background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer'}}>+</button>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em'}}>Materials Used</div>
+            <span style={{fontSize:11,color:'#a89a92'}}>{materials.length} {materials.length === 1 ? 'item':'items'}</span>
           </div>
+          {materials.length === 0 && (
+            <div style={{fontSize:12,color:'#a89a92',padding:'8px 0',textAlign:'center',marginBottom:6}}>No materials yet — tap "+ Add material" below.</div>
+          )}
+          {materials.map((m, idx) => (
+            <div key={idx} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr auto',gap:6,marginBottom:6,alignItems:'center'}}>
+              <input value={m.name} onChange={e => setExecutionMaterials(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).map((x,i) => i === idx ? {...x, name: e.target.value} : x)}))} placeholder="Item name" style={{padding:'9px 10px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+              <input type="number" value={m.qty} min={1} onChange={e => setExecutionMaterials(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).map((x,i) => i === idx ? {...x, qty: parseInt(e.target.value)||1} : x)}))} placeholder="Qty" style={{padding:'9px 10px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none',boxSizing:'border-box'}}/>
+              <select value={m.unit} onChange={e => setExecutionMaterials(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).map((x,i) => i === idx ? {...x, unit: e.target.value} : x)}))} style={{padding:'9px 10px',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,outline:'none',boxSizing:'border-box',background:'#fff'}}>
+                <option>pc</option><option>m</option><option>kg</option><option>L</option><option>set</option>
+              </select>
+              <button onClick={() => setExecutionMaterials(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)}))} style={{padding:'8px 10px',background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',lineHeight:1}}>×</button>
+            </div>
+          ))}
+          <button onClick={() => setExecutionMaterials(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), {name:'', qty:1, unit:'pc'}]}))} style={{width:'100%',marginTop:6,padding:'10px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add material
+          </button>
         </div>
 
         {/* Execution actions */}
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',flexDirection:'column',gap:8,zIndex:50}}>
-          <button onClick={() => { setCloseoutForm({workDone: ''}); setPage('closeout'); }} style={{padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Submit Close-Out</button>
+          <button onClick={() => { setCloseoutForm({workDone: ''}); setPage('closeout'); }} style={{padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Continue to close-out</button>
           <div style={{display:'flex',gap:8}}>
             <button onClick={() => setShowHoldModal(true)} style={{flex:1,padding:11,background:'#fff',color:'#7a5a30',border:'1px solid #d5cfc8',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>On Hold</button>
             <button onClick={() => escalateWO(wo)} style={{flex:1,padding:11,background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>Escalate</button>
@@ -22053,7 +22085,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
           <div style={{fontSize:11,fontWeight:600,color:'#8a7f76',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>After photos <span style={{color:'#c0392b'}}>*</span></div>
           <div style={{fontSize:11,color:'#a89a92',marginBottom:10}}>At least one after-photo is required. Photos will be visible to the resident.</div>
-          <input type="file" id={'fm-after-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
+          <input type="file" id={'fm-after-camera-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
             const files = Array.from(e.target.files || []);
             const readers = files.map(file => new Promise(resolve => {
               const reader = new FileReader();
@@ -22063,10 +22095,26 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
             Promise.all(readers).then(items => setAfterPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
             e.target.value = '';
           }}/>
-          <button onClick={() => document.getElementById('fm-after-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Add after photo
-          </button>
+          <input type="file" id={'fm-after-upload-'+wo.id} accept="image/*" multiple style={{display:'none'}} onChange={e => {
+            const files = Array.from(e.target.files || []);
+            const readers = files.map(file => new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = ev => resolve({id:'AP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'After', capturedAt: new Date().toISOString()});
+              reader.readAsDataURL(file);
+            }));
+            Promise.all(readers).then(items => setAfterPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            e.target.value = '';
+          }}/>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+            <button onClick={() => document.getElementById('fm-after-camera-'+wo.id).click()} style={{padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Take photo
+            </button>
+            <button onClick={() => document.getElementById('fm-after-upload-'+wo.id).click()} style={{padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload from phone
+            </button>
+          </div>
           {afterPhotos.length > 0 && (
             <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
               {afterPhotos.map((p, idx) => (
@@ -22116,18 +22164,18 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
             if (afterPhotos.length === 0) { showToast('At least one after-photo is required'); return; }
             if (!closeoutForm.workDone.trim()) { showToast('Please describe the work done'); return; }
             setShowCompleteConfirm(true);
-          }} style={{flex:2,padding:14,background: valid ? '#2d6a4f':'#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor: valid ? 'pointer':'default'}}>Mark as completed</button>
+          }} style={{flex:2,padding:14,background: valid ? '#2d6a4f':'#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor: valid ? 'pointer':'default'}}>Close service request</button>
         </div>
 
         {/* Complete confirmation */}
         {showCompleteConfirm && (
           <div onClick={() => setShowCompleteConfirm(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
             <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:24,width:'100%',maxWidth:360}}>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Mark as completed?</div>
-              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>This will notify the resident that the job is done and share the after-photos. The resident can confirm or report an issue.</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Close service request?</div>
+              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>This will mark the order as <strong>Done</strong>, notify the resident, and share the after-photos. The resident can then confirm or report an issue.</div>
               <div style={{display:'flex',gap:8}}>
                 <button onClick={() => setShowCompleteConfirm(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back</button>
-                <button onClick={() => { setShowCompleteConfirm(false); submitCloseOut(wo); }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm</button>
+                <button onClick={() => { setShowCompleteConfirm(false); submitCloseOut(wo); }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Close request</button>
               </div>
             </div>
           </div>
@@ -22189,8 +22237,6 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
       <div className="res-content" style={{padding:0}}>
         {page === 'queue' && renderQueue()}
         {page === 'detail' && renderDetail()}
-        {page === 'enroute' && renderEnroute()}
-        {page === 'assessment' && renderAssessment()}
         {page === 'execution' && renderExecution()}
         {page === 'closeout' && renderCloseout()}
         {page === 'success' && renderSuccess()}
@@ -22295,7 +22341,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
 // ---- FM Supervisor App (Mobile) ----
 const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   const { data, setData, showToast } = useApp();
-  const [page, setPage] = useState('dashboard'); // dashboard | queue | team | approvals | woDetail
+  const [page, setPage] = useState('dashboard'); // dashboard | queue | team | approvals | woDetail | profile
   const [activeWoId, setActiveWoId] = useState(null);
   const [queueFilter, setQueueFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -22303,6 +22349,9 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [showSupTechChat, setShowSupTechChat] = useState(null); // woId
   const [supTechChatDraft, setSupTechChatDraft] = useState('');
+  const [showTechProfile, setShowTechProfile] = useState(null); // techId for the profile sheet
+  const [showDirectChat, setShowDirectChat] = useState(null); // techId for direct (non-WO) chat
+  const [directChatDraft, setDirectChatDraft] = useState('');
   const [now, setNow] = useState(Date.now());
 
   // Live clock for SLA / job timers
@@ -22367,36 +22416,66 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   };
 
   // Build a timeline of events per spec § 5.6
+  // 10-step fixed timeline — always renders all steps with done/current/upcoming states
   const buildTimeline = (wo) => {
-    const events = [];
-    const submittedAt = wo.date + ' · ' + (wo.time || '—');
-    events.push({ key:'submitted', label:'Request submitted by resident', ts: submittedAt, color:'#a89a92' });
-    if (wo.assignedTo && wo.assignedAt) {
-      const tech = fmUsers.find(u => u.id === wo.assignedTo);
-      events.push({ key:'assigned', label:'Assigned to ' + (tech ? tech.name : 'technician'), ts: FmHelpers.timeAgo(wo.assignedAt) || wo.assignedAt, color:'#3a5a8a' });
-    }
-    if (wo.assignedTo && !wo.acceptedAt && (wo.woStatus === 'Assigned' || wo.woStatus === 'Pending Approval')) {
-      events.push({ key:'awaiting', label:'Awaiting technician confirmation', ts:'', color:'#b08a4a', pulse:true });
-    }
-    if (wo.rejectedAt) {
-      events.push({ key:'rejected', label:'Technician rejected — ' + (wo.rejectedReason || 'no reason'), ts: FmHelpers.timeAgo(wo.rejectedAt), color:'#c0392b', note: wo.rejectedComment });
-    }
-    if (wo.acceptedAt) {
-      const tech = fmUsers.find(u => u.id === wo.assignedTo);
-      events.push({ key:'accepted', label:'Technician accepted' + (tech ? ' (' + tech.name + ')' : ''), ts: FmHelpers.timeAgo(wo.acceptedAt), color:'#2d6a4f' });
-    }
-    if (wo.arrivedAt) events.push({ key:'arrived', label:'Technician arrived at unit', ts: FmHelpers.timeAgo(wo.arrivedAt), color:'#2d6a4f' });
-    if (wo.assessmentSharedAt) events.push({ key:'assessment', label:'Assessment shared', ts: FmHelpers.timeAgo(wo.assessmentSharedAt), color:'#2d6a4f', note: wo.assessmentDescription });
-    if (wo.startedAt) events.push({ key:'progress', label:'Work in progress', ts: FmHelpers.timeAgo(wo.startedAt), color:'#3a5a8a' });
-    if (wo.holdReason && wo.woStatus === 'On Hold') events.push({ key:'hold', label:'On hold — ' + wo.holdReason, ts:'', color:'#b08a4a', pulse:true });
-    if (wo.resumedAt) events.push({ key:'resumed', label:'Work resumed', ts: FmHelpers.timeAgo(wo.resumedAt), color:'#3a5a8a' });
-    if (wo.completedAt && (isCompleted(wo) || wo.workDone)) {
-      const c = wo.completionTimeMinutes ? ' (' + wo.completionTimeMinutes + ' min)' : '';
-      events.push({ key:'completed', label:'Completed' + c, ts: wo.completedAt, color:'#2d6a4f', note: wo.workDone });
-    }
-    if (wo.ratedAt) events.push({ key:'confirmed', label:'Resident confirmed', ts: FmHelpers.timeAgo(wo.ratedAt), color:'#2d6a4f' });
-    if (wo.reopenedAt) events.push({ key:'reopened', label:'Reopened by resident', ts: FmHelpers.timeAgo(wo.reopenedAt), color:'#c0392b', note: wo.reopenReason });
-    return events;
+    const tech = fmUsers.find(u => u.id === wo.assignedTo);
+    const techName = tech ? tech.name : '—';
+    const st = wo.woStatus;
+    // Compute current step number from status
+    let currentStep = 1;
+    if (st === 'Assigned' || st === 'Pending Approval') currentStep = 3;
+    else if (st === 'Accepted' || st === 'En route') currentStep = 5;
+    else if (st === 'Arrived') currentStep = 6;
+    else if (st === 'Assessment shared') currentStep = 7;
+    else if (st === 'In Progress' || st === 'On Hold') currentStep = 8;
+    else if (st === 'Completed') currentStep = 9;
+    else if (st === 'Done' || st === 'Closed' || st === 'Confirmed' || wo.rating) currentStep = 10;
+    else if (st === 'Reopened') currentStep = 9;
+    // If 'Done' status but no rating yet, awaiting feedback → step 10 is current
+    const ratingDone = !!(wo.rating || wo.autoConfirmed);
+    if (currentStep === 10 && !ratingDone && (st === 'Done' || st === 'Completed')) currentStep = 10; // step 10 still current
+
+    const truncate = (s, n) => {
+      if (!s) return '';
+      const txt = s.replace(/\n/g,' ').trim();
+      return txt.length > n ? txt.slice(0, n).trim() + '…' : txt;
+    };
+    const firstSentence = (s) => {
+      if (!s) return '';
+      const m = s.match(/^[^.!?]+[.!?]?/);
+      return truncate(m ? m[0] : s, 80);
+    };
+
+    const elapsedFromAssigned = wo.assignedAt ? Math.floor((now - new Date(wo.assignedAt).getTime())/60000) : 0;
+    const startedMs = wo.startedAt ? new Date(wo.startedAt).getTime() : 0;
+    const elapsedSec = startedMs ? Math.floor((now - startedMs)/1000) : 0;
+    const liveTimerStr = startedMs ? (Math.floor(elapsedSec/60).toString().padStart(2,'0') + ':' + (elapsedSec%60).toString().padStart(2,'0')) : '';
+
+    const steps = [
+      { id:1, label:'Request submitted by resident', ts: wo.date + ' · ' + (wo.time || '—'), note:'' },
+      { id:2, label:'Assigned to ' + techName, ts: wo.assignedAt ? FmHelpers.timeAgo(wo.assignedAt) : '', note: wo.assignedBy ? 'By ' + wo.assignedBy : '' },
+      { id:3, label:'Awaiting technician confirmation', ts: wo.assignedAt ? FmHelpers.timeAgo(wo.assignedAt) : '', note: (currentStep === 3 && elapsedFromAssigned > 10) ? ('Sent ' + elapsedFromAssigned + ' min ago — no response yet') : '' },
+      { id:4, label:'Technician accepted', ts: wo.acceptedAt ? FmHelpers.timeAgo(wo.acceptedAt) : '', note: wo.acceptedAt && tech ? 'Confirmed by ' + tech.name : '' },
+      { id:5, label:'Technician en route', ts: wo.acceptedAt ? FmHelpers.timeAgo(wo.acceptedAt) : '', note:'' },
+      { id:6, label:'Technician arrived at unit', ts: wo.arrivedAt ? FmHelpers.timeAgo(wo.arrivedAt) : '', note:'' },
+      { id:7, label:'On-site assessment shared', ts: wo.assessmentSharedAt ? FmHelpers.timeAgo(wo.assessmentSharedAt) : '', note: firstSentence(wo.assessmentDescription) },
+      { id:8, label:'Work in progress', ts: wo.startedAt ? FmHelpers.timeAgo(wo.startedAt) : '', note: '', live: currentStep === 8 ? liveTimerStr : '', onHold: st === 'On Hold' ? (wo.holdReason || 'paused') : '' },
+      { id:9, label:'Job completed', ts: wo.completedAt ? wo.completedAt : '', note: firstSentence(wo.workDone) },
+      { id:10, label:'Resident feedback received', ts: wo.ratedAt ? FmHelpers.timeAgo(wo.ratedAt) : (wo.autoConfirmed ? 'auto-confirmed' : ''), note: wo.rating ? ('★'.repeat(Math.floor(wo.rating)) + ' ' + wo.rating.toFixed(1) + ' / 5 — confirmed') : (wo.autoConfirmed ? 'Auto-confirmed — no response' : '') }
+    ];
+
+    // Compute states + reopen note
+    return steps.map(s => {
+      let state = 'upcoming';
+      if (s.id < currentStep) state = 'done';
+      else if (s.id === currentStep) state = 'current';
+      // Reopened — keep step 9 current and add red note on step 10
+      if (st === 'Reopened') {
+        if (s.id <= 9) state = 'done';
+        if (s.id === 10) { state = 'current'; s.reopened = true; s.reopenNote = wo.reopenReason || 'Reopened by resident'; }
+      }
+      return { ...s, state };
+    });
   };
 
   // Time elapsed since submission — for queue cards
@@ -22484,13 +22563,9 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
             <span style={{color:'#7a6f66'}}>Avg time to completion</span>
             <span style={{fontWeight:600,color:'#1a1a1a'}}>{avgMinutes} min</span>
           </div>
-          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #f0eae5',fontSize:13}}>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontSize:13}}>
             <span style={{color:'#7a6f66'}}>SLA breached</span>
             <span style={{fontWeight:600,color: slaBreached.length > 0 ? '#c0392b':'#1a1a1a'}}>{slaBreached.length}</span>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontSize:13}}>
-            <span style={{color:'#7a6f66'}}>Pending sign-off</span>
-            <span style={{fontWeight:600,color:'#1a1a1a'}}>{pendingReview.length}</span>
           </div>
         </div>
 
@@ -22624,12 +22699,12 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
 
   const renderTeam = () => (
     <div style={{padding:'12px 16px',paddingBottom:80}}>
-      <div style={{fontSize:13,color:'#7a6f66',marginBottom:14}}>{technicians.length} technicians on shift</div>
+      <div style={{fontSize:13,color:'#7a6f66',marginBottom:14}}>{technicians.length} technicians on shift · tap a card to view profile</div>
       {technicians.map(t => {
         const techWOs = open.filter(w => w.assignedTo === t.id);
         const stColor = t.status === 'on-shift' ? '#5a6b4f' : t.status === 'on-break' ? '#b08a4a' : '#a89a92';
         return (
-          <div key={t.id} style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div key={t.id} onClick={() => setShowTechProfile(t.id)} style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',cursor:'pointer'}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
               <div style={{width:42,height:42,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600}}>{t.initials}</div>
               <div style={{flex:1}}>
@@ -22640,12 +22715,13 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
                 <div style={{fontSize:11,fontWeight:600,color:stColor}}>● {t.status}</div>
                 <div style={{fontSize:10,color:'#a89a92'}}>{t.shiftStart}–{t.shiftEnd}</div>
               </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c4b8b0" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
             {techWOs.length > 0 && (
               <div style={{paddingTop:8,borderTop:'1px solid #f0eae5'}}>
                 <div style={{fontSize:10,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.04em',marginBottom:6}}>Active ({techWOs.length})</div>
                 {techWOs.slice(0,3).map(w => (
-                  <div key={w.id} onClick={() => { setActiveWoId(w.id); setPage('woDetail'); }} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',fontSize:12,cursor:'pointer'}}>
+                  <div key={w.id} onClick={(e) => { e.stopPropagation(); setActiveWoId(w.id); setPage('woDetail'); }} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',fontSize:12,cursor:'pointer'}}>
                     <span>{w.type} · {w.flat}</span>
                     <span style={{color:FmHelpers.fmStatusColor(w.woStatus),fontWeight:600,fontSize:10}}>{w.woStatus}</span>
                   </div>
@@ -22675,6 +22751,62 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
       ))}
     </div>
   );
+
+  // ---- Supervisor profile screen (Step 7) ----
+  const renderProfile = () => {
+    // Total orders managed = ALL WOs that this supervisor either assigned or has supervisorId tag
+    const totalManaged = (data.serviceRequests || []).filter(s => s.assignedById === user.id || s.assignedBy === user.name).length;
+    // Currently in queue = open/active states on those orders
+    const openStates = ['New','Pending Approval','Assigned','Accepted','En route','Arrived','Assessment shared','In Progress','On Hold'];
+    const currentlyInQueue = (data.serviceRequests || []).filter(s => (s.assignedById === user.id || s.assignedBy === user.name) && openStates.includes(s.status)).length;
+    const queueColor = currentlyInQueue > 0 ? '#185FA5' : '#a89a92';
+    return (
+      <div style={{padding:'12px 16px',paddingBottom:80}}>
+        {/* Header — avatar + name + role */}
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'18px 0 22px'}}>
+          <div style={{width:72,height:72,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:24,marginBottom:12}}>{user.initials}</div>
+          <div style={{fontSize:18,fontWeight:600,color:'#1a1a1a',marginBottom:2}}>{user.name}</div>
+          <div style={{fontSize:12,color:'#7a6f66',marginBottom:6}}>{user.specialty || 'Supervisor'}</div>
+          <div style={{fontSize:11,color:'#a89a92'}}>{user.id} · {user.zone || 'Operations'}</div>
+        </div>
+
+        {/* Two metric cards — Total managed + Currently in queue */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+          <div style={{background:'#faf8f6',borderRadius:12,padding:16,border:'1px solid #ebe7e3'}}>
+            <div style={{fontSize:13,color:'#7a6f66',marginBottom:6}}>Total orders managed</div>
+            <div style={{fontSize:28,fontWeight:500,color:'#1a1a1a',fontFeatureSettings:"'tnum' 1",lineHeight:1.1}}>{totalManaged.toLocaleString()}</div>
+          </div>
+          <div style={{background:'#faf8f6',borderRadius:12,padding:16,border:'1px solid #ebe7e3'}}>
+            <div style={{fontSize:13,color:'#7a6f66',marginBottom:6}}>Currently in queue</div>
+            <div style={{fontSize:28,fontWeight:500,color:queueColor,fontFeatureSettings:"'tnum' 1",lineHeight:1.1}}>{currentlyInQueue}</div>
+          </div>
+        </div>
+
+        {/* Profile details */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:14,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Profile</div>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid #f0eae5',fontSize:13}}>
+            <span style={{color:'#7a6f66'}}>Phone</span>
+            <span style={{fontWeight:500,color:'#1a1a1a'}}>{user.phone || '—'}</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid #f0eae5',fontSize:13}}>
+            <span style={{color:'#7a6f66'}}>Shift</span>
+            <span style={{fontWeight:500,color:'#1a1a1a'}}>{user.shiftStart} – {user.shiftEnd}</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',fontSize:13}}>
+            <span style={{color:'#7a6f66'}}>Zone</span>
+            <span style={{fontWeight:500,color:'#1a1a1a'}}>{user.zone || 'All Properties'}</span>
+          </div>
+        </div>
+
+        {/* Settings / actions */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:14,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div onClick={onSwitchRole} style={{padding:'12px 4px',cursor:'pointer',fontSize:13,color:'#4a6fa5',fontWeight:500,borderBottom:'1px solid #f0eae5'}}>Switch role</div>
+          <div onClick={onSignOut} style={{padding:'12px 4px',cursor:'pointer',fontSize:13,color:'#8b4a42',fontWeight:500}}>Sign out</div>
+        </div>
+      </div>
+    );
+  };
 
   const renderWoDetail = () => {
     if (!activeWO) return null;
@@ -22919,30 +23051,55 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
           </div>
         )}
 
-        {/* Live progress timeline */}
-        {events.length > 0 && (
-          <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:12}}>Progress timeline</div>
-            <div>
-              {events.map((e, idx) => {
-                const last = idx === events.length - 1;
-                return (
-                  <div key={e.key+idx} style={{display:'flex',gap:12}}>
-                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
-                      <div style={{width:14,height:14,borderRadius:'50%',background:e.color,boxShadow: e.pulse ? '0 0 0 4px '+e.color+'33' : 'none'}}/>
-                      {!last && <div style={{width:2,flex:1,minHeight:24,background:'#e8e3de'}}/>}
-                    </div>
-                    <div style={{flex:1,paddingBottom: last ? 0 : 14}}>
-                      <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',lineHeight:1.4}}>{e.label}</div>
-                      {e.ts && <div style={{fontSize:10,color:'#a89a92',marginTop:2}}>{e.ts}</div>}
-                      {e.note && <div style={{fontSize:11,color:'#7a6f66',marginTop:4,padding:'6px 8px',background:'#faf8f6',borderRadius:6,lineHeight:1.4}}>{e.note}</div>}
-                    </div>
+        {/* Progress timeline — fixed 10 steps with done/current/upcoming colors */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:12}}>Progress timeline</div>
+          <div>
+            {events.map((e, idx) => {
+              const last = idx === events.length - 1;
+              const dotColor = e.state === 'done' ? '#1D9E75' : e.state === 'current' ? '#C9974A' : '#B4B2A9';
+              const labelColor = e.state === 'upcoming' ? '#a89a92' : '#1a1a1a';
+              const labelWeight = e.state === 'upcoming' ? 500 : 600;
+              const nextDoneOrCurrent = e.state === 'done';
+              const lineStyle = nextDoneOrCurrent
+                ? { width:2, flex:1, minHeight:28, background:'#1D9E75' }
+                : { width:0, flex:1, minHeight:28, borderLeft:'2px dashed #d5cfc8' };
+              return (
+                <div key={e.id} style={{display:'flex',gap:12}}>
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,minWidth:14}}>
+                    <div style={{width:14,height:14,borderRadius:'50%',background:dotColor,boxShadow: e.state === 'current' ? '0 0 0 4px ' + dotColor + '33' : 'none',flexShrink:0}}/>
+                    {!last && <div style={lineStyle}/>}
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{flex:1,paddingBottom: last ? 0 : 14}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                      <div style={{fontSize:12,fontWeight:labelWeight,color:labelColor,lineHeight:1.4}}>
+                        <span style={{display:'inline-block',width:18,color:e.state==='upcoming'?'#c4b8b0':'#a89a92',fontVariantNumeric:'tabular-nums',fontWeight:500}}>{e.id}.</span>
+                        {e.label}
+                      </div>
+                      {e.state !== 'upcoming' && e.ts && <div style={{fontSize:10,color:'#a89a92',whiteSpace:'nowrap'}}>{e.ts}</div>}
+                    </div>
+                    {/* Live timer for step 8 when current */}
+                    {e.state === 'current' && e.live && (
+                      <div style={{fontSize:11,color:'#3a5a8a',fontWeight:600,marginTop:4,fontFeatureSettings:"'tnum' 1"}}>● Timer running — {e.live} elapsed</div>
+                    )}
+                    {/* On hold sub-note for step 8 */}
+                    {e.id === 8 && e.onHold && (
+                      <div style={{fontSize:11,color:'#7a6040',marginTop:4,padding:'6px 8px',background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:6,lineHeight:1.4}}>● On hold — {e.onHold}</div>
+                    )}
+                    {/* Reopen sub-note for step 10 */}
+                    {e.reopened && (
+                      <div style={{fontSize:11,color:'#8b3a30',marginTop:4,padding:'6px 8px',background:'#fbeeec',border:'1px solid #e5c6c1',borderRadius:6,lineHeight:1.4}}>● {e.reopenNote}</div>
+                    )}
+                    {/* Standard note */}
+                    {e.note && !e.reopened && (
+                      <div style={{fontSize:11,color: e.state === 'upcoming' ? '#c4b8b0' : '#7a6f66',marginTop:4,lineHeight:1.4}}>{e.note}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
         {/* Action bar */}
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
@@ -23004,7 +23161,7 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
     );
   };
 
-  const headerTitle = page === 'dashboard' ? 'Dashboard' : page === 'queue' ? 'All Work Orders' : page === 'team' ? 'Team' : page === 'approvals' ? 'Sign-Offs' : 'Work Order';
+  const headerTitle = page === 'dashboard' ? 'Dashboard' : page === 'queue' ? 'All Work Orders' : page === 'team' ? 'Team' : page === 'approvals' ? 'Sign-Offs' : page === 'profile' ? 'Profile' : 'Work Order';
 
   return (
     <div className="res-app" style={{paddingBottom:60}}>
@@ -23013,7 +23170,7 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
           <div className="res-header-title">FM Executor</div>
           <div className="res-header-unit">{headerTitle} · Supervisor</div>
         </div>
-        <div onClick={onSwitchRole} style={{width:34,height:34,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:12,cursor:'pointer'}} title="Switch role">{user.initials}</div>
+        <div onClick={() => setPage('profile')} style={{width:34,height:34,borderRadius:'50%',background: page === 'profile' ? '#1a1a1a' : '#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:12,cursor:'pointer'}} title="Profile">{user.initials}</div>
       </div>
 
       <div className="res-content" style={{padding:0}}>
@@ -23022,6 +23179,7 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
         {page === 'team' && renderTeam()}
         {page === 'approvals' && renderApprovals()}
         {page === 'woDetail' && renderWoDetail()}
+        {page === 'profile' && renderProfile()}
       </div>
 
       <div className="res-bottom-nav">
@@ -23037,10 +23195,6 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={page==='team'?'#1a1a1a':'#888'} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
           <span>Team</span>
         </div>
-        <div className={`res-nav-item ${page==='approvals'?'active':''}`} onClick={() => setPage('approvals')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={page==='approvals'?'#1a1a1a':'#888'} strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>Sign-offs{pendingReview.length > 0 ? ' · '+pendingReview.length : ''}</span>
-        </div>
       </div>
 
       {photoPreview && (
@@ -23049,6 +23203,135 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
           <img src={photoPreview.dataUrl} style={{maxWidth:'95%',maxHeight:'90vh',objectFit:'contain'}} onClick={e => e.stopPropagation()}/>
         </div>
       )}
+
+      {/* Technician profile sheet (Step 6) */}
+      {showTechProfile && (() => {
+        const t = fmUsers.find(u => u.id === showTechProfile);
+        if (!t) return null;
+        const stColor = t.status === 'on-shift' ? '#5a6b4f' : t.status === 'on-break' ? '#b08a4a' : t.status === 'idle' ? '#a89a92' : '#a89a92';
+        const stLabel = t.status === 'on-shift' ? 'On shift' : t.status === 'on-break' ? 'On break' : t.status === 'idle' ? 'Idle' : 'Off shift';
+        const activeStatuses = ['Assigned','Accepted','Arrived','Assessment shared','In Progress','On Hold'];
+        const activeOrders = (data.serviceRequests || []).filter(s => s.assignedTo === t.id && activeStatuses.includes(s.status));
+        const specialties = (t.specialty || '').split(/\s*\/\s*/).filter(Boolean);
+        const shiftLabel = (() => {
+          const sh = parseInt((t.shiftStart||'').split(':')[0]) || 0;
+          if (sh < 12) return 'Morning';
+          if (sh < 17) return 'Afternoon';
+          return 'Evening';
+        })();
+        return (
+          <div onClick={() => setShowTechProfile(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderTopLeftRadius:18,borderTopRightRadius:18,padding:'18px 20px 24px',width:'100%',maxWidth:480,maxHeight:'88vh',overflowY:'auto'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
+                <div style={{width:36,height:4,background:'#d5cfc8',borderRadius:2,margin:'0 auto'}}/>
+                <button onClick={() => setShowTechProfile(null)} style={{position:'absolute',top:14,right:14,background:'none',border:'none',cursor:'pointer',color:'#a89a92',fontSize:22,padding:4,lineHeight:1}}>&times;</button>
+              </div>
+              {/* Header */}
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginBottom:18}}>
+                <div style={{width:56,height:56,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:18,marginBottom:10}}>{t.initials}</div>
+                <div style={{fontSize:16,fontWeight:600,color:'#1a1a1a',marginBottom:2}}>{t.name}</div>
+                <div style={{fontSize:11,color:'#a89a92',marginBottom:6}}>{t.id}</div>
+                <div style={{fontSize:12,color:'#7a6f66',marginBottom:8}}>{t.specialty.split('/')[0].trim().includes('Senior') ? 'Senior Technician' : 'Technician'}</div>
+                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,fontWeight:600,color:stColor}}>● {stLabel}</div>
+              </div>
+
+              {/* Details */}
+              <div style={{background:'#faf8f6',borderRadius:12,padding:14,marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.04em',marginBottom:8}}>Speciality</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:14}}>
+                  {specialties.map((s, i) => (
+                    <span key={i} style={{padding:'4px 10px',borderRadius:14,background:'#e8e3de',color:'#5a5045',fontSize:11,fontWeight:600}}>{s}</span>
+                  ))}
+                </div>
+
+                <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.04em',marginBottom:8}}>Working shift</div>
+                <div style={{fontSize:13,color:'#1a1a1a',fontWeight:500,marginBottom:14}}>{shiftLabel} · {t.shiftStart} – {t.shiftEnd}</div>
+
+                <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.04em',marginBottom:8}}>Phone</div>
+                <a href={'tel:'+(t.phone||'').replace(/\s/g,'')} style={{fontSize:13,color:'#3a5a8a',fontWeight:600,textDecoration:'none',display:'inline-flex',alignItems:'center',gap:6,marginBottom:14}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                  {t.phone}
+                </a>
+
+                <button onClick={() => { setShowTechProfile(null); setShowDirectChat(t.id); }} style={{width:'100%',padding:12,background:'#fff',color:'#1a1a1a',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                  Send message
+                </button>
+              </div>
+
+              {/* Active orders */}
+              <div>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                  <span style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>Active orders</span>
+                  <span style={{fontSize:10,padding:'2px 7px',borderRadius:10,background:'#e8e3de',color:'#5a5045',fontWeight:600}}>{activeOrders.length}</span>
+                </div>
+                {activeOrders.length === 0 ? (
+                  <div style={{fontSize:12,color:'#a89a92',padding:'14px 0',textAlign:'center'}}>No active orders right now</div>
+                ) : activeOrders.map(s => (
+                  <div key={s.id} onClick={() => { setShowTechProfile(null); setActiveWoId(s.id); setPage('woDetail'); }} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#faf8f6',borderRadius:8,marginBottom:6,cursor:'pointer',border:'1px solid #ebe7e3'}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a'}}>{s.id} · {s.type}</div>
+                      <div style={{fontSize:10,color:'#a89a92',marginTop:2}}>Unit {s.flat}{s.location ? ' · ' + s.location : ''}</div>
+                    </div>
+                    <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'#fff',color:FmHelpers.fmStatusColor(s.status),textTransform:'uppercase',letterSpacing:'0.04em'}}>{supStatusLabel(s.status)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Direct supervisor↔technician chat (not tied to a WO) */}
+      {showDirectChat && (() => {
+        const t = fmUsers.find(u => u.id === showDirectChat);
+        if (!t) return null;
+        const directMessages = (data.fmDirectMessages && data.fmDirectMessages[t.id]) || [];
+        const sendDirect = () => {
+          const txt = directChatDraft.trim();
+          if (!txt) return;
+          const msg = { id:'DM-'+Date.now(), sender:'supervisor', senderName: user.name, text: txt, ts: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).replace(',',' ·'), read:false };
+          setData(prev => ({...prev, fmDirectMessages: {...(prev.fmDirectMessages||{}), [t.id]: [...((prev.fmDirectMessages||{})[t.id] || []), msg]}}));
+          setDirectChatDraft('');
+        };
+        const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDirect(); } };
+        return (
+          <div onClick={() => { setShowDirectChat(null); setDirectChatDraft(''); }} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'linear-gradient(180deg,#ece4df 0%,#d8ccc4 100%)',width:'100%',maxWidth:480,height:'92vh',borderTopLeftRadius:20,borderTopRightRadius:20,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+              <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(200,188,178,0.3)',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={() => { setShowDirectChat(null); setDirectChatDraft(''); }} style={{background:'none',border:'none',cursor:'pointer',padding:6,color:'#6b5d52'}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div style={{width:38,height:38,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13}}>{t.initials}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a'}}>{t.name}</div>
+                  <div style={{fontSize:11,color:'#7a6f66'}}>Direct message · {t.specialty}</div>
+                </div>
+                <a href={'tel:'+(t.phone||'').replace(/\s/g,'')} style={{padding:'8px 10px',borderRadius:8,background:'#fff',border:'1px solid #d5cfc8',color:'#1a1a1a',textDecoration:'none',fontSize:11,fontWeight:600}}>Call</a>
+              </div>
+              <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:8}}>
+                {directMessages.length === 0 ? (
+                  <div style={{textAlign:'center',color:'#a89a92',fontSize:12,padding:40}}>No messages yet — start the conversation below.</div>
+                ) : directMessages.map((m, idx) => {
+                  const mine = m.sender === 'supervisor';
+                  return (
+                    <div key={m.id || idx} style={{display:'flex',justifyContent: mine ? 'flex-end':'flex-start'}}>
+                      <div style={{maxWidth:'78%',padding:'10px 14px',borderRadius:14,background: mine ? '#3a5a8a' : 'rgba(255,255,255,0.85)',color: mine ? '#fff':'#1a1a1a',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}}>
+                        <div style={{fontSize:13,lineHeight:1.4,whiteSpace:'pre-wrap'}}>{m.text}</div>
+                        <div style={{fontSize:9,color: mine ? 'rgba(255,255,255,0.6)' : '#a89a92',marginTop:4,textAlign:'right'}}>{m.ts}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{padding:'10px 12px',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(200,188,178,0.3)',display:'flex',gap:8,alignItems:'flex-end'}}>
+                <textarea value={directChatDraft} onChange={e => setDirectChatDraft(e.target.value)} onKeyDown={onKey} placeholder={'Message ' + t.name + '…'} rows={1} style={{flex:1,padding:'10px 12px',border:'1px solid #d5cfc8',borderRadius:18,fontSize:13,outline:'none',resize:'none',fontFamily:'inherit',background:'#fff',maxHeight:100}}/>
+                <button onClick={sendDirect} disabled={!directChatDraft.trim()} style={{padding:'10px 16px',borderRadius:18,border:'none',background: directChatDraft.trim() ? '#1a1a1a':'#c4b8b0',color:'#fff',fontSize:13,fontWeight:600,cursor: directChatDraft.trim() ? 'pointer':'default'}}>Send</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Supervisor ↔ Technician chat per WO */}
       {showSupTechChat && (() => {
