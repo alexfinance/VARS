@@ -837,6 +837,17 @@ const formatTime12 = (date) => {
 };
 
 // ==================== DATA STORE ====================
+// Helper — generate compact data-URL SVG photos for demo seeding (keeps file lightweight vs base64 JPGs)
+const _svgPhoto = (label, sub, fg, bg, accent) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">'
+  + '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+bg+'"/><stop offset="1" stop-color="'+(accent||bg)+'"/></linearGradient></defs>'
+  + '<rect width="400" height="300" fill="url(#g)"/>'
+  + '<rect x="40" y="40" width="320" height="220" rx="12" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>'
+  + '<circle cx="200" cy="130" r="34" fill="rgba(255,255,255,0.85)"/>'
+  + '<text x="200" y="200" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="'+fg+'">'+label+'</text>'
+  + (sub ? '<text x="200" y="222" text-anchor="middle" font-family="sans-serif" font-size="11" fill="'+fg+'" opacity="0.85">'+sub+'</text>' : '')
+  + '</svg>'
+);
 const initialData = {
   currentUser: { name: 'Hassan Al-PM', email: 'hassan@pinnaclepm.ae', phone: '+971 50 999 0001', role: 'Property Manager' },
   property: { name: 'VARS Property Management', location: 'Abu Dhabi, UAE', timezone: 'Asia/Dubai (GMT+4)', towers: 5, totalFlats: 4740, occupiedFlats: 4110 },
@@ -873,44 +884,215 @@ const initialData = {
     { id: 5, name: 'Sofia Mendes', flat: 'D-1102', amount: 8420, status: 'Paid', time: '10:15' }
   ],
   serviceRequests: [
-    // === Demo entries for flat B-102 (Nitin Sharma) — full progress + FM photos + rating flow ===
-    { id: 'SR-2001', type: 'AC Repair', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '27 Apr', time: '14:30',
-      status: 'Completed',
+    // ============================================================================
+    // Demo lifecycle for B-102 (Nitin Sharma) — full data: photos, chats, ratings
+    // 5 closed/completed · 1 in-progress · 3 new (assigned)
+    // ============================================================================
+
+    // ---- 1) AC Repair · Closed · 5★ · ~85 min ----
+    { id: 'SR-3001', type: 'AC Repair', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '22 Apr', time: '10:30',
+      status: 'Closed',
       areaType: 'Unit Area', location: 'Bedroom', urgency: 'Urgent',
-      comments: 'AC unit not cooling properly. Strange noise from outdoor compressor.',
-      fmTechnician: { name: 'Ahmed Khan', role: 'Senior HVAC Technician', phone: '+971 4 123 4567', expectedArrival: '14:35' },
-      completedAt: '15:50',
+      comments: 'AC stopped cooling overnight. Outdoor unit making a humming noise even when off. Room temperature at 30°C.',
+      attachments: [
+        { id:'AT-3001-1', name:'ac-front.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Bedroom AC unit','Front cover · stuck thermostat','#fff','#2c4a78','#1a3460') }
+      ],
+      assignedTo: 'TECH-001', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-22T10:33:00Z', acceptedAt: '2026-04-22T10:35:00Z', arrivedAt: '2026-04-22T10:55:00Z',
+      assessmentSharedAt: '2026-04-22T11:10:00Z',
+      assessmentDescription: 'Compressor capacitor failed and thermostat sensor needs recalibration. Will replace capacitor and clean coils.',
+      assessmentEta: '60–90 minutes',
+      beforePhotos: [
+        { id:'BP-3001-1', name:'compressor-before.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Compressor','Capacitor bulged · 22 Apr 11:08','#fff','#7a3a30','#5a2520') }
+      ],
+      fmTechnician: { name: 'Ahmed Khan', role: 'Senior HVAC Technician', phone: '+971 50 111 2233', expectedArrival: '10:55' },
+      completedAt: '12:25', completionTimeMinutes: 85,
+      workDone: 'Replaced compressor capacitor (35µF). Cleaned outdoor coils, recalibrated thermostat sensor. Tested 30 min — cooling normal at 21°C.',
+      materialsUsed: [{name:'Capacitor 35µF', qty:1, unit:'pc'},{name:'Coil cleaner', qty:1, unit:'L'}],
       completionPhotos: [
-        { id:'CP-1', name:'compressor-after.svg', type:'image/svg+xml', dataUrl:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a6b4f"/><stop offset="1" stop-color="#3a4a30"/></linearGradient></defs><rect width="400" height="300" fill="url(#g)"/><rect x="80" y="60" width="240" height="180" rx="10" fill="#fff" opacity="0.9"/><rect x="100" y="80" width="200" height="80" rx="6" fill="#dcd5cd"/><circle cx="200" cy="120" r="28" fill="#928989"/><circle cx="200" cy="120" r="20" fill="#fff"/><text x="200" y="200" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#1a1a1a" font-weight="600">AC Unit — After Service</text><text x="200" y="220" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#5a6b4f">Compressor replaced</text></svg>') },
-        { id:'CP-2', name:'unit-test.svg', type:'image/svg+xml', dataUrl:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#4a6fa5"/><rect x="60" y="60" width="280" height="100" rx="8" fill="#fff" opacity="0.95"/><text x="200" y="100" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#2d6a4f">21°C</text><text x="200" y="130" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#5a6b4f">Cooling normal</text><text x="200" y="200" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#fff">Test Reading</text><text x="200" y="220" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#dde6f0">After repair · 27 Apr 15:48</text></svg>') },
-        { id:'CP-3', name:'service-card.pdf', type:'application/pdf', dataUrl:'data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nCWMQQrCMBQF93kK7+AlmpdmCoVCwUWv4OoDXbQfwf72zjMzL5MZBhB8mEVbgu4gVpmFoLY5cHNiojzCNWHGWi/EpDMyoBs0KV3l13E5n89B9d/0Pue3++bi5h36AXgvFjYKZW5kc3RyZWFtCmVuZG9iago=' }
+        { id:'CP-3001-1', name:'compressor-replaced.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('Compressor — After','New capacitor installed · tested OK','#fff','#5a6b4f','#3a4a30') },
+        { id:'CP-3001-2', name:'cooling-test.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('Cooling test · 21°C','30-min run · normal','#fff','#4a6fa5','#3a5a8a') }
+      ],
+      rating: 5, ratingComment: 'Ahmed arrived earlier than expected and explained the problem clearly. Cooling is back to normal. Highly recommend!', ratedAt: '2026-04-22T13:00:00Z',
+      fmChatMessages: [
+        { id:'M3001-1', sender:'technician', senderName:'Ahmed Khan', text:'On my way. ETA 20 minutes.', ts:'22 Apr · 10:36', read:true },
+        { id:'M3001-2', sender:'resident', text:'Thanks, I am home.', ts:'22 Apr · 10:38', read:true },
+        { id:'M3001-3', sender:'technician', senderName:'Ahmed Khan', text:'Capacitor failure confirmed. Replacement is in the van.', ts:'22 Apr · 11:12', read:true }
       ]
     },
-    { id: 'SR-2002', type: 'Plumbing', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '20 Apr', time: '10:00',
+
+    // ---- 2) Plumbing · Closed · 5★ · ~50 min ----
+    { id: 'SR-3002', type: 'Plumbing', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '23 Apr', time: '09:15',
       status: 'Closed',
       areaType: 'Unit Area', location: 'Kitchen', urgency: 'Normal',
-      comments: 'Kitchen sink draining slowly.',
-      fmTechnician: { name: 'Mahmoud Ali', role: 'Plumbing Specialist', phone: '+971 4 123 4567', expectedArrival: '10:05' },
-      completedAt: '11:20',
-      completionPhotos: [
-        { id:'CP-4', name:'pipe-cleared.svg', type:'image/svg+xml', dataUrl:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#a89a92"/><rect x="50" y="100" width="300" height="100" rx="8" fill="#dcd5cd"/><circle cx="200" cy="150" r="40" fill="#fff"/><circle cx="200" cy="150" r="28" fill="#4a6fa5"/><text x="200" y="240" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#fff">Drainage Restored</text><text x="200" y="260" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#fff">Sink unclogged · pipes flushed</text></svg>') }
-      ],
-      rating: 5, ratingComment: 'Great service, fast response. Mahmoud was very professional.', ratedAt: '2026-04-20T11:35:00.000Z'
-    },
-    { id: 'SR-2003', type: 'Pest Control', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '29 Apr', time: '14:04',
-      status: 'Pending Approval',
-      areaType: 'Unit Area', location: 'Bedroom', urgency: 'Normal',
-      comments: 'Ant trail visible near the bedroom window. Please send pest control team. Trail goes from the corner skirting under the wardrobe.',
+      comments: 'Kitchen sink draining very slowly, water sits in the basin for 5+ minutes. Tried plunger, no improvement.',
       attachments: [
-        { id:'AT-2003-1', name:'ant-trail.svg', type:'image/svg+xml', dataUrl:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8ccc4"/><stop offset="1" stop-color="#a89a92"/></linearGradient></defs><rect width="400" height="300" fill="url(#g)"/><rect x="0" y="220" width="400" height="80" fill="#6b5d52"/><circle cx="60" cy="240" r="3" fill="#1a1a1a"/><circle cx="80" cy="245" r="3" fill="#1a1a1a"/><circle cx="100" cy="240" r="3" fill="#1a1a1a"/><circle cx="120" cy="245" r="3" fill="#1a1a1a"/><circle cx="140" cy="242" r="3" fill="#1a1a1a"/><circle cx="160" cy="247" r="3" fill="#1a1a1a"/><text x="200" y="160" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Bedroom skirting</text><text x="200" y="180" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#6b5d52">Ant trail visible</text></svg>') },
-        { id:'AT-2003-2', name:'wardrobe-corner.svg', type:'image/svg+xml', dataUrl:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#c4b8b0"/><rect x="50" y="40" width="300" height="200" rx="4" fill="#8b6f4a"/><rect x="60" y="50" width="140" height="180" fill="#6b5430"/><rect x="200" y="50" width="140" height="180" fill="#7a5e38"/><line x1="200" y1="50" x2="200" y2="230" stroke="#1a1a1a" stroke-width="2"/><circle cx="190" cy="140" r="3" fill="#dcc888"/><circle cx="210" cy="140" r="3" fill="#dcc888"/><text x="200" y="280" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1a1a1a">Wardrobe — under-corner</text></svg>') }
+        { id:'AT-3002-1', name:'sink-blocked.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Kitchen sink','Standing water · drain blocked','#fff','#4a6680','#2a4660') }
+      ],
+      assignedTo: 'TECH-002', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-23T09:20:00Z', acceptedAt: '2026-04-23T09:22:00Z', arrivedAt: '2026-04-23T09:40:00Z',
+      assessmentSharedAt: '2026-04-23T09:48:00Z',
+      assessmentDescription: 'Grease and food debris build-up in P-trap. Will dismantle, clean, and flush with enzyme cleaner.',
+      assessmentEta: '40–55 minutes',
+      beforePhotos: [
+        { id:'BP-3002-1', name:'p-trap-before.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('P-trap','Heavy grease build-up','#fff','#7a5a30','#5a3a10') }
+      ],
+      fmTechnician: { name: 'Mahmoud Ali', role: 'Plumbing Specialist', phone: '+971 50 222 3344', expectedArrival: '09:40' },
+      completedAt: '10:35', completionTimeMinutes: 50,
+      workDone: 'Removed and cleaned P-trap. Replaced washer (was hardened). Flushed line with enzyme cleaner. Drainage tested — clears in under 10 seconds.',
+      materialsUsed: [{name:'P-trap washer', qty:1, unit:'pc'},{name:'Enzyme drain cleaner', qty:0.5, unit:'L'}],
+      completionPhotos: [
+        { id:'CP-3002-1', name:'sink-clear.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('Drainage restored','Water clears in 8 seconds','#fff','#5a6b4f','#3a4a30') }
+      ],
+      rating: 5, ratingComment: 'Quick and clean job. Left the area spotless. Will request him again.', ratedAt: '2026-04-23T11:00:00Z',
+      fmChatMessages: [
+        { id:'M3002-1', sender:'technician', senderName:'Mahmoud Ali', text:'I am outside your door.', ts:'23 Apr · 09:39', read:true }
       ]
     },
-    // Demo SR without photos (shows graceful empty state)
-    { id: 'SR-2004', type: 'Plumbing', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '29 Apr', time: '16:08',
-      status: 'Pending Approval',
-      areaType: 'Unit Area', location: 'Kitchen', urgency: 'Normal',
-      comments: 'Kitchen tap dripping continuously. Water collects in the sink overnight.'
+
+    // ---- 3) Electrical · Closed · 4★ · ~70 min ----
+    { id: 'SR-3003', type: 'Electrical', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '24 Apr', time: '14:00',
+      status: 'Closed',
+      areaType: 'Unit Area', location: 'Bedroom', urgency: 'Normal',
+      comments: 'Bedroom outlet near the bed sparks slightly when plugging in the lamp. Switched to another outlet for safety.',
+      attachments: [
+        { id:'AT-3003-1', name:'outlet-issue.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Bedroom outlet','Visible scorch mark','#fff','#7a3a30','#5a2520') }
+      ],
+      assignedTo: 'TECH-003', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-24T14:05:00Z', acceptedAt: '2026-04-24T14:10:00Z', arrivedAt: '2026-04-24T14:45:00Z',
+      assessmentSharedAt: '2026-04-24T14:55:00Z',
+      assessmentDescription: 'Outlet shows scorching from a loose neutral wire. Will isolate the circuit, replace the outlet, and test load.',
+      assessmentEta: '60–75 minutes',
+      beforePhotos: [
+        { id:'BP-3003-1', name:'outlet-before.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Old outlet','Neutral wire loose','#fff','#7a3a30','#5a2520') }
+      ],
+      fmTechnician: { name: 'Rashid Mansoor', role: 'Electrical Specialist', phone: '+971 50 333 4455', expectedArrival: '14:45' },
+      completedAt: '15:55', completionTimeMinutes: 70,
+      workDone: 'Replaced outlet with new 13A unit. Re-terminated all wires (live, neutral, earth). Load test 1500W — no heating. Reset breaker.',
+      materialsUsed: [{name:'13A wall outlet', qty:1, unit:'pc'},{name:'Insulating tape', qty:1, unit:'pc'}],
+      completionPhotos: [
+        { id:'CP-3003-1', name:'outlet-after.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('New outlet','Tested 1500W · safe','#fff','#5a6b4f','#3a4a30') }
+      ],
+      rating: 4, ratingComment: 'Job done well, but technician arrived 30 minutes later than the ETA. Otherwise good.', ratedAt: '2026-04-24T16:30:00Z',
+      fmChatMessages: [
+        { id:'M3003-1', sender:'technician', senderName:'Rashid Mansoor', text:'Apologies, traffic delay. ETA 15 minutes.', ts:'24 Apr · 14:30', read:true },
+        { id:'M3003-2', sender:'resident', text:'No problem, please isolate the circuit before starting.', ts:'24 Apr · 14:32', read:true }
+      ]
+    },
+
+    // ---- 4) Pest Control · Closed · 5★ · ~55 min ----
+    { id: 'SR-3004', type: 'Pest Control', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '25 Apr', time: '11:00',
+      status: 'Closed',
+      areaType: 'Common Area', location: 'Balcony', urgency: 'Normal',
+      comments: 'Wasps building a nest under the balcony railing. Two wasps already entered the living room.',
+      attachments: [
+        { id:'AT-3004-1', name:'wasp-nest.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Balcony railing','Wasp nest forming','#fff','#7a6040','#5a4020') }
+      ],
+      assignedTo: 'TECH-005', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-25T11:05:00Z', acceptedAt: '2026-04-25T11:08:00Z', arrivedAt: '2026-04-25T11:30:00Z',
+      assessmentSharedAt: '2026-04-25T11:38:00Z',
+      assessmentDescription: 'Early-stage paper-wasp nest. Will treat with approved residual spray, remove the nest safely, and seal entry points along the railing seam.',
+      assessmentEta: '45–60 minutes',
+      beforePhotos: [
+        { id:'BP-3004-1', name:'nest-before.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Wasp nest','Under railing · before treatment','#fff','#7a6040','#5a4020') }
+      ],
+      fmTechnician: { name: 'Hassan Karim', role: 'Pest Control Specialist', phone: '+971 50 555 6677', expectedArrival: '11:30' },
+      completedAt: '12:25', completionTimeMinutes: 55,
+      workDone: 'Treated nest with pyrethrin spray, removed and disposed safely in sealed bag. Sealed two entry gaps with silicone. Advised resident to keep balcony door closed for 4 hours.',
+      materialsUsed: [{name:'Pyrethrin residual spray', qty:0.3, unit:'L'},{name:'Silicone sealant', qty:1, unit:'pc'}],
+      completionPhotos: [
+        { id:'CP-3004-1', name:'after-treatment.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('Balcony cleared','Nest removed · gaps sealed','#fff','#5a6b4f','#3a4a30') }
+      ],
+      rating: 5, ratingComment: 'Hassan was very careful and explained the safety period. Excellent work.', ratedAt: '2026-04-25T14:00:00Z',
+      fmChatMessages: []
+    },
+
+    // ---- 5) Carpenter · Completed (awaiting rating — triggers rating widget) · ~95 min ----
+    { id: 'SR-3005', type: 'Carpenter', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '26 Apr', time: '15:30',
+      status: 'Completed',
+      areaType: 'Unit Area', location: 'Bedroom', urgency: 'Normal',
+      comments: 'Wardrobe sliding door has come off the bottom track and will not close properly. Door scrapes the floor when moved.',
+      attachments: [
+        { id:'AT-3005-1', name:'wardrobe-door.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Wardrobe door','Off track · scrapes floor','#fff','#8b6f4a','#6b5430') }
+      ],
+      assignedTo: 'TECH-004', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-26T15:32:00Z', acceptedAt: '2026-04-26T15:34:00Z', arrivedAt: '2026-04-26T16:00:00Z',
+      assessmentSharedAt: '2026-04-26T16:08:00Z',
+      assessmentDescription: 'Bottom track is bent and the roller wheel is worn. Will replace the roller, straighten/replace the track section, and re-align the door.',
+      assessmentEta: '60–90 minutes',
+      beforePhotos: [
+        { id:'BP-3005-1', name:'track-before.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Bottom track','Bent + worn rollers','#fff','#7a5a30','#5a3a10') }
+      ],
+      fmTechnician: { name: 'Vikram Pillai', role: 'Carpentry / General', phone: '+971 50 444 5566', expectedArrival: '16:00' },
+      completedAt: '17:30', completionTimeMinutes: 95,
+      workDone: 'Replaced bottom track section and both roller wheels. Re-aligned door — opens and closes smoothly with no scrape.',
+      materialsUsed: [{name:'Sliding door track 2m', qty:1, unit:'pc'},{name:'Nylon roller wheel', qty:2, unit:'pc'}],
+      completionPhotos: [
+        { id:'CP-3005-1', name:'door-fixed.svg', type:'image/svg+xml', tag:'After', dataUrl:_svgPhoto('Wardrobe door','Tested · slides smoothly','#fff','#5a6b4f','#3a4a30') }
+      ],
+      // No rating yet — triggers the rating widget in the resident app
+      fmChatMessages: [
+        { id:'M3005-1', sender:'technician', senderName:'Vikram Pillai', text:'Will be there in 10 minutes.', ts:'26 Apr · 15:50', read:true }
+      ]
+    },
+
+    // ---- 6) Handyman · In Progress (mid-job) ----
+    { id: 'SR-3006', type: 'Handyman', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '28 Apr', time: '11:00',
+      status: 'In Progress',
+      areaType: 'Unit Area', location: 'Living Room', urgency: 'Normal',
+      comments: 'Curtain rod has come loose from the wall — both wall brackets pulled out. Curtains are currently on the floor.',
+      attachments: [
+        { id:'AT-3006-1', name:'curtain-rod.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Curtain rod','Brackets pulled from wall','#fff','#7a5a30','#5a3a10') }
+      ],
+      assignedTo: 'TECH-001', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-28T10:30:00Z', acceptedAt: '2026-04-28T10:32:00Z', arrivedAt: '2026-04-28T11:00:00Z',
+      assessmentSharedAt: '2026-04-28T11:10:00Z',
+      assessmentDescription: 'Drywall anchors failed (wrong type used originally). Will install heavy-duty toggle anchors and re-mount the rod 2cm higher to use intact drywall.',
+      assessmentEta: '50–70 minutes',
+      beforePhotos: [
+        { id:'BP-3006-1', name:'wall-damage.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Wall mount','Anchor holes torn','#fff','#7a5a30','#5a3a10') },
+        { id:'BP-3006-2', name:'rod-on-floor.svg', type:'image/svg+xml', tag:'Before', dataUrl:_svgPhoto('Rod + curtains','On living-room floor','#fff','#a89a92','#7a6f66') }
+      ],
+      startedAt: '2026-04-28T11:15:00Z',
+      fmTechnician: { name: 'Ahmed Khan', role: 'Senior HVAC Technician', phone: '+971 50 111 2233', expectedArrival: '11:00' },
+      fmChatMessages: [
+        { id:'M3006-1', sender:'technician', senderName:'Ahmed Khan', text:'On my way.', ts:'28 Apr · 10:35', read:true },
+        { id:'M3006-2', sender:'technician', senderName:'Ahmed Khan', text:'I am outside your door.', ts:'28 Apr · 10:58', read:true }
+      ]
+    },
+
+    // ---- 7) Painter · Assigned (new — awaiting tech accept) ----
+    { id: 'SR-3007', type: 'Painter', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '29 Apr', time: '10:00',
+      status: 'Assigned',
+      areaType: 'Unit Area', location: 'Living Room', urgency: 'Normal',
+      comments: 'Long scuff mark along the living-room wall (about 1.5m, near the sofa). Touch-up paint needed.',
+      attachments: [
+        { id:'AT-3007-1', name:'scuff-mark.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Living-room wall','Long scuff near sofa','#fff','#a89a92','#7a6f66') }
+      ],
+      assignedTo: 'TECH-001', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-28T17:00:00Z'
+    },
+
+    // ---- 8) Plumbing · Assigned (urgent — new) ----
+    { id: 'SR-3008', type: 'Plumbing', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '29 Apr', time: '14:30',
+      status: 'Assigned',
+      areaType: 'Unit Area', location: 'Bathroom', urgency: 'Urgent',
+      comments: 'Master bathroom shower mixer leaking from the handle even when fully closed. Water pooling on the floor.',
+      attachments: [
+        { id:'AT-3008-1', name:'shower-mixer.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Shower mixer','Leak from handle','#fff','#4a6680','#2a4660') },
+        { id:'AT-3008-2', name:'floor-water.svg', type:'image/svg+xml', dataUrl:_svgPhoto('Bathroom floor','Water pooling','#fff','#4a6680','#2a4660') }
+      ],
+      assignedTo: 'TECH-001', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-28T17:30:00Z'
+    },
+
+    // ---- 9) AC Repair · Assigned (new) ----
+    { id: 'SR-3009', type: 'AC Repair', flat: 'B-102', resident: 'Nitin Sharma', residentPhone: '+971 50 123 4567', date: '30 Apr', time: '09:30',
+      status: 'Assigned',
+      areaType: 'Unit Area', location: 'Living Room', urgency: 'Normal',
+      comments: 'Living-room AC blowing only mildly cool air. Filter cleaned by me last week with no improvement.',
+      assignedTo: 'TECH-001', assignedBy: 'Omar Al-Hosani', assignedById: 'SUP-001',
+      assignedAt: '2026-04-28T18:00:00Z'
     },
     // === Past (completed) ===
     { id: 'SR-1080', type: 'AC Repair',    flat: 'A-0302', resident: 'Ms. Dina Al-Farsi',       date: '08 Apr', time: '09:00', status: 'Completed', notes: 'Compressor replaced, unit tested OK' },
@@ -20917,7 +21099,7 @@ try {
   }
 } catch(e) { console.log('Supabase init error:', e.message); }
 
-const DATA_VERSION = 'v62';
+const DATA_VERSION = 'v63';
 const loadPersistedData = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -21043,19 +21225,51 @@ const FmHelpers = {
   },
   fmStatusColor: (st) => {
     if (st === 'New' || st === 'Pending Approval') return '#b08a4a';
-    if (st === 'Assigned' || st === 'Scheduled') return '#5a6b4f';
+    if (st === 'Assigned' || st === 'Scheduled') return '#7a6040';
+    if (st === 'Accepted' || st === 'En route') return '#4a6fa5';
+    if (st === 'Arrived' || st === 'Assessment shared') return '#3a5a8a';
     if (st === 'In Progress') return '#4a6fa5';
     if (st === 'On Hold') return '#7a5a30';
     if (st === 'Pending Review') return '#8b6f3a';
     if (st === 'Completed' || st === 'Done' || st === 'Confirmed') return '#2d6a4f';
     if (st === 'Closed') return '#888';
-    if (st === 'Cancelled' || st === 'Reopened') return '#c0392b';
+    if (st === 'Cancelled' || st === 'Reopened' || st === 'Rejected') return '#c0392b';
     return '#5a6b4f';
   },
+  fmStatusLabel: (st) => {
+    if (st === 'Pending Approval' || st === 'New' || st === 'Assigned') return 'Assigned';
+    if (st === 'Accepted') return 'Accepted';
+    if (st === 'Arrived') return 'On site';
+    if (st === 'Assessment shared') return 'Assessed';
+    return st;
+  },
   enrichWorkOrder: (sr) => {
-    // Map a serviceRequest into a work order shape
-    const status = sr.status === 'Pending Approval' ? 'New' : sr.status;
+    // Normalize serviceRequest into work-order shape with derived status
+    let status = sr.status;
+    if (status === 'Pending Approval') status = 'Assigned'; // resident-submitted, awaiting tech accept
     return { ...sr, woStatus: status, priority: FmHelpers.priorityFromUrgency(sr.urgency) };
+  },
+  // Returns the FmTechnician page name to render for a given woStatus
+  techPageForStatus: (st) => {
+    if (st === 'Accepted' || st === 'En route') return 'enroute';
+    if (st === 'Arrived') return 'assessment';
+    if (st === 'Assessment shared') return 'execution';
+    if (st === 'In Progress' || st === 'On Hold') return 'execution';
+    if (['Completed','Closed','Confirmed','Done'].includes(st)) return 'detail';
+    return 'detail';
+  },
+  timeAgo: (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso).getTime();
+    if (isNaN(d)) return '';
+    const diff = Date.now() - d;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    return days + 'd ago';
   }
 };
 
@@ -21081,6 +21295,16 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
   const [now, setNow] = useState(Date.now());
   const [showChatFor, setShowChatFor] = useState(null); // woId currently open in chat
   const [chatDraft, setChatDraft] = useState('');
+  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [rejectForm, setRejectForm] = useState({reason: 'Cannot reach the location', comment: ''});
+  const [assessmentDrafts, setAssessmentDrafts] = useState({}); // { woId: { description, eta, internalNotes } }
+  const [beforePhotosByWo, setBeforePhotosByWo] = useState({}); // { woId: [{...}] }
+  const [afterPhotosByWo, setAfterPhotosByWo] = useState({}); // { woId: [{...}] }
+  const [duringPhotosByWo, setDuringPhotosByWo] = useState({}); // { woId: [{...}] } — internal only
+  const [stepCommentsByWo, setStepCommentsByWo] = useState({}); // { woId: { stepIdx: 'comment text' } }
+  const [stepCommentOpen, setStepCommentOpen] = useState({}); // { woId-stepIdx: bool }
 
   // Live clock for timer / SLA
   useEffect(() => {
@@ -21093,24 +21317,28 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
     if (!shiftStartedAt) setShiftStartedAt(Date.now());
   }, []);
 
-  // My queue = service requests assigned to me
+  // My queue = ONLY service requests explicitly assigned to me by a supervisor
   const myWorkOrders = (data.serviceRequests || [])
-    .filter(s => s.assignedTo === (user && user.id) || (!s.assignedTo && (s.flat || '').startsWith('B-'))) // demo: tech sees flat B-* if unassigned
+    .filter(s => s.assignedTo === (user && user.id))
     .map(FmHelpers.enrichWorkOrder);
 
+  // Single source of truth for tab matching — badge count and visible list always agree
+  const tabMatch = {
+    'All': () => true,
+    'New': (s) => ['New','Assigned','Scheduled','Accepted','En route','Arrived','Assessment shared'].includes(s.woStatus),
+    'In Progress': (s) => s.woStatus === 'In Progress',
+    'On Hold': (s) => s.woStatus === 'On Hold',
+    'Completed': (s) => ['Completed','Closed','Confirmed','Done'].includes(s.woStatus)
+  };
   const tabCounts = {
     'All': myWorkOrders.length,
-    'New': myWorkOrders.filter(s => s.woStatus === 'New').length,
-    'In Progress': myWorkOrders.filter(s => s.woStatus === 'In Progress').length,
-    'On Hold': myWorkOrders.filter(s => s.woStatus === 'On Hold').length,
-    'Completed': myWorkOrders.filter(s => ['Completed','Closed','Confirmed'].includes(s.woStatus)).length
+    'New': myWorkOrders.filter(tabMatch['New']).length,
+    'In Progress': myWorkOrders.filter(tabMatch['In Progress']).length,
+    'On Hold': myWorkOrders.filter(tabMatch['On Hold']).length,
+    'Completed': myWorkOrders.filter(tabMatch['Completed']).length
   };
 
-  let filteredWOs = myWorkOrders;
-  if (filterTab === 'New') filteredWOs = filteredWOs.filter(s => s.woStatus === 'New' || s.woStatus === 'Assigned' || s.woStatus === 'Scheduled');
-  else if (filterTab === 'In Progress') filteredWOs = filteredWOs.filter(s => s.woStatus === 'In Progress');
-  else if (filterTab === 'On Hold') filteredWOs = filteredWOs.filter(s => s.woStatus === 'On Hold');
-  else if (filterTab === 'Completed') filteredWOs = filteredWOs.filter(s => ['Completed','Closed','Confirmed'].includes(s.woStatus));
+  let filteredWOs = myWorkOrders.filter(tabMatch[filterTab] || (() => true));
   if (search) {
     const q = search.toLowerCase();
     filteredWOs = filteredWOs.filter(s => (s.id||'').toLowerCase().includes(q) || (s.flat||'').toLowerCase().includes(q) || (s.type||'').toLowerCase().includes(q) || (s.location||'').toLowerCase().includes(q));
@@ -21156,14 +21384,20 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
   };
 
   const submitCloseOut = (wo) => {
-    const photos = completionPhotosByWo[wo.id] || [];
+    const afterPhotos = afterPhotosByWo[wo.id] || [];
+    const beforePhotos = beforePhotosByWo[wo.id] || (wo.beforePhotos || []);
+    const duringPhotos = duringPhotosByWo[wo.id] || [];
     setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {
       ...s,
       status:'Completed',
       completedAt: new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}),
       workDone: closeoutForm.workDone,
       materialsUsed: executionMaterials[wo.id] || [],
-      completionPhotos: [...(s.completionPhotos || []), ...photos],
+      // Resident sees Before + After only (per spec)
+      completionPhotos: [...beforePhotos, ...afterPhotos],
+      // Internal-only photos preserved separately
+      duringPhotos: duringPhotos,
+      checklistComments: stepCommentsByWo[wo.id] || {},
       fmTechnician: { name: user.name, role: user.specialty, phone: user.phone, expectedArrival: s.time || '—' }
     } : s)}));
     setCloseoutForm({workDone:''});
@@ -21208,28 +21442,37 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           ))}
         </div>
 
+        {/* My assigned tasks header */}
+        <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',marginBottom:10}}>My assigned tasks <span style={{fontWeight:400,color:'#a89a92'}}>· {filteredWOs.length}</span></div>
+
         {/* Work order list */}
         {filteredWOs.length === 0 ? (
-          <div style={{textAlign:'center',padding:40,color:'#a89a92',fontSize:13}}>No work orders match this filter.</div>
+          <div style={{textAlign:'center',padding:40,color:'#a89a92',fontSize:13}}>No tasks assigned in this filter.</div>
         ) : filteredWOs.map(wo => {
           const pc = FmHelpers.prColor(wo.priority);
-          const elapsedMin = Math.floor((Date.now() - new Date(wo.createdAt || (FmHelpers.parseDate(wo.date)+'T'+(wo.time||'00:00')+':00')).getTime()) / 60000);
+          const showAssignedBanner = ['Assigned','New','Pending Approval'].includes(wo.woStatus);
           return (
-            <div key={wo.id} onClick={() => { setActiveWoId(wo.id); setPage('detail'); }} style={{background:'rgba(255,255,255,0.7)',backdropFilter:'blur(8px)',borderRadius:14,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 1px 6px rgba(120,100,90,0.05)',cursor:'pointer'}}>
-              <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <div key={wo.id} onClick={() => { setActiveWoId(wo.id); setPage(FmHelpers.techPageForStatus(wo.woStatus)); }} style={{background:'rgba(255,255,255,0.7)',backdropFilter:'blur(8px)',borderRadius:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 1px 6px rgba(120,100,90,0.05)',cursor:'pointer',overflow:'hidden'}}>
+              {showAssignedBanner && wo.assignedBy && (
+                <div style={{background:'#eef2f7',color:'#3a5a8a',padding:'7px 14px',fontSize:11,fontWeight:600,display:'flex',alignItems:'center',gap:6,borderBottom:'1px solid #d6e0eb'}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6M19 8v6"/></svg>
+                  Assigned by {wo.assignedBy} · {FmHelpers.timeAgo(wo.assignedAt) || 'recently'}
+                </div>
+              )}
+              <div style={{padding:14,display:'flex',alignItems:'center',gap:12}}>
                 <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b5d52" strokeWidth="1.5"><path d={FmHelpers.catIcon(wo.type)}/></svg>
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2,flexWrap:'wrap'}}>
                     <span style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{wo.type}</span>
                     <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
                   </div>
-                  <div style={{fontSize:11,color:'#7a6f66',marginBottom:2}}>Unit {wo.flat} · {wo.location || '—'}</div>
-                  <div style={{fontSize:10,color:'#a89a92'}}>{wo.id} · {wo.date} {wo.time || ''}</div>
+                  <div style={{fontSize:11,color:'#7a6f66',marginBottom:2}}>Unit {wo.flat}{wo.resident ? ' · ' + wo.resident : ''}</div>
+                  <div style={{fontSize:10,color:'#a89a92'}}>{wo.id} · {wo.location || '—'}</div>
                 </div>
-                <div style={{textAlign:'right'}}>
-                  <div style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{wo.woStatus}</div>
+                <div style={{textAlign:'right',flexShrink:0}}>
+                  <div style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{FmHelpers.fmStatusLabel(wo.woStatus)}</div>
                 </div>
               </div>
             </div>
@@ -21261,12 +21504,26 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
             <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
-            <span style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{wo.woStatus}</span>
+            <span style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{FmHelpers.fmStatusLabel(wo.woStatus)}</span>
           </div>
           <div style={{fontSize:18,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>{wo.type}</div>
           <div style={{fontSize:12,color:'#7a6f66'}}>Unit {wo.flat} · {wo.areaType || ''}{wo.areaType && wo.location ? ' — ' : ''}{wo.location || ''}</div>
           <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>Submitted {wo.date} · {wo.time || '—'}</div>
         </div>
+
+        {/* Assigned-by panel */}
+        {wo.assignedBy && (
+          <div style={{background:'#eef2f7',border:'1px solid #d6e0eb',borderRadius:14,padding:14,marginBottom:12,display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:38,height:38,borderRadius:'50%',background:'#3a5a8a',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13}}>
+              {wo.assignedBy.split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,fontWeight:600,color:'#3a5a8a',textTransform:'uppercase',letterSpacing:'0.04em',marginBottom:2}}>Assigned by</div>
+              <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{wo.assignedBy}</div>
+              <div style={{fontSize:11,color:'#7a6f66'}}>Supervisor · {FmHelpers.timeAgo(wo.assignedAt) || 'today'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Resident description + photos */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
@@ -21332,17 +21589,23 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           <textarea value={executionNotes[wo.id] || ''} onChange={e => setExecutionNotes(prev => ({...prev, [wo.id]: e.target.value}))} placeholder="Add internal note..." rows={2} style={{width:'100%',padding:8,border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
         </div>
 
-        {/* Action buttons */}
+        {/* Action buttons — depend on woStatus */}
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
-          {wo.woStatus === 'In Progress' ? (
-            <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Resume Execution</button>
-          ) : ['Completed','Closed','Confirmed'].includes(wo.woStatus) ? (
-            <div style={{flex:1,padding:14,background:'#eef0eb',color:'#5a6b4f',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>Work order completed</div>
-          ) : (
+          {['Assigned','New','Pending Approval'].includes(wo.woStatus) ? (
             <>
-              <button onClick={() => startWork(wo)} style={{flex:1,padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Start Work</button>
-              <button onClick={() => setShowHoldModal(true)} style={{padding:14,background:'#fff',color:'#7a5a30',border:'1px solid #d5cfc8',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>On Hold</button>
+              <button onClick={() => setShowRejectModal(true)} style={{flex:1,padding:14,background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Reject task</button>
+              <button onClick={() => setShowAcceptConfirm(true)} style={{flex:2,padding:14,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Accept task</button>
             </>
+          ) : ['Accepted','En route'].includes(wo.woStatus) ? (
+            <button onClick={() => setPage('enroute')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Continue to en route</button>
+          ) : wo.woStatus === 'Arrived' ? (
+            <button onClick={() => setPage('assessment')} style={{flex:1,padding:14,background:'#3a5a8a',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Continue to assessment</button>
+          ) : ['Assessment shared','In Progress','On Hold'].includes(wo.woStatus) ? (
+            <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>{wo.woStatus === 'On Hold' ? 'Resume work' : 'Continue execution'}</button>
+          ) : ['Completed','Closed','Confirmed'].includes(wo.woStatus) ? (
+            <div style={{flex:1,padding:14,background:'#eef0eb',color:'#2d6a4f',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>WO #{wo.id.replace('SR-','')} closed</div>
+          ) : (
+            <div style={{flex:1,padding:14,background:'#fbeeec',color:'#8b3a30',borderRadius:10,fontSize:12,textAlign:'center',fontWeight:600}}>Status: {wo.woStatus}</div>
           )}
         </div>
 
@@ -21364,6 +21627,225 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
             </div>
           </div>
         )}
+
+        {/* Accept confirmation */}
+        {showAcceptConfirm && (
+          <div onClick={() => setShowAcceptConfirm(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:24,width:'100%',maxWidth:360}}>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Accept this task?</div>
+              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>You are taking responsibility for <strong>{wo.id}</strong>. The resident will be notified that you have been assigned and are on the way.</div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={() => setShowAcceptConfirm(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancel</button>
+                <button onClick={() => {
+                  setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, status:'Accepted', acceptedAt: new Date().toISOString()} : s)}));
+                  setShowAcceptConfirm(false);
+                  showToast('Task accepted — resident notified');
+                  setPage('enroute');
+                }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reject modal */}
+        {showRejectModal && (() => {
+          const minComment = rejectForm.reason === 'Other' ? 20 : 10;
+          const valid = rejectForm.comment.trim().length >= minComment;
+          return (
+            <div onClick={() => setShowRejectModal(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+              <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:20,width:'100%',maxWidth:380,maxHeight:'90vh',overflowY:'auto'}}>
+                <div style={{fontSize:16,fontWeight:600,marginBottom:6,color:'#1a1a1a'}}>Reject task</div>
+                <div style={{fontSize:11,color:'#7a6f66',marginBottom:14}}>The supervisor will be notified and reassign the task. The resident is not informed of rejections.</div>
+                <label style={{fontSize:11,color:'#7a6f66',fontWeight:600,display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.04em'}}>Reason</label>
+                <select value={rejectForm.reason} onChange={e => setRejectForm({...rejectForm, reason: e.target.value})} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',marginBottom:12,background:'#fff'}}>
+                  <option>Cannot reach the location</option>
+                  <option>Missing tools or parts</option>
+                  <option>Outside my skill area</option>
+                  <option>Already on an active urgent job</option>
+                  <option>Personal emergency</option>
+                  <option>Other</option>
+                </select>
+                <label style={{fontSize:11,color:'#7a6f66',fontWeight:600,display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.04em'}}>Comment <span style={{color:'#c0392b'}}>*</span> <span style={{color:'#a89a92',fontWeight:400,textTransform:'none'}}>(min {minComment} chars)</span></label>
+                <textarea value={rejectForm.comment} onChange={e => setRejectForm({...rejectForm, comment: e.target.value})} rows={3} placeholder="Explain to the supervisor..." style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box',marginBottom:14}}/>
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={() => setShowRejectModal(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancel</button>
+                  <button disabled={!valid} onClick={() => {
+                    setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, status:'Rejected', assignedTo: null, rejectedReason: rejectForm.reason, rejectedComment: rejectForm.comment, rejectedAt: new Date().toISOString(), rejectedBy: user.name} : s)}));
+                    setShowRejectModal(false);
+                    setRejectForm({reason:'Cannot reach the location', comment:''});
+                    showToast('Task rejected — supervisor notified');
+                    setActiveWoId(null);
+                    setPage('queue');
+                  }} style={{flex:1,padding:12,background: valid ? '#c0392b':'#e0c4c0',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor: valid ? 'pointer':'default'}}>Submit rejection</button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    );
+  };
+
+  // ---- En Route screen (after Accept) ----
+  const renderEnroute = () => {
+    if (!activeWO) return null;
+    const wo = activeWO;
+    const acceptedAt = wo.acceptedAt ? new Date(wo.acceptedAt).getTime() : Date.now();
+    const elapsedSinceAccept = now - acceptedAt;
+    const arriveLockMs = 60 * 1000; // 1 minute
+    const canArrive = elapsedSinceAccept >= arriveLockMs;
+    const arriveCountdown = Math.max(0, Math.ceil((arriveLockMs - elapsedSinceAccept)/1000));
+    const sendQuick = (text) => {
+      const msg = { id: 'M-'+Date.now(), sender: 'technician', senderName: user.name, text, ts: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).replace(',',' ·'), read: false };
+      setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, fmChatMessages: [...(s.fmChatMessages || []), msg]} : s)}));
+      showToast('Message sent to resident');
+    };
+    return (
+      <div style={{padding:'12px 16px',paddingBottom:140}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+          <button onClick={() => setPage('detail')} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',gap:4,color:'#6b5d52',fontSize:13,fontWeight:500}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Detail
+          </button>
+          <div style={{marginLeft:'auto',fontSize:11,color:'#a89a92'}}>{wo.id}</div>
+        </div>
+
+        <div style={{fontSize:20,fontWeight:600,color:'#1a1a1a',marginBottom:6}}>On the way</div>
+        <div style={{fontSize:13,color:'#7a6f66',marginBottom:16}}>{wo.type} · Unit {wo.flat}</div>
+
+        {/* Destination card */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Destination</div>
+          <div style={{fontSize:15,fontWeight:600,color:'#1a1a1a'}}>Unit {wo.flat}</div>
+          <div style={{fontSize:12,color:'#7a6f66',marginTop:2}}>{wo.location || 'Location not specified'}{wo.areaType ? ' · ' + wo.areaType : ''}</div>
+          <div style={{fontSize:12,color:'#7a6f66',marginTop:2}}>Resident: <span style={{fontWeight:600,color:'#1a1a1a'}}>{wo.resident || '—'}</span></div>
+        </div>
+
+        {/* Contact resident */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Contact resident</div>
+          <div style={{display:'flex',gap:8,marginBottom:12}}>
+            <a href={'tel:'+(wo.residentPhone||'+971501234567').replace(/\s/g,'')} style={{flex:1,padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:13,fontWeight:600,textDecoration:'none',textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              Call
+            </a>
+            <button onClick={() => setShowChatFor(wo.id)} style={{flex:1,padding:'12px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Open chat
+            </button>
+          </div>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Quick messages</div>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {['On my way','Will be there in 10 minutes','I am outside your door'].map(q => (
+              <button key={q} onClick={() => sendQuick(q)} style={{padding:'10px 12px',borderRadius:8,border:'1px solid #ebe7e3',background:'#faf8f6',color:'#1a1a1a',fontSize:12,fontWeight:500,cursor:'pointer',textAlign:'left'}}>{q}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* I have arrived */}
+        <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',zIndex:50}}>
+          <button disabled={!canArrive} onClick={() => {
+            setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, status:'Arrived', arrivedAt: new Date().toISOString()} : s)}));
+            showToast('Marked as arrived — resident notified');
+            setPage('assessment');
+          }} style={{width:'100%',padding:16,background: canArrive ? '#3a5a8a' : '#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:15,fontWeight:600,cursor: canArrive ? 'pointer':'default',letterSpacing:'-0.01em'}}>
+            {canArrive ? 'I have arrived' : 'I have arrived (' + arriveCountdown + 's)'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ---- On-site Assessment screen ----
+  const renderAssessment = () => {
+    if (!activeWO) return null;
+    const wo = activeWO;
+    const draft = assessmentDrafts[wo.id] || {description:'', eta:'', internalNotes:''};
+    const photos = beforePhotosByWo[wo.id] || (wo.beforePhotos || []);
+    const setDraft = (patch) => setAssessmentDrafts(prev => ({...prev, [wo.id]: {...(prev[wo.id]||draft), ...patch}}));
+    const isShared = wo.woStatus === 'Assessment shared' || wo.woStatus === 'In Progress' || wo.woStatus === 'On Hold' || wo.woStatus === 'Completed';
+    const valid = !isShared && photos.length >= 1 && draft.description.trim().length > 0;
+    return (
+      <div style={{padding:'12px 16px',paddingBottom:140}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+          <button onClick={() => setPage('detail')} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',gap:4,color:'#6b5d52',fontSize:13,fontWeight:500}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Detail
+          </button>
+          <div style={{marginLeft:'auto',fontSize:11,color:'#a89a92'}}>{wo.id}</div>
+        </div>
+
+        <div style={{fontSize:20,fontWeight:600,color:'#1a1a1a',marginBottom:6}}>On-site assessment</div>
+        <div style={{fontSize:13,color:'#7a6f66',marginBottom:16}}>Document the issue before starting work. The resident will see your photos and notes.</div>
+
+        {/* Before photos */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#8a7f76',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>Before photos <span style={{color:'#c0392b'}}>*</span></div>
+          <div style={{fontSize:11,color:'#a89a92',marginBottom:10}}>At least one photo is required. Photos will be visible to the resident.</div>
+          <input type="file" id={'fm-before-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
+            const files = Array.from(e.target.files || []);
+            const readers = files.map(file => new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = ev => resolve({id:'BP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'Before', capturedAt: new Date().toISOString()});
+              reader.readAsDataURL(file);
+            }));
+            Promise.all(readers).then(items => setBeforePhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            e.target.value = '';
+          }}/>
+          {!isShared && (
+            <button onClick={() => document.getElementById('fm-before-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Add before photo
+            </button>
+          )}
+          {photos.length > 0 && (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
+              {photos.map((p, idx) => (
+                <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
+                  <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:'#b08a4a',color:'#fff',fontSize:9,fontWeight:700}}>BEFORE</div>
+                  {!isShared && <button onClick={(e) => { e.stopPropagation(); setBeforePhotosByWo(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)})); }} style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',width:18,height:18,borderRadius:'50%',fontSize:11,cursor:'pointer',padding:0,lineHeight:1}}>×</button>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* What is required */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <label style={{fontSize:11,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:6}}>What is required <span style={{color:'#c0392b'}}>*</span></label>
+          <textarea disabled={isShared} value={isShared ? (wo.assessmentDescription || draft.description) : draft.description} onChange={e => setDraft({description: e.target.value})} rows={3} placeholder="Describe what you found and what you will do..." style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box',background: isShared ? '#faf8f6':'#fff'}}/>
+          <label style={{fontSize:11,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginTop:14,marginBottom:6}}>Approximate time to complete</label>
+          <input disabled={isShared} value={isShared ? (wo.assessmentEta || draft.eta) : draft.eta} onChange={e => setDraft({eta: e.target.value})} placeholder="e.g. 45–60 minutes" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',boxSizing:'border-box',background: isShared ? '#faf8f6':'#fff'}}/>
+        </div>
+
+        {/* Internal notes */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <label style={{fontSize:11,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:6}}>Internal notes <span style={{color:'#a89a92',fontWeight:400,textTransform:'none'}}>(FM only — not visible to resident)</span></label>
+          <textarea disabled={isShared} value={draft.internalNotes} onChange={e => setDraft({internalNotes: e.target.value})} rows={2} placeholder="Notes for supervisor..." style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box',background: isShared ? '#faf8f6':'#fff'}}/>
+        </div>
+
+        {/* Action bar */}
+        <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',zIndex:50}}>
+          {isShared ? (
+            <button onClick={() => setPage('execution')} style={{width:'100%',padding:14,background:'#4a6fa5',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Continue to execution</button>
+          ) : (
+            <button disabled={!valid} onClick={() => {
+              const beforePhotos = (beforePhotosByWo[wo.id] || []);
+              setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {
+                ...s,
+                status:'Assessment shared',
+                assessmentDescription: draft.description,
+                assessmentEta: draft.eta,
+                assessmentInternalNotes: draft.internalNotes,
+                assessmentSharedAt: new Date().toISOString(),
+                beforePhotos: beforePhotos
+              } : s)}));
+              showToast('Assessment sent to resident');
+              setPage('execution');
+            }} style={{width:'100%',padding:14,background: valid ? '#3a5a8a':'#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor: valid ? 'pointer':'default'}}>Send assessment to resident</button>
+          )}
+        </div>
       </div>
     );
   };
@@ -21409,53 +21891,70 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           <div style={{fontSize:11,opacity:0.85,marginTop:6}}>SLA window: {fmt(tpl.slaMinutes)}</div>
         </div>
 
-        {/* Checklist */}
+        {/* Start work CTA when assessment was just shared */}
+        {wo.woStatus === 'Assessment shared' && (
+          <div style={{background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:14,padding:14,marginBottom:12,textAlign:'center'}}>
+            <div style={{fontSize:13,color:'#7a6040',marginBottom:10}}>Assessment was shared with the resident. Start the work when ready.</div>
+            <button onClick={() => startWork(wo)} style={{width:'100%',padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Start work</button>
+          </div>
+        )}
+
+        {/* Checklist with expandable per-step comments */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
           <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Work Checklist</div>
           {tpl.checklist.length === 0 ? (
             <div style={{fontSize:12,color:'#a89a92',padding:8}}>No checklist defined for this category.</div>
           ) : tpl.checklist.map((step, idx) => {
             const done = !!checklist[idx];
+            const stepKey = wo.id + '-' + idx;
+            const isOpen = !!stepCommentOpen[stepKey];
+            const stepComment = (stepCommentsByWo[wo.id] || {})[idx] || '';
             return (
-              <label key={idx} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom: idx < tpl.checklist.length-1 ? '1px solid #f0eae5':'none',cursor:'pointer'}}>
-                <input type="checkbox" checked={done} onChange={() => setExecutionChecklist(prev => ({...prev, [wo.id]: {...(prev[wo.id]||{}), [idx]: !done}}))} style={{width:18,height:18,cursor:'pointer'}}/>
-                <span style={{fontSize:13,flex:1,textDecoration: done ? 'line-through':'none',color: done ? '#a89a92':'#1a1a1a'}}>{step}</span>
-              </label>
+              <div key={idx} style={{padding:'10px 0',borderBottom: idx < tpl.checklist.length-1 ? '1px solid #f0eae5':'none'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <input type="checkbox" checked={done} onChange={() => setExecutionChecklist(prev => ({...prev, [wo.id]: {...(prev[wo.id]||{}), [idx]: !done}}))} style={{width:18,height:18,cursor:'pointer'}}/>
+                  <span style={{fontSize:13,flex:1,textDecoration: done ? 'line-through':'none',color: done ? '#a89a92':'#1a1a1a',cursor:'pointer'}} onClick={() => setExecutionChecklist(prev => ({...prev, [wo.id]: {...(prev[wo.id]||{}), [idx]: !done}}))}>{step}</span>
+                  <button onClick={() => setStepCommentOpen(prev => ({...prev, [stepKey]: !isOpen}))} style={{background:'none',border:'none',cursor:'pointer',padding:4,color: stepComment ? '#3a5a8a':'#a89a92',display:'flex',alignItems:'center',gap:3,fontSize:11,fontWeight:500}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    {stepComment ? 'Note' : '+'}
+                  </button>
+                </div>
+                {isOpen && (
+                  <textarea value={stepComment} onChange={e => setStepCommentsByWo(prev => ({...prev, [wo.id]: {...(prev[wo.id]||{}), [idx]: e.target.value}}))} placeholder="Add note for this step (e.g. 'Cartridge was non-standard, used universal replacement')" rows={2} style={{width:'100%',marginTop:8,padding:8,border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+                )}
+              </div>
             );
           })}
         </div>
 
-        {/* Photo capture */}
+        {/* Mid-job photos — During tag, INTERNAL only (not synced to resident) */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em'}}>Photo Evidence</div>
-            <div style={{display:'flex',gap:4,padding:2,background:'#f5f3f0',borderRadius:6}}>
-              {['Before','After'].map(tag => (
-                <button key={tag} onClick={() => setPhotoTag(tag)} style={{padding:'4px 10px',borderRadius:4,border:'none',background: photoTag===tag ? '#928989':'transparent',color: photoTag===tag ? '#fff':'#6b5d52',fontSize:11,fontWeight:600,cursor:'pointer'}}>{tag}</button>
-              ))}
-            </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em'}}>Mid-job photos</div>
+            <span style={{fontSize:9,color:'#a89a92',padding:'2px 6px',borderRadius:4,background:'#f5f3f0',fontWeight:500}}>Internal only</span>
           </div>
-          <input type="file" id={'fm-photo-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
+          <div style={{fontSize:11,color:'#a89a92',marginBottom:10}}>Tagged "During" — for supervisor and audit. Not visible to the resident.</div>
+          <input type="file" id={'fm-during-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
             const files = Array.from(e.target.files || []);
             const readers = files.map(file => new Promise(resolve => {
               const reader = new FileReader();
-              reader.onload = ev => resolve({id:'CP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: photoTag, capturedAt: new Date().toISOString()});
+              reader.onload = ev => resolve({id:'DP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'During', capturedAt: new Date().toISOString()});
               reader.readAsDataURL(file);
             }));
-            Promise.all(readers).then(items => setCompletionPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            Promise.all(readers).then(items => setDuringPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
             e.target.value = '';
           }}/>
-          <button onClick={() => document.getElementById('fm-photo-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+          <button onClick={() => document.getElementById('fm-during-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Capture {photoTag} Photo
+            Add photo
           </button>
-          {photos.length > 0 && (
+          {(duringPhotosByWo[wo.id] || []).length > 0 && (
             <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6,marginTop:10}}>
-              {photos.map((p, idx) => (
+              {(duringPhotosByWo[wo.id] || []).map((p, idx) => (
                 <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
                   <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:p.tag==='Before' ? '#b08a4a':'#5a6b4f',color:'#fff',fontSize:9,fontWeight:700,letterSpacing:'0.04em'}}>{p.tag}</div>
-                  <button onClick={(e) => { e.stopPropagation(); setCompletionPhotosByWo(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)})); }} style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',width:18,height:18,borderRadius:'50%',fontSize:11,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:'#4a6fa5',color:'#fff',fontSize:9,fontWeight:700}}>DURING</div>
+                  <button onClick={(e) => { e.stopPropagation(); setDuringPhotosByWo(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)})); }} style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',width:18,height:18,borderRadius:'50%',fontSize:11,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
                 </div>
               ))}
             </div>
@@ -21522,12 +22021,17 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
   const renderCloseout = () => {
     if (!activeWO) return null;
     const wo = activeWO;
-    const photos = completionPhotosByWo[wo.id] || [];
+    const beforePhotos = beforePhotosByWo[wo.id] || (wo.beforePhotos || []);
+    const afterPhotos = afterPhotosByWo[wo.id] || [];
     const materials = executionMaterials[wo.id] || [];
     const startedMs = executionTimers[wo.id] || (wo.startedAt ? new Date(wo.startedAt).getTime() : Date.now());
     const elapsedMs = now - startedMs;
+    const tpl = (data.fmCategoryTemplates || {})[wo.type] || {checklist:[]};
+    const checklist = executionChecklist[wo.id] || {};
+    const checklistComplete = tpl.checklist.length === 0 || tpl.checklist.every((_, i) => checklist[i]);
+    const valid = closeoutForm.workDone.trim().length > 0 && afterPhotos.length >= 1 && checklistComplete;
     return (
-      <div style={{padding:'12px 16px',paddingBottom:120}}>
+      <div style={{padding:'12px 16px',paddingBottom:140}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
           <button onClick={() => setPage('execution')} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',gap:4,color:'#6b5d52',fontSize:13,fontWeight:500}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -21538,26 +22042,67 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
 
         <div style={{fontSize:20,fontWeight:600,color:'#1a1a1a',marginBottom:14}}>Close-Out Summary</div>
 
+        {/* Checklist gating warning */}
+        {!checklistComplete && (
+          <div style={{padding:12,background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:10,marginBottom:12,fontSize:12,color:'#7a6040'}}>
+            ⚠ Some checklist steps are still open. Complete or mark N/A all steps before close-out.
+          </div>
+        )}
+
+        {/* After photos — required */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <label style={{fontSize:11,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Work Done <span style={{color:'#c0392b'}}>*</span></label>
-          <textarea value={closeoutForm.workDone} onChange={e => setCloseoutForm({...closeoutForm, workDone: e.target.value})} placeholder="Brief plain-language description of the work carried out..." rows={4} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+          <div style={{fontSize:11,fontWeight:600,color:'#8a7f76',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>After photos <span style={{color:'#c0392b'}}>*</span></div>
+          <div style={{fontSize:11,color:'#a89a92',marginBottom:10}}>At least one after-photo is required. Photos will be visible to the resident.</div>
+          <input type="file" id={'fm-after-input-'+wo.id} accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={e => {
+            const files = Array.from(e.target.files || []);
+            const readers = files.map(file => new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = ev => resolve({id:'AP-'+Date.now()+Math.random().toString(36).slice(2,6), name:file.name, type:file.type, dataUrl:ev.target.result, tag: 'After', capturedAt: new Date().toISOString()});
+              reader.readAsDataURL(file);
+            }));
+            Promise.all(readers).then(items => setAfterPhotosByWo(prev => ({...prev, [wo.id]: [...(prev[wo.id]||[]), ...items]})));
+            e.target.value = '';
+          }}/>
+          <button onClick={() => document.getElementById('fm-after-input-'+wo.id).click()} style={{width:'100%',padding:'12px 0',borderRadius:8,border:'1px dashed #c4b8b0',background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Add after photo
+          </button>
+          {afterPhotos.length > 0 && (
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
+              {afterPhotos.map((p, idx) => (
+                <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
+                  <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:'#5a6b4f',color:'#fff',fontSize:9,fontWeight:700}}>AFTER</div>
+                  <button onClick={(e) => { e.stopPropagation(); setAfterPhotosByWo(prev => ({...prev, [wo.id]: (prev[wo.id]||[]).filter((_,i) => i !== idx)})); }} style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',color:'#fff',width:18,height:18,borderRadius:'50%',fontSize:11,cursor:'pointer',padding:0,lineHeight:1}}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Summary */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <label style={{fontSize:11,color:'#8a7f76',fontWeight:600,display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>Summary of work done <span style={{color:'#c0392b'}}>*</span></label>
+          <textarea value={closeoutForm.workDone} onChange={e => setCloseoutForm({...closeoutForm, workDone: e.target.value})} placeholder="Brief plain-language description (e.g. Replaced kitchen tap cartridge. Tested — no leaks)" rows={4} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+        </div>
+
+        {/* Confirm */}
         <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
           <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Confirm</div>
           <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0',borderBottom:'1px solid #f0eae5'}}><span style={{color:'#8a7f76'}}>Time spent</span><span style={{fontWeight:600}}>{fmtElapsed(elapsedMs)}</span></div>
-          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0',borderBottom:'1px solid #f0eae5'}}><span style={{color:'#8a7f76'}}>Photos attached</span><span style={{fontWeight:600}}>{photos.length}</span></div>
-          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0'}}><span style={{color:'#8a7f76'}}>Materials logged</span><span style={{fontWeight:600}}>{materials.length}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0',borderBottom:'1px solid #f0eae5'}}><span style={{color:'#8a7f76'}}>Before / After photos</span><span style={{fontWeight:600}}>{beforePhotos.length} / {afterPhotos.length}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0',borderBottom:'1px solid #f0eae5'}}><span style={{color:'#8a7f76'}}>Materials logged</span><span style={{fontWeight:600}}>{materials.length}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'6px 0'}}><span style={{color:'#8a7f76'}}>Checklist</span><span style={{fontWeight:600,color: checklistComplete ? '#2d6a4f':'#c0392b'}}>{checklistComplete ? 'Complete' : 'Open steps'}</span></div>
         </div>
 
-        {photos.length > 0 && (
+        {(beforePhotos.length > 0 || afterPhotos.length > 0) && (
           <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Before / After Photos</div>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Before / After Review</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
-              {photos.map((p, idx) => (
+              {[...beforePhotos, ...afterPhotos].map((p, idx) => (
                 <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
                   <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:p.tag==='Before' ? '#b08a4a':'#5a6b4f',color:'#fff',fontSize:9,fontWeight:700}}>{p.tag}</div>
+                  <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:p.tag==='Before' ? '#b08a4a':'#5a6b4f',color:'#fff',fontSize:9,fontWeight:700}}>{(p.tag||'').toUpperCase()}</div>
                 </div>
               ))}
             </div>
@@ -21565,12 +22110,28 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
         )}
 
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
-          <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back to Execution</button>
-          <button onClick={() => {
+          <button onClick={() => setPage('execution')} style={{flex:1,padding:14,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back</button>
+          <button disabled={!valid} onClick={() => {
+            if (!checklistComplete) { showToast('Complete or mark N/A all checklist steps'); return; }
+            if (afterPhotos.length === 0) { showToast('At least one after-photo is required'); return; }
             if (!closeoutForm.workDone.trim()) { showToast('Please describe the work done'); return; }
-            submitCloseOut(wo);
-          }} style={{flex:2,padding:14,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>Submit & Notify Resident</button>
+            setShowCompleteConfirm(true);
+          }} style={{flex:2,padding:14,background: valid ? '#2d6a4f':'#c4b8b0',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor: valid ? 'pointer':'default'}}>Mark as completed</button>
         </div>
+
+        {/* Complete confirmation */}
+        {showCompleteConfirm && (
+          <div onClick={() => setShowCompleteConfirm(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:24,width:'100%',maxWidth:360}}>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Mark as completed?</div>
+              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>This will notify the resident that the job is done and share the after-photos. The resident can confirm or report an issue.</div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={() => setShowCompleteConfirm(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back</button>
+                <button onClick={() => { setShowCompleteConfirm(false); submitCloseOut(wo); }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -21611,7 +22172,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
     </div>
   );
 
-  const headerTitle = page === 'queue' ? 'My Queue' : page === 'detail' ? 'Work Order' : page === 'execution' ? 'Execution' : page === 'closeout' ? 'Close-Out' : page === 'success' ? 'Submitted' : 'Profile';
+  const headerTitle = page === 'queue' ? 'My Queue' : page === 'detail' ? 'Task' : page === 'enroute' ? 'En Route' : page === 'assessment' ? 'Assessment' : page === 'execution' ? 'Execution' : page === 'closeout' ? 'Close-Out' : page === 'success' ? 'Submitted' : 'Profile';
 
   return (
     <div className="res-app" style={{paddingBottom:60}}>
@@ -21628,6 +22189,8 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
       <div className="res-content" style={{padding:0}}>
         {page === 'queue' && renderQueue()}
         {page === 'detail' && renderDetail()}
+        {page === 'enroute' && renderEnroute()}
+        {page === 'assessment' && renderAssessment()}
         {page === 'execution' && renderExecution()}
         {page === 'closeout' && renderCloseout()}
         {page === 'success' && renderSuccess()}
@@ -21734,25 +22297,140 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   const { data, setData, showToast } = useApp();
   const [page, setPage] = useState('dashboard'); // dashboard | queue | team | approvals | woDetail
   const [activeWoId, setActiveWoId] = useState(null);
-  const [queueFilter, setQueueFilter] = useState('All'); // All | Unassigned | Urgent | SLA Breached
+  const [queueFilter, setQueueFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [showSupTechChat, setShowSupTechChat] = useState(null); // woId
+  const [supTechChatDraft, setSupTechChatDraft] = useState('');
+  const [now, setNow] = useState(Date.now());
+
+  // Live clock for SLA / job timers
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const fmUsers = (data.fmUsers || []);
   const technicians = fmUsers.filter(u => u.role === 'technician');
 
   const allWOs = (data.serviceRequests || []).map(FmHelpers.enrichWorkOrder);
-  const open = allWOs.filter(w => !['Completed','Closed','Cancelled','Confirmed'].includes(w.woStatus));
-  const urgent = open.filter(w => w.priority === 'Urgent');
-  const unassigned = open.filter(w => !w.assignedTo);
+
+  // Sort by priority then submission time descending — most urgent + recent on top
+  const sortQueue = (list) => list.slice().sort((a,b) => {
+    const pa = a.priority === 'Urgent' ? 0 : a.priority === 'Normal' ? 1 : 2;
+    const pb = b.priority === 'Urgent' ? 0 : b.priority === 'Normal' ? 1 : 2;
+    if (pa !== pb) return pa - pb;
+    return FmHelpers.parseDate(b.date).localeCompare(FmHelpers.parseDate(a.date));
+  });
+
+  // Status grouping per spec
+  const isAwaitingTech = (w) => w.woStatus === 'Assigned' || w.woStatus === 'Pending Approval' || w.woStatus === 'New';
+  const isInProgress = (w) => ['Accepted','En route','Arrived','Assessment shared','In Progress'].includes(w.woStatus);
+  const isOnHold = (w) => w.woStatus === 'On Hold';
+  const isCompleted = (w) => ['Completed','Closed','Confirmed','Done'].includes(w.woStatus);
+  const isOpen = (w) => !['Completed','Closed','Cancelled','Confirmed','Done'].includes(w.woStatus);
+
+  const open = allWOs.filter(isOpen);
+  const urgent = allWOs.filter(w => w.priority === 'Urgent' && isOpen(w));
+  const unassigned = allWOs.filter(w => !w.assignedTo && isOpen(w));
   const slaBreached = open.filter(w => w.slaBreached);
   const pendingReview = allWOs.filter(w => w.woStatus === 'Pending Review' || (w.woStatus === 'Completed' && w.requiresSupervisorSignOff));
+
+  // Status label tailored for supervisor view (per spec § 8)
+  const supStatusLabel = (st) => {
+    if (st === 'Pending Approval' || st === 'New') return 'New';
+    if (st === 'Assigned') return 'Awaiting technician';
+    if (st === 'Accepted') return 'Accepted';
+    if (st === 'Arrived') return 'Arrived';
+    if (st === 'Assessment shared') return 'Assessment shared';
+    if (st === 'In Progress') return 'In progress';
+    if (st === 'On Hold') return 'On hold';
+    if (st === 'Completed') return 'Completed';
+    if (st === 'Closed' || st === 'Confirmed') return 'Confirmed';
+    if (st === 'Rejected') return 'Rejected';
+    if (st === 'Reopened') return 'Reopened';
+    if (st === 'Cancelled') return 'Cancelled';
+    return st;
+  };
+
+  // Specialty match for a category — used by the assignment picker
+  const specialtyMatch = (specialty, category) => {
+    if (!specialty || !category) return false;
+    const s = specialty.toLowerCase(), c = category.toLowerCase();
+    if (s.includes('hvac') && c.includes('ac')) return true;
+    if (s.includes('plumb') && c.includes('plumb')) return true;
+    if (s.includes('electrical') && (c.includes('electric') || c.includes('outlet'))) return true;
+    if (s.includes('pest') && c.includes('pest')) return true;
+    if ((s.includes('handyman') || s.includes('general') || s.includes('carpentry')) && (c.includes('carpenter') || c.includes('handyman') || c.includes('painter') || c.includes('install') || c.includes('move'))) return true;
+    return false;
+  };
+
+  // Build a timeline of events per spec § 5.6
+  const buildTimeline = (wo) => {
+    const events = [];
+    const submittedAt = wo.date + ' · ' + (wo.time || '—');
+    events.push({ key:'submitted', label:'Request submitted by resident', ts: submittedAt, color:'#a89a92' });
+    if (wo.assignedTo && wo.assignedAt) {
+      const tech = fmUsers.find(u => u.id === wo.assignedTo);
+      events.push({ key:'assigned', label:'Assigned to ' + (tech ? tech.name : 'technician'), ts: FmHelpers.timeAgo(wo.assignedAt) || wo.assignedAt, color:'#3a5a8a' });
+    }
+    if (wo.assignedTo && !wo.acceptedAt && (wo.woStatus === 'Assigned' || wo.woStatus === 'Pending Approval')) {
+      events.push({ key:'awaiting', label:'Awaiting technician confirmation', ts:'', color:'#b08a4a', pulse:true });
+    }
+    if (wo.rejectedAt) {
+      events.push({ key:'rejected', label:'Technician rejected — ' + (wo.rejectedReason || 'no reason'), ts: FmHelpers.timeAgo(wo.rejectedAt), color:'#c0392b', note: wo.rejectedComment });
+    }
+    if (wo.acceptedAt) {
+      const tech = fmUsers.find(u => u.id === wo.assignedTo);
+      events.push({ key:'accepted', label:'Technician accepted' + (tech ? ' (' + tech.name + ')' : ''), ts: FmHelpers.timeAgo(wo.acceptedAt), color:'#2d6a4f' });
+    }
+    if (wo.arrivedAt) events.push({ key:'arrived', label:'Technician arrived at unit', ts: FmHelpers.timeAgo(wo.arrivedAt), color:'#2d6a4f' });
+    if (wo.assessmentSharedAt) events.push({ key:'assessment', label:'Assessment shared', ts: FmHelpers.timeAgo(wo.assessmentSharedAt), color:'#2d6a4f', note: wo.assessmentDescription });
+    if (wo.startedAt) events.push({ key:'progress', label:'Work in progress', ts: FmHelpers.timeAgo(wo.startedAt), color:'#3a5a8a' });
+    if (wo.holdReason && wo.woStatus === 'On Hold') events.push({ key:'hold', label:'On hold — ' + wo.holdReason, ts:'', color:'#b08a4a', pulse:true });
+    if (wo.resumedAt) events.push({ key:'resumed', label:'Work resumed', ts: FmHelpers.timeAgo(wo.resumedAt), color:'#3a5a8a' });
+    if (wo.completedAt && (isCompleted(wo) || wo.workDone)) {
+      const c = wo.completionTimeMinutes ? ' (' + wo.completionTimeMinutes + ' min)' : '';
+      events.push({ key:'completed', label:'Completed' + c, ts: wo.completedAt, color:'#2d6a4f', note: wo.workDone });
+    }
+    if (wo.ratedAt) events.push({ key:'confirmed', label:'Resident confirmed', ts: FmHelpers.timeAgo(wo.ratedAt), color:'#2d6a4f' });
+    if (wo.reopenedAt) events.push({ key:'reopened', label:'Reopened by resident', ts: FmHelpers.timeAgo(wo.reopenedAt), color:'#c0392b', note: wo.reopenReason });
+    return events;
+  };
+
+  // Time elapsed since submission — for queue cards
+  const elapsedSince = (wo) => {
+    const iso = FmHelpers.parseDate(wo.date) + 'T' + (wo.time || '00:00') + ':00';
+    return FmHelpers.timeAgo(iso) || 'today';
+  };
+
+  // Live timer for an in-progress WO (MM:SS)
+  const liveTimer = (wo) => {
+    if (!wo.startedAt) return null;
+    const startMs = new Date(wo.startedAt).getTime();
+    if (isNaN(startMs)) return null;
+    const ms = (wo.completedAt && isCompleted(wo)) ? (wo.completionTimeMinutes ? wo.completionTimeMinutes * 60 * 1000 : 0) : (now - startMs);
+    const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    return h > 0 ? h + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0') : String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  };
 
   const woById = (id) => (data.serviceRequests || []).find(s => s.id === id);
   const activeWO = activeWoId ? FmHelpers.enrichWorkOrder(woById(activeWoId) || {}) : null;
   const assignTo = (woId, techId) => {
     const tech = fmUsers.find(u => u.id === techId);
-    setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === woId ? {...s, assignedTo: techId, status: s.status === 'Pending Approval' || s.status === 'New' ? 'Assigned' : s.status, fmTechnician: tech ? {name: tech.name, role: tech.specialty, phone: tech.phone, expectedArrival: s.time || '—'} : s.fmTechnician} : s)}));
+    setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === woId ? {
+      ...s,
+      assignedTo: techId,
+      assignedBy: user.name,
+      assignedById: user.id,
+      assignedAt: new Date().toISOString(),
+      // Reset rejection state if reassigning after a reject
+      rejectedAt: null, rejectedReason: null, rejectedComment: null, rejectedBy: null,
+      status: 'Assigned',
+      acceptedAt: null,
+      fmTechnician: tech ? {name: tech.name, role: tech.specialty, phone: tech.phone, expectedArrival: s.time || '—'} : s.fmTechnician
+    } : s)}));
     showToast('Assigned to ' + (tech ? tech.name : 'technician'));
     setShowAssignModal(false);
   };
@@ -21776,29 +22454,26 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
 
   // ---- Renderers ----
   const renderDashboard = () => {
-    const todayCompleted = allWOs.filter(w => ['Completed','Closed','Confirmed'].includes(w.woStatus)).length;
+    const newCount = allWOs.filter(w => w.woStatus === 'New' || w.woStatus === 'Assigned' || w.woStatus === 'Scheduled').length;
+    const completedCount = allWOs.filter(w => ['Completed','Closed','Confirmed','Done'].includes(w.woStatus)).length;
     const avgMinutes = 47;
     return (
       <div style={{padding:'12px 16px',paddingBottom:80}}>
         <div style={{fontSize:13,color:'#7a6f66',marginBottom:12}}>Welcome, {user.name.split(' ')[0]}. Here is the team overview.</div>
 
-        {/* Summary cards */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-          <div style={{background:'#fff',borderRadius:12,padding:14,border:'1px solid #ebe7e3'}}>
-            <div style={{fontSize:24,fontWeight:700,color:'#1a1a1a',fontFeatureSettings:"'tnum' 1"}}>{open.length}</div>
-            <div style={{fontSize:10,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4}}>Open Work Orders</div>
+        {/* Summary cards — New / Urgent / Completed */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:14}}>
+          <div onClick={() => { setQueueFilter('All'); setPage('queue'); }} style={{background:'#fdf6e8',borderRadius:12,padding:14,border:'1px solid #e8d5a5',textAlign:'center',cursor:'pointer'}}>
+            <div style={{fontSize:24,fontWeight:700,color:'#7a6040',fontFeatureSettings:"'tnum' 1"}}>{newCount}</div>
+            <div style={{fontSize:10,color:'#7a6040',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4,fontWeight:600}}>New</div>
           </div>
-          <div style={{background:'#fbeeec',borderRadius:12,padding:14,border:'1px solid #e5c6c1'}}>
+          <div onClick={() => { setQueueFilter('Urgent'); setPage('queue'); }} style={{background:'#fbeeec',borderRadius:12,padding:14,border:'1px solid #e5c6c1',textAlign:'center',cursor:'pointer'}}>
             <div style={{fontSize:24,fontWeight:700,color:'#8b3a30',fontFeatureSettings:"'tnum' 1"}}>{urgent.length}</div>
-            <div style={{fontSize:10,color:'#8b3a30',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4}}>Urgent</div>
+            <div style={{fontSize:10,color:'#8b3a30',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4,fontWeight:600}}>Urgent</div>
           </div>
-          <div style={{background:'#fdf6e8',borderRadius:12,padding:14,border:'1px solid #e8d5a5'}}>
-            <div style={{fontSize:24,fontWeight:700,color:'#7a6040',fontFeatureSettings:"'tnum' 1"}}>{unassigned.length}</div>
-            <div style={{fontSize:10,color:'#7a6040',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4}}>Unassigned</div>
-          </div>
-          <div style={{background:'#eef0eb',borderRadius:12,padding:14,border:'1px solid #ccd0c2'}}>
-            <div style={{fontSize:24,fontWeight:700,color:'#2d6a4f',fontFeatureSettings:"'tnum' 1"}}>{todayCompleted}</div>
-            <div style={{fontSize:10,color:'#2d6a4f',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4}}>Completed Today</div>
+          <div onClick={() => { setQueueFilter('All'); setPage('queue'); }} style={{background:'#eef0eb',borderRadius:12,padding:14,border:'1px solid #ccd0c2',textAlign:'center',cursor:'pointer'}}>
+            <div style={{fontSize:24,fontWeight:700,color:'#2d6a4f',fontFeatureSettings:"'tnum' 1"}}>{completedCount}</div>
+            <div style={{fontSize:10,color:'#2d6a4f',textTransform:'uppercase',letterSpacing:'0.05em',marginTop:4,fontWeight:600}}>Completed</div>
           </div>
         </div>
 
@@ -21848,33 +22523,98 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   };
 
   const renderQueue = () => {
-    let list = allWOs;
-    if (queueFilter === 'Unassigned') list = unassigned;
-    else if (queueFilter === 'Urgent') list = urgent;
-    else if (queueFilter === 'SLA Breached') list = slaBreached;
-    else list = open;
+    // Per-filter list builders
+    const lists = {
+      'All': allWOs,
+      'Urgent': allWOs.filter(w => w.priority === 'Urgent' && isOpen(w)),
+      'Awaiting tech': allWOs.filter(isAwaitingTech),
+      'In progress': allWOs.filter(isInProgress),
+      'On hold': allWOs.filter(isOnHold),
+      'Completed': allWOs.filter(isCompleted)
+    };
+    const counts = Object.fromEntries(Object.entries(lists).map(([k,v]) => [k, v.length]));
+    let list = lists[queueFilter] || allWOs;
+
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(w => (w.id||'').toLowerCase().includes(q) || (w.flat||'').toLowerCase().includes(q) || (w.type||'').toLowerCase().includes(q) || (w.resident||'').toLowerCase().includes(q) || (w.comments||'').toLowerCase().includes(q));
+    }
+    list = sortQueue(list);
+
     return (
       <div style={{padding:'12px 16px',paddingBottom:80}}>
-        <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto'}}>
-          {['All','Unassigned','Urgent','SLA Breached'].map(f => (
-            <button key={f} onClick={() => setQueueFilter(f)} style={{padding:'7px 12px',borderRadius:20,border:'1px solid '+(queueFilter===f?'#928989':'#d5cfc8'),background: queueFilter===f?'#928989':'#fff',color: queueFilter===f?'#fff':'#6b5d52',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{f}</button>
+        {/* Search */}
+        <div style={{position:'relative',marginBottom:12}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="2" style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)'}}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by WO ID, unit, resident, keyword..." style={{width:'100%',padding:'10px 12px 10px 34px',borderRadius:10,border:'1px solid #d5cfc8',fontSize:13,outline:'none',background:'rgba(255,255,255,0.7)',boxSizing:'border-box'}}/>
+        </div>
+
+        {/* Filter pills with counts */}
+        <div style={{display:'flex',gap:6,marginBottom:14,overflowX:'auto',paddingBottom:2}}>
+          {['All','Urgent','Awaiting tech','In progress','On hold','Completed'].map(f => (
+            <button key={f} onClick={() => setQueueFilter(f)} style={{padding:'7px 12px',borderRadius:20,border:'1px solid '+(queueFilter===f?'#1a1a1a':'#d5cfc8'),background: queueFilter===f?'#1a1a1a':'#fff',color: queueFilter===f?'#fff':'#6b5d52',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>
+              {f} {counts[f] > 0 && <span style={{opacity:0.8,fontWeight:500,marginLeft:4}}>({counts[f]})</span>}
+            </button>
           ))}
         </div>
+
+        {/* Cards */}
         {list.length === 0 ? (
           <div style={{textAlign:'center',padding:40,color:'#a89a92',fontSize:13}}>No work orders in this view.</div>
         ) : list.map(wo => {
           const pc = FmHelpers.prColor(wo.priority);
           const tech = fmUsers.find(u => u.id === wo.assignedTo);
+          const photoCount = (wo.attachments || []).length;
+          const desc = (wo.comments || wo.notes || '').trim();
+          const descPreview = desc.length > 110 ? desc.slice(0, 110) + '…' : desc;
+          const statusColor = FmHelpers.fmStatusColor(wo.woStatus);
           return (
-            <div key={wo.id} onClick={() => { setActiveWoId(wo.id); setPage('woDetail'); }} style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',cursor:'pointer'}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
-                <span style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{wo.woStatus}</span>
-                <span style={{marginLeft:'auto',fontSize:10,color:'#a89a92'}}>{wo.id}</span>
+            <div key={wo.id} onClick={() => { setActiveWoId(wo.id); setPage('woDetail'); }} style={{background:'rgba(255,255,255,0.75)',borderRadius:14,padding:14,marginBottom:10,border:'1px solid rgba(255,255,255,0.5)',cursor:'pointer',boxShadow:'0 1px 6px rgba(120,100,90,0.05)'}}>
+              {/* Top row: WO ID + priority/status badges + time elapsed */}
+              <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8,marginBottom:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                  <span style={{fontSize:10,color:'#a89a92',fontWeight:500}}>{wo.id}</span>
+                  <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
+                  <span style={{fontSize:9,fontWeight:600,padding:'2px 7px',borderRadius:4,background:'#f5f3f0',color:statusColor,textTransform:'uppercase',letterSpacing:'0.04em'}}>{supStatusLabel(wo.woStatus)}</span>
+                </div>
+                <div style={{fontSize:10,color:'#a89a92',whiteSpace:'nowrap',flexShrink:0,paddingTop:2}}>{elapsedSince(wo)}</div>
               </div>
-              <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',marginBottom:2}}>{wo.type}</div>
-              <div style={{fontSize:11,color:'#7a6f66',marginBottom:4}}>Unit {wo.flat} · {wo.location || '—'}</div>
-              <div style={{fontSize:11,color:'#a89a92'}}>{tech ? '👷 ' + tech.name : <span style={{color:'#b08a4a',fontWeight:600}}>● Unassigned</span>}</div>
+
+              {/* Title */}
+              <div style={{fontSize:15,fontWeight:600,color:'#1a1a1a',marginBottom:4,lineHeight:1.3}}>{wo.type}{wo.location ? ' — ' + wo.location : ''}</div>
+
+              {/* Location */}
+              <div style={{fontSize:11,color:'#7a6f66',marginBottom:6}}>Tower {(wo.flat||'').charAt(0)} · Unit {wo.flat}{wo.areaType ? ' · ' + wo.areaType : ''}</div>
+
+              {/* Description preview */}
+              {descPreview && (
+                <div style={{fontSize:12,color:'#5a5045',lineHeight:1.45,marginBottom:8,padding:'8px 10px',background:'#faf8f6',borderRadius:6,borderLeft:'2px solid #d5cfc8'}}>{descPreview}</div>
+              )}
+
+              {/* Bottom row: resident · photos · technician */}
+              <div style={{display:'flex',alignItems:'center',gap:10,fontSize:11,flexWrap:'wrap'}}>
+                <span style={{color:'#7a6f66',display:'flex',alignItems:'center',gap:4}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+                  {wo.resident || 'Common area'}
+                </span>
+                {photoCount > 0 && (
+                  <span style={{color:'#7a6f66',display:'flex',alignItems:'center',gap:4}}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    {photoCount} {photoCount === 1 ? 'photo':'photos'}
+                  </span>
+                )}
+                <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:6}}>
+                  {tech ? (
+                    <>
+                      <div style={{width:22,height:22,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600}}>{tech.initials}</div>
+                      <span style={{color:'#1a1a1a',fontWeight:500}}>{tech.name}</span>
+                    </>
+                  ) : (
+                    <span style={{color:'#c0392b',fontWeight:600,fontSize:11}}>● Unassigned</span>
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}
@@ -21941,101 +22681,321 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
     const wo = activeWO;
     const pc = FmHelpers.prColor(wo.priority);
     const tech = fmUsers.find(u => u.id === wo.assignedTo);
-    const photos = wo.completionPhotos || [];
+    const beforePhotos = wo.beforePhotos || ((wo.completionPhotos || []).filter(p => p.tag === 'Before'));
+    const duringPhotos = wo.duringPhotos || [];
+    const afterPhotos = (wo.completionPhotos || []).filter(p => p.tag === 'After' || !p.tag);
+    const residentPhotos = wo.attachments || [];
+    const timer = liveTimer(wo);
+    const showAwaitingBanner = wo.assignedTo && !wo.acceptedAt && !wo.rejectedAt && (wo.woStatus === 'Assigned' || wo.woStatus === 'Pending Approval');
+    const showAcceptedBanner = wo.acceptedAt && !wo.rejectedAt && (wo.woStatus === 'Accepted');
+    const showRejectedBanner = wo.rejectedAt;
+    const showOnHoldBanner = wo.woStatus === 'On Hold';
+    const showReopenedBanner = wo.woStatus === 'Reopened' || wo.reopenedAt;
+    const isCompletedView = isCompleted(wo);
+    const events = buildTimeline(wo);
+
     return (
       <div style={{padding:'12px 16px',paddingBottom:140}}>
+        {/* Top nav */}
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
           <button onClick={() => { setActiveWoId(null); setPage('queue'); }} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',gap:4,color:'#6b5d52',fontSize:13,fontWeight:500}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-            Back
+            Queue
           </button>
           <div style={{marginLeft:'auto',fontSize:11,color:'#a89a92'}}>{wo.id}</div>
         </div>
 
-        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
-            <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
-            <span style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{wo.woStatus}</span>
-          </div>
-          <div style={{fontSize:18,fontWeight:600,color:'#1a1a1a',marginBottom:4}}>{wo.type}</div>
-          <div style={{fontSize:12,color:'#7a6f66'}}>Unit {wo.flat} · {wo.areaType || ''}{wo.location ? ' — ' + wo.location : ''}</div>
-          <div style={{fontSize:11,color:'#a89a92',marginTop:4}}>Submitted {wo.date} · {wo.time || '—'}</div>
-        </div>
-
-        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Assignment</div>
-          {tech ? (
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:40,height:40,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13}}>{tech.initials}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600}}>{tech.name}</div>
-                <div style={{fontSize:11,color:'#a89a92'}}>{tech.specialty} · {tech.zone}</div>
-              </div>
-              <button onClick={() => setShowAssignModal(true)} style={{padding:'8px 12px',background:'#fff',color:'#4a6fa5',border:'1px solid #d5cfc8',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer'}}>Reassign</button>
-            </div>
-          ) : (
-            <button onClick={() => setShowAssignModal(true)} style={{width:'100%',padding:12,background:'#928989',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Assign Technician</button>
-          )}
-        </div>
-
-        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Resident Request</div>
-          <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,whiteSpace:'pre-wrap'}}>{wo.comments || wo.notes || 'No description provided.'}</div>
-        </div>
-
-        {wo.workDone && (
-          <div style={{background:'#eef0eb',borderRadius:14,padding:14,marginBottom:12,border:'1px solid #ccd0c2'}}>
-            <div style={{fontSize:10,fontWeight:600,color:'#2d6a4f',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Technician Report</div>
-            <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,whiteSpace:'pre-wrap'}}>{wo.workDone}</div>
+        {/* Reopened banner */}
+        {showReopenedBanner && (
+          <div style={{background:'#fbeeec',border:'1px solid #e5c6c1',borderRadius:12,padding:12,marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#8b3a30',marginBottom:4}}>● Resident reported an issue — follow-up required</div>
+            {wo.reopenReason && <div style={{fontSize:12,color:'#7a4540',lineHeight:1.4}}>{wo.reopenReason}</div>}
           </div>
         )}
 
-        {photos.length > 0 && (
+        {/* Awaiting confirmation */}
+        {showAwaitingBanner && (
+          <div style={{background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:12,padding:12,marginBottom:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'#b08a4a'}}/>
+              <span style={{fontSize:12,fontWeight:600,color:'#7a6040'}}>Awaiting confirmation from {tech ? tech.name : 'technician'}</span>
+            </div>
+            <div style={{fontSize:11,color:'#7a6040',marginBottom:10}}>Assigned at {FmHelpers.timeAgo(wo.assignedAt) || 'just now'}</div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={() => setShowSupTechChat(wo.id)} style={{flex:1,padding:'8px 0',borderRadius:6,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer'}}>Chat</button>
+              <a href={'tel:'+(tech && tech.phone || '').replace(/\s/g,'')} style={{flex:1,padding:'8px 0',borderRadius:6,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,textDecoration:'none',textAlign:'center'}}>Call</a>
+            </div>
+          </div>
+        )}
+
+        {/* Accepted banner */}
+        {showAcceptedBanner && (
+          <div style={{background:'#eef0eb',border:'1px solid #ccd0c2',borderRadius:12,padding:12,marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#2d6a4f'}}>✓ Accepted by {tech ? tech.name : 'technician'} {wo.acceptedAt ? '· ' + FmHelpers.timeAgo(wo.acceptedAt) : ''}</div>
+          </div>
+        )}
+
+        {/* Rejected banner */}
+        {showRejectedBanner && (
+          <div style={{background:'#fbeeec',border:'1px solid #e5c6c1',borderRadius:12,padding:12,marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#8b3a30',marginBottom:4}}>✗ Rejected — {wo.rejectedReason}</div>
+            {wo.rejectedComment && <div style={{fontSize:12,color:'#7a4540',lineHeight:1.4,marginBottom:8,padding:'6px 8px',background:'rgba(255,255,255,0.6)',borderRadius:6}}>"{wo.rejectedComment}"</div>}
+            <div style={{fontSize:11,color:'#7a4540',marginBottom:8}}>by {wo.rejectedBy || 'technician'} · {FmHelpers.timeAgo(wo.rejectedAt)}</div>
+            <button onClick={() => setShowAssignModal(true)} style={{width:'100%',padding:'10px 0',background:'#1a1a1a',color:'#fff',border:'none',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer'}}>Reassign to different technician</button>
+          </div>
+        )}
+
+        {/* On hold banner */}
+        {showOnHoldBanner && (
+          <div style={{background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:12,padding:12,marginBottom:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'#b08a4a'}}/>
+              <span style={{fontSize:13,fontWeight:600,color:'#7a6040'}}>On hold — {wo.holdReason || 'reason not specified'}</span>
+            </div>
+            {wo.holdComment && <div style={{fontSize:12,color:'#7a6040',lineHeight:1.4,marginBottom:8}}>{wo.holdComment}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={() => setShowSupTechChat(wo.id)} style={{flex:1,padding:'8px 0',borderRadius:6,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer'}}>Chat</button>
+              <a href={'tel:'+(tech && tech.phone || '').replace(/\s/g,'')} style={{flex:1,padding:'8px 0',borderRadius:6,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,textDecoration:'none',textAlign:'center'}}>Call</a>
+            </div>
+          </div>
+        )}
+
+        {/* Title card with location grid */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:8,flexWrap:'wrap'}}>
+            <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:pc.bg,color:pc.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{wo.priority}</span>
+            <span style={{fontSize:10,fontWeight:600,color:FmHelpers.fmStatusColor(wo.woStatus)}}>{supStatusLabel(wo.woStatus)}</span>
+          </div>
+          <div style={{fontSize:18,fontWeight:600,color:'#1a1a1a',marginBottom:8}}>{wo.type}{wo.location ? ' — ' + wo.location : ''}</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',padding:'10px 0',borderTop:'1px solid #f0eae5'}}>
+            <div><div style={{fontSize:10,color:'#a89a92',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.04em'}}>Building</div><div style={{fontSize:12,color:'#1a1a1a',fontWeight:500}}>Tower {(wo.flat||'').charAt(0)}</div></div>
+            <div><div style={{fontSize:10,color:'#a89a92',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.04em'}}>Unit</div><div style={{fontSize:12,color:'#1a1a1a',fontWeight:500}}>{wo.flat}</div></div>
+            <div><div style={{fontSize:10,color:'#a89a92',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.04em'}}>Area</div><div style={{fontSize:12,color:'#1a1a1a',fontWeight:500}}>{wo.areaType || '—'}</div></div>
+            <div><div style={{fontSize:10,color:'#a89a92',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.04em'}}>Specific</div><div style={{fontSize:12,color:'#1a1a1a',fontWeight:500}}>{wo.location || '—'}</div></div>
+          </div>
+          <div style={{fontSize:11,color:'#a89a92',marginTop:6,paddingTop:8,borderTop:'1px solid #f0eae5'}}>Submitted {wo.date} · {wo.time || '—'} · {elapsedSince(wo)}</div>
+        </div>
+
+        {/* Resident block */}
+        <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+          <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Resident</div>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+            <div style={{width:38,height:38,borderRadius:'50%',background:'#e8e3de',color:'#6b5d52',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13}}>
+              {(wo.resident || 'R').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{wo.resident || 'Common area'}</div>
+              <div style={{fontSize:11,color:'#a89a92'}}>{wo.residentPhone || 'No phone on file'}</div>
+            </div>
+            {wo.residentPhone && (
+              <a href={'tel:'+wo.residentPhone.replace(/\s/g,'')} style={{padding:'8px 12px',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:11,fontWeight:600,textDecoration:'none',display:'flex',alignItems:'center',gap:6}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Call
+              </a>
+            )}
+          </div>
+          <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,whiteSpace:'pre-wrap',padding:'10px 12px',background:'#faf8f6',borderRadius:8,borderLeft:'2px solid #d5cfc8'}}>"{wo.comments || wo.notes || 'No description provided.'}"</div>
+          {residentPhotos.length > 0 && (
+            <div style={{marginTop:10}}>
+              <div style={{fontSize:10,color:'#a89a92',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.04em'}}>Resident photos · {residentPhotos.length}</div>
+              <div style={{display:'flex',gap:6,overflowX:'auto'}}>
+                {residentPhotos.map((p, idx) => (
+                  <div key={idx} onClick={() => setPhotoPreview(p)} style={{width:80,height:80,flexShrink:0,background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer',border:'1px solid #ebe7e3'}}>
+                    {p.dataUrl && <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Assignment / Technician block */}
+        {!tech ? (
           <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
-            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Completion Photos ({photos.length})</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
-              {photos.map((p, idx) => (
-                <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
-                  {p.dataUrl && <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>}
-                  {p.tag && <div style={{position:'absolute',top:4,left:4,padding:'2px 6px',borderRadius:3,background:p.tag==='Before' ? '#b08a4a':'#5a6b4f',color:'#fff',fontSize:9,fontWeight:700}}>{p.tag}</div>}
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Assignment</div>
+            <button onClick={() => setShowAssignModal(true)} style={{width:'100%',padding:14,background:'#3a5a8a',color:'#fff',border:'none',borderRadius:8,fontSize:14,fontWeight:600,cursor:'pointer'}}>Assign technician</button>
+          </div>
+        ) : (
+          <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Assigned technician</div>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+              <div style={{width:42,height:42,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:14}}>{tech.initials}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{tech.name}</div>
+                <div style={{fontSize:11,color:'#a89a92'}}>{tech.specialty} · {tech.phone}</div>
+              </div>
+              <button onClick={() => setShowAssignModal(true)} style={{padding:'7px 10px',background:'#fff',color:'#4a6fa5',border:'1px solid #d5cfc8',borderRadius:6,fontSize:10,fontWeight:600,cursor:'pointer'}}>Reassign</button>
+            </div>
+            {timer && (wo.woStatus === 'In Progress' || wo.woStatus === 'On Hold') && (
+              <div style={{padding:'10px 12px',background:'linear-gradient(135deg,#3a5a8a,#2a4670)',color:'#fff',borderRadius:10,marginBottom:10,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <div style={{fontSize:9,opacity:0.85,letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:2}}>{wo.woStatus === 'On Hold' ? 'Timer paused' : 'Live timer'}</div>
+                  <div style={{fontSize:22,fontWeight:700,fontFeatureSettings:"'tnum' 1"}}>{timer}</div>
                 </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:9,opacity:0.85,letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:2}}>Status</div>
+                  <div style={{fontSize:11,fontWeight:600}}>{supStatusLabel(wo.woStatus)}</div>
+                </div>
+              </div>
+            )}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={() => setShowSupTechChat(wo.id)} style={{flex:1,padding:'10px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Chat
+              </button>
+              <a href={'tel:'+(tech.phone || '').replace(/\s/g,'')} style={{flex:1,padding:'10px 0',borderRadius:8,border:'1px solid #d5cfc8',background:'#fff',color:'#1a1a1a',fontSize:12,fontWeight:600,textDecoration:'none',textAlign:'center',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Call
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Assessment block */}
+        {wo.assessmentDescription && (
+          <div style={{background:'#eef2f7',border:'1px solid #d6e0eb',borderRadius:14,padding:14,marginBottom:12}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#3a5a8a',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Technician assessment</div>
+            <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,marginBottom:6}}>{wo.assessmentDescription}</div>
+            {wo.assessmentEta && <div style={{fontSize:11,color:'#3a5a8a'}}>Approx. time: <strong>{wo.assessmentEta}</strong></div>}
+          </div>
+        )}
+
+        {/* Photos grouped Before / During / After */}
+        {(beforePhotos.length + duringPhotos.length + afterPhotos.length) > 0 && (
+          <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Technician photos</div>
+            {[
+              {tag:'Before', list: beforePhotos, color:'#b08a4a', bg:'#fdf6e8'},
+              {tag:'During', list: duringPhotos, color:'#4a6fa5', bg:'#eef2f7'},
+              {tag:'After',  list: afterPhotos,  color:'#5a6b4f', bg:'#eef0eb'}
+            ].filter(g => g.list.length > 0).map(group => (
+              <div key={group.tag} style={{marginBottom:10}}>
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                  <span style={{fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:4,background:group.bg,color:group.color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{group.tag}</span>
+                  <span style={{fontSize:11,color:'#a89a92'}}>{group.list.length} {group.list.length === 1 ? 'photo':'photos'}</span>
+                  {group.tag === 'During' && <span style={{fontSize:9,color:'#a89a92',marginLeft:4}}>(internal · not shown to resident)</span>}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:6}}>
+                  {group.list.map((p, idx) => (
+                    <div key={idx} onClick={() => setPhotoPreview(p)} style={{position:'relative',aspectRatio:'1/1',background:'#f5f3f0',borderRadius:8,overflow:'hidden',cursor:'pointer'}}>
+                      {p.dataUrl && <img src={p.dataUrl} style={{width:'100%',height:'100%',objectFit:'cover'}}/>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Completion summary */}
+        {wo.workDone && (
+          <div style={{background:'#eef0eb',borderRadius:14,padding:14,marginBottom:12,border:'1px solid #ccd0c2'}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#2d6a4f',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Completion summary</div>
+            <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,whiteSpace:'pre-wrap',padding:'8px 10px',background:'rgba(255,255,255,0.6)',borderRadius:6,borderLeft:'2px solid #5a6b4f'}}>"{wo.workDone}"</div>
+            {wo.completionTimeMinutes && <div style={{fontSize:11,color:'#5a6b4f',marginTop:8}}>Total time: <strong>{wo.completionTimeMinutes} minutes</strong></div>}
+          </div>
+        )}
+
+        {/* Resident review (supervisor-only) */}
+        {wo.rating && (
+          <div style={{background:'linear-gradient(135deg,#fff8e8,#fdf0d0)',border:'1px solid #e8d5a5',borderRadius:14,padding:14,marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div style={{fontSize:10,fontWeight:600,color:'#7a6040',textTransform:'uppercase',letterSpacing:'0.05em'}}>Resident review</div>
+              <div style={{fontSize:9,color:'#a89a92',padding:'2px 6px',borderRadius:4,background:'rgba(255,255,255,0.7)',fontWeight:600}}>Supervisor only</div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              {[1,2,3,4,5].map(n => (
+                <svg key={n} width="20" height="20" viewBox="0 0 24 24" fill={n <= wo.rating ? '#e8a838' : 'none'} stroke={n <= wo.rating ? '#e8a838' : '#c4b8b0'} strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               ))}
+              <span style={{marginLeft:6,fontSize:14,fontWeight:700,color:'#7a6040',fontFeatureSettings:"'tnum' 1"}}>{wo.rating.toFixed(1)} / 5</span>
+            </div>
+            {wo.ratingComment && <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,fontStyle:'italic',marginTop:6}}>"{wo.ratingComment}"</div>}
+            <div style={{fontSize:11,color:'#7a6040',marginTop:6}}>— {wo.resident || 'Resident'} · {FmHelpers.timeAgo(wo.ratedAt) || 'recently'}</div>
+          </div>
+        )}
+        {isCompletedView && !wo.rating && (
+          <div style={{background:'#faf8f6',border:'1px dashed #d5cfc8',borderRadius:12,padding:12,marginBottom:12,fontSize:12,color:'#8a7f76',textAlign:'center'}}>
+            Awaiting resident review (auto-confirms after 48 hours).
+          </div>
+        )}
+
+        {/* Live progress timeline */}
+        {events.length > 0 && (
+          <div style={{background:'rgba(255,255,255,0.7)',borderRadius:14,padding:14,marginBottom:12,border:'1px solid rgba(255,255,255,0.5)'}}>
+            <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:12}}>Progress timeline</div>
+            <div>
+              {events.map((e, idx) => {
+                const last = idx === events.length - 1;
+                return (
+                  <div key={e.key+idx} style={{display:'flex',gap:12}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
+                      <div style={{width:14,height:14,borderRadius:'50%',background:e.color,boxShadow: e.pulse ? '0 0 0 4px '+e.color+'33' : 'none'}}/>
+                      {!last && <div style={{width:2,flex:1,minHeight:24,background:'#e8e3de'}}/>}
+                    </div>
+                    <div style={{flex:1,paddingBottom: last ? 0 : 14}}>
+                      <div style={{fontSize:12,fontWeight:600,color:'#1a1a1a',lineHeight:1.4}}>{e.label}</div>
+                      {e.ts && <div style={{fontSize:10,color:'#a89a92',marginTop:2}}>{e.ts}</div>}
+                      {e.note && <div style={{fontSize:11,color:'#7a6f66',marginTop:4,padding:'6px 8px',background:'#faf8f6',borderRadius:6,lineHeight:1.4}}>{e.note}</div>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Action bar */}
         <div style={{position:'fixed',bottom:0,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
-          {wo.woStatus === 'Pending Review' || (wo.woStatus === 'Completed' && !wo.supervisorSignedOff && wo.workDone) ? (
+          {wo.woStatus === 'Pending Review' || (wo.woStatus === 'Completed' && !wo.supervisorSignedOff && wo.workDone && wo.requiresSupervisorSignOff) ? (
             <>
               <button onClick={() => requestRework(wo)} style={{flex:1,padding:13,background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>Request Rework</button>
               <button onClick={() => approveWO(wo)} style={{flex:2,padding:13,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Approve & Sign Off</button>
             </>
+          ) : !tech ? (
+            <button onClick={() => setShowAssignModal(true)} style={{flex:1,padding:14,background:'#3a5a8a',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer'}}>Assign technician</button>
           ) : (
             <>
               <button onClick={() => escalateWO(wo)} style={{flex:1,padding:13,background:'#fff',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer'}}>Escalate</button>
-              <button onClick={() => setShowAssignModal(true)} style={{flex:2,padding:13,background:'#928989',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>{tech ? 'Reassign' : 'Assign'} Technician</button>
+              <button onClick={() => setShowAssignModal(true)} style={{flex:2,padding:13,background:'#928989',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Reassign technician</button>
             </>
           )}
         </div>
 
+        {/* Enhanced assignment picker */}
         {showAssignModal && (
-          <div onClick={() => setShowAssignModal(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-            <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:20,width:'100%',maxWidth:380,maxHeight:'80vh',overflowY:'auto'}}>
-              <div style={{fontSize:15,fontWeight:600,marginBottom:14}}>Assign technician</div>
-              {technicians.map(t => {
-                const techOpen = open.filter(w => w.assignedTo === t.id).length;
-                return (
-                  <div key={t.id} onClick={() => assignTo(wo.id, t.id)} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 8px',cursor:'pointer',borderRadius:8,borderBottom:'1px solid #f0eae5'}}>
-                    <div style={{width:36,height:36,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600}}>{t.initials}</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:600}}>{t.name}</div>
-                      <div style={{fontSize:10,color:'#a89a92'}}>{t.specialty} · {techOpen} open</div>
+          <div onClick={() => setShowAssignModal(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderTopLeftRadius:18,borderTopRightRadius:18,padding:'18px 18px 24px',width:'100%',maxWidth:480,maxHeight:'85vh',overflowY:'auto'}}>
+              <div style={{width:36,height:4,background:'#d5cfc8',borderRadius:2,margin:'0 auto 14px'}}/>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4,color:'#1a1a1a'}}>Assign technician</div>
+              <div style={{fontSize:11,color:'#7a6f66',marginBottom:14}}>{wo.type}{wo.location ? ' — ' + wo.location : ''} · Tower {(wo.flat||'').charAt(0)} · Unit {wo.flat}</div>
+              {(() => {
+                const ranked = technicians.slice().sort((a,b) => {
+                  const am = specialtyMatch(a.specialty, wo.type) ? 0 : 1;
+                  const bm = specialtyMatch(b.specialty, wo.type) ? 0 : 1;
+                  return am - bm;
+                });
+                return ranked.map(t => {
+                  const techOpen = open.filter(w => w.assignedTo === t.id);
+                  const isOnUrgent = techOpen.some(w => w.priority === 'Urgent');
+                  const matched = specialtyMatch(t.specialty, wo.type);
+                  const techStatus = techOpen.some(w => w.woStatus === 'In Progress') ? 'On job' : t.status === 'on-break' ? 'On break' : 'Available';
+                  const stColor = techStatus === 'Available' ? '#2d6a4f' : techStatus === 'On job' ? '#4a6fa5' : '#b08a4a';
+                  return (
+                    <div key={t.id} onClick={() => assignTo(wo.id, t.id)} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 8px',cursor:'pointer',borderRadius:8,borderBottom:'1px solid #f0eae5'}}>
+                      <div style={{width:38,height:38,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:600}}>{t.initials}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                          <span style={{fontSize:13,fontWeight:600,color:'#1a1a1a'}}>{t.name}</span>
+                          {matched && <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'#eef0eb',color:'#2d6a4f',textTransform:'uppercase',letterSpacing:'0.04em'}}>Recommended</span>}
+                          {isOnUrgent && <span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'#fdf6e8',color:'#7a6040',textTransform:'uppercase',letterSpacing:'0.04em'}}>⚠ urgent job</span>}
+                        </div>
+                        <div style={{fontSize:11,color:'#a89a92',marginTop:2}}>{t.specialty} · {techOpen.length} open</div>
+                      </div>
+                      <span style={{fontSize:10,fontWeight:600,color:stColor,whiteSpace:'nowrap'}}>● {techStatus}</span>
                     </div>
-                    <span style={{fontSize:10,fontWeight:600,color: t.status==='on-shift' ? '#5a6b4f':'#a89a92'}}>● {t.status}</span>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
               <button onClick={() => setShowAssignModal(false)} style={{width:'100%',marginTop:12,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancel</button>
             </div>
           </div>
@@ -22089,6 +23049,74 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
           <img src={photoPreview.dataUrl} style={{maxWidth:'95%',maxHeight:'90vh',objectFit:'contain'}} onClick={e => e.stopPropagation()}/>
         </div>
       )}
+
+      {/* Supervisor ↔ Technician chat per WO */}
+      {showSupTechChat && (() => {
+        const wo = (data.serviceRequests || []).find(s => s.id === showSupTechChat);
+        if (!wo) return null;
+        const tech = fmUsers.find(u => u.id === wo.assignedTo);
+        const seedMessages = (wo.supTechChatMessages && wo.supTechChatMessages.length > 0) ? wo.supTechChatMessages : [];
+        const messages = (wo.supTechChatMessages && wo.supTechChatMessages.length > 0) ? wo.supTechChatMessages : seedMessages;
+        const sendMessage = () => {
+          const txt = supTechChatDraft.trim();
+          if (!txt) return;
+          const msg = { id: 'STM-'+Date.now(), sender: 'supervisor', senderName: user.name, text: txt, ts: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).replace(',',' ·'), read: false };
+          setData(prev => ({...prev, serviceRequests: (prev.serviceRequests||[]).map(s => s.id === wo.id ? {...s, supTechChatMessages: [...(s.supTechChatMessages || []), msg]} : s)}));
+          setSupTechChatDraft('');
+        };
+        const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+        return (
+          <div onClick={() => { setShowSupTechChat(null); setSupTechChatDraft(''); }} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+            <div onClick={e => e.stopPropagation()} style={{background:'linear-gradient(180deg,#ece4df 0%,#d8ccc4 100%)',width:'100%',maxWidth:480,height:'92vh',borderTopLeftRadius:20,borderTopRightRadius:20,display:'flex',flexDirection:'column',boxShadow:'0 -8px 32px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+              <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(20px)',borderBottom:'1px solid rgba(200,188,178,0.3)',display:'flex',alignItems:'center',gap:12}}>
+                <button onClick={() => { setShowSupTechChat(null); setSupTechChatDraft(''); }} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',color:'#6b5d52'}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div style={{width:38,height:38,borderRadius:'50%',background:'#928989',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13}}>{tech ? tech.initials : '—'}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:600,color:'#1a1a1a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{tech ? tech.name : 'Technician'}</div>
+                  <div style={{fontSize:11,color:'#7a6f66'}}>{tech ? tech.specialty : ''} · {wo.id}</div>
+                </div>
+                {tech && tech.phone && (
+                  <a href={'tel:'+tech.phone.replace(/\s/g,'')} style={{padding:'8px 10px',borderRadius:8,background:'#fff',border:'1px solid #d5cfc8',color:'#1a1a1a',textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:11,fontWeight:600}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.11 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                    Call
+                  </a>
+                )}
+              </div>
+
+              <div style={{padding:'10px 16px',background:'rgba(255,255,255,0.4)',borderBottom:'1px solid rgba(200,188,178,0.25)',fontSize:11,color:'#7a6f66',display:'flex',alignItems:'center',gap:8}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                Conversation linked to <span style={{fontWeight:600,color:'#1a1a1a'}}>{wo.id}</span> · {wo.type}
+              </div>
+
+              <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:8}}>
+                {messages.length === 0 ? (
+                  <div style={{textAlign:'center',color:'#a89a92',fontSize:12,padding:40}}>No messages yet — start the conversation below.</div>
+                ) : messages.map((m, idx) => {
+                  const mine = m.sender === 'supervisor';
+                  return (
+                    <div key={m.id || idx} style={{display:'flex',justifyContent: mine ? 'flex-end':'flex-start'}}>
+                      <div style={{maxWidth:'78%',padding:'10px 14px',borderRadius:14,background: mine ? '#3a5a8a' : 'rgba(255,255,255,0.85)',color: mine ? '#fff':'#1a1a1a',boxShadow:'0 1px 3px rgba(0,0,0,0.05)',borderTopLeftRadius: mine ? 14 : 4,borderTopRightRadius: mine ? 4 : 14}}>
+                        <div style={{fontSize:13,lineHeight:1.4,whiteSpace:'pre-wrap'}}>{m.text}</div>
+                        <div style={{fontSize:9,color: mine ? 'rgba(255,255,255,0.6)' : '#a89a92',marginTop:4,textAlign:'right'}}>{m.ts}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{padding:'10px 12px',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(200,188,178,0.3)',display:'flex',alignItems:'flex-end',gap:8}}>
+                <textarea value={supTechChatDraft} onChange={e => setSupTechChatDraft(e.target.value)} onKeyDown={onKey} placeholder="Message technician…" rows={1} style={{flex:1,padding:'10px 12px',border:'1px solid #d5cfc8',borderRadius:18,fontSize:13,outline:'none',resize:'none',fontFamily:'inherit',background:'#fff',maxHeight:100}}/>
+                <button onClick={sendMessage} disabled={!supTechChatDraft.trim()} style={{padding:'10px 16px',borderRadius:18,border:'none',background: supTechChatDraft.trim() ? '#1a1a1a':'#c4b8b0',color:'#fff',fontSize:13,fontWeight:600,cursor: supTechChatDraft.trim() ? 'pointer':'default',display:'flex',alignItems:'center',gap:6}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
