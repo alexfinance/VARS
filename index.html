@@ -837,17 +837,169 @@ const formatTime12 = (date) => {
 };
 
 // ==================== DATA STORE ====================
-// Helper — generate compact data-URL SVG photos for demo seeding (keeps file lightweight vs base64 JPGs)
-const _svgPhoto = (label, sub, fg, bg, accent) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">'
-  + '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+bg+'"/><stop offset="1" stop-color="'+(accent||bg)+'"/></linearGradient></defs>'
-  + '<rect width="400" height="300" fill="url(#g)"/>'
-  + '<rect x="40" y="40" width="320" height="220" rx="12" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>'
-  + '<circle cx="200" cy="130" r="34" fill="rgba(255,255,255,0.85)"/>'
-  + '<text x="200" y="200" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="'+fg+'">'+label+'</text>'
-  + (sub ? '<text x="200" y="222" text-anchor="middle" font-family="sans-serif" font-size="11" fill="'+fg+'" opacity="0.85">'+sub+'</text>' : '')
-  + '</svg>'
-);
+// Realistic SVG scene illustrations for demo work-order photos.
+// Each call detects the subject from label/sub text and composes a recognisable
+// scene with depth (gradients, shadows, layered shapes) so it looks like a real photo of the issue.
+const _svgPhoto = (label, sub, fg, bg, accent) => {
+  const k = (label + ' ' + (sub || '')).toLowerCase();
+  // Each scene returns the SVG body BEFORE the bottom caption strip.
+  let scene = '';
+  // ---------- AC UNIT (indoor / outdoor / cooling) ----------
+  if (k.includes('ac unit') || k.includes('ac repair') || (k.includes('compressor') && !k.includes('replaced')) || (k.includes('compressor') && k.includes('after'))) {
+    // Indoor wall-mounted split AC unit
+    scene = ''
+      + '<defs><linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dde6ed"/><stop offset="1" stop-color="#c8d3dc"/></linearGradient>'
+      + '<linearGradient id="ac" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdfdfd"/><stop offset="1" stop-color="#dee3e7"/></linearGradient>'
+      + '<filter id="sh"><feGaussianBlur in="SourceAlpha" stdDeviation="3"/><feOffset dx="0" dy="3" result="o"/><feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'
+      + '<rect width="400" height="300" fill="url(#wall)"/>'
+      + '<rect width="400" height="60" fill="rgba(255,255,255,0.4)"/>'
+      + '<g filter="url(#sh)"><rect x="65" y="60" width="270" height="95" rx="10" fill="url(#ac)" stroke="#aab2ba" stroke-width="1.2"/>'
+      + '<rect x="78" y="74" width="244" height="14" rx="2" fill="#cbd2d8"/>'
+      + '<rect x="78" y="92" width="244" height="14" rx="2" fill="#cbd2d8"/>'
+      + '<rect x="78" y="110" width="244" height="14" rx="2" fill="#cbd2d8"/>'
+      + '<rect x="78" y="128" width="244" height="14" rx="2" fill="#cbd2d8"/>'
+      + '<rect x="180" y="148" width="40" height="11" rx="1" fill="#1a1a1a"/></g>'
+      + (k.includes('after') || k.includes('replaced') || k.includes('ok') || k.includes('21') || k.includes('cooling') ? '<text x="200" y="156" text-anchor="middle" font-family="monospace" font-size="9" fill="#5fcf7f">21°C COOL</text><g transform="translate(310,170)"><circle r="15" fill="#2d6a4f"/><path d="M-6 0 L-2 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g>' : '<text x="200" y="156" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff6b6b">EE-2 ERR</text><g transform="translate(310,170)"><circle r="15" fill="#c0392b"/><text y="3" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>')
+      + '<rect x="0" y="265" width="400" height="35" fill="#a89a92"/>'  // floor strip
+      + '<rect x="0" y="260" width="400" height="6" fill="#928989"/>';
+  }
+  // ---------- COMPRESSOR / OUTDOOR UNIT ----------
+  else if (k.includes('compressor') || k.includes('capacitor') || k.includes('outdoor')) {
+    scene = ''
+      + '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdd6df"/><stop offset="1" stop-color="#9aa7b3"/></linearGradient>'
+      + '<linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0e3e7"/><stop offset="1" stop-color="#a8aeb5"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="url(#sky)"/>'
+      + '<rect x="60" y="80" width="280" height="170" rx="6" fill="url(#box)" stroke="#7a8089" stroke-width="2"/>'
+      + '<rect x="60" y="80" width="280" height="20" fill="#7a8089"/>'
+      + '<g stroke="#525860" stroke-width="1" fill="none">'
+      +   '<line x1="80" y1="115" x2="320" y2="115"/><line x1="80" y1="125" x2="320" y2="125"/><line x1="80" y1="135" x2="320" y2="135"/><line x1="80" y1="145" x2="320" y2="145"/><line x1="80" y1="155" x2="320" y2="155"/>'
+      + '</g>'
+      + '<circle cx="200" cy="195" r="42" fill="#3a3f44" stroke="#1a1a1a" stroke-width="2"/>'
+      + '<g transform="translate(200,195)" stroke="#7a8089" stroke-width="6" stroke-linecap="round"><line x1="0" y1="-32" x2="0" y2="-12"/><line x1="28" y1="16" x2="11" y2="6"/><line x1="-28" y1="16" x2="-11" y2="6"/></g>'
+      + '<circle cx="200" cy="195" r="6" fill="#1a1a1a"/>'
+      + (k.includes('bulged') || k.includes('failed') || k.includes('before') ? '<g transform="translate(290,120)"><circle r="14" fill="#c0392b" opacity="0.85"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>' : '<g transform="translate(290,120)"><circle r="14" fill="#2d6a4f"/><path d="M-5 0 L-1 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g>');
+  }
+  // ---------- SINK / FAUCET / DRAIN / P-TRAP ----------
+  else if (k.includes('sink') || k.includes('faucet') || k.includes('drain') || k.includes('p-trap') || k.includes('tap')) {
+    scene = ''
+      + '<defs><linearGradient id="cnt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3530"/><stop offset="1" stop-color="#2a2520"/></linearGradient>'
+      + '<linearGradient id="basin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa0a6"/><stop offset="1" stop-color="#666b70"/></linearGradient>'
+      + '<linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#88b8d0" stop-opacity="0.85"/><stop offset="1" stop-color="#5a8aa8" stop-opacity="0.95"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="#e8e2dc"/>'  // tile wall
+      + '<g stroke="#cabfb3" stroke-width="0.5"><line x1="0" y1="80" x2="400" y2="80"/><line x1="0" y1="160" x2="400" y2="160"/><line x1="80" y1="0" x2="80" y2="200"/><line x1="200" y1="0" x2="200" y2="200"/><line x1="320" y1="0" x2="320" y2="200"/></g>'
+      + '<rect x="0" y="200" width="400" height="100" fill="url(#cnt)"/>'  // counter
+      + '<rect x="60" y="195" width="280" height="14" rx="2" fill="#1a1a1a"/>'  // counter rim
+      + '<ellipse cx="200" cy="240" rx="120" ry="40" fill="url(#basin)"/>'  // basin
+      + '<ellipse cx="200" cy="240" rx="105" ry="32" fill="#3a3a3a"/>'
+      + (k.includes('clog') || k.includes('block') || k.includes('slow') || k.includes('grease') || k.includes('before') || k.includes('standing') ? '<ellipse cx="200" cy="240" rx="100" ry="28" fill="url(#water)"/><circle cx="180" cy="232" r="3" fill="#fff" opacity="0.5"/><circle cx="220" cy="238" r="2" fill="#fff" opacity="0.5"/><g transform="translate(310,80)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>' : '<ellipse cx="200" cy="240" rx="20" ry="6" fill="#1a1a1a"/><g transform="translate(310,80)"><circle r="14" fill="#2d6a4f"/><path d="M-5 0 L-1 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g>')
+      + '<g stroke="#bcbfc4" stroke-width="6" fill="none" stroke-linecap="round"><path d="M200 80 L200 145 Q200 152 207 152 L235 152"/></g>'  // faucet
+      + '<rect x="232" y="148" width="14" height="10" fill="#bcbfc4"/>'  // spout
+      + (k.includes('after') || k.includes('clear') || k.includes('flow') ? '<line x1="239" y1="160" x2="239" y2="220" stroke="#88b8d0" stroke-width="3" stroke-dasharray="2 3"/>' : '');
+  }
+  // ---------- ELECTRICAL OUTLET / WIRING ----------
+  else if (k.includes('outlet') || k.includes('electric') || k.includes('wire') || k.includes('socket') || k.includes('scorch')) {
+    scene = ''
+      + '<defs><linearGradient id="wallE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0ebe4"/><stop offset="1" stop-color="#d8cfc4"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="url(#wallE)"/>'
+      + '<rect x="120" y="80" width="160" height="160" rx="6" fill="#fafafa" stroke="#999" stroke-width="2"/>'  // outlet plate
+      + '<rect x="155" y="115" width="90" height="40" rx="3" fill="#1a1a1a"/>'  // top socket
+      + '<rect x="170" y="125" width="6" height="20" fill="#fafafa"/><rect x="186" y="125" width="6" height="20" fill="#fafafa"/><rect x="202" y="125" width="6" height="20" fill="#fafafa"/><rect x="218" y="125" width="6" height="20" fill="#fafafa"/>'  // pin holes
+      + '<rect x="155" y="170" width="90" height="40" rx="3" fill="#1a1a1a"/>'  // bottom socket
+      + '<rect x="170" y="180" width="6" height="20" fill="#fafafa"/><rect x="186" y="180" width="6" height="20" fill="#fafafa"/><rect x="202" y="180" width="6" height="20" fill="#fafafa"/><rect x="218" y="180" width="6" height="20" fill="#fafafa"/>'
+      + '<circle cx="200" cy="105" r="3" fill="#928989"/>'  // screw
+      + (k.includes('scorch') || k.includes('spark') || k.includes('before') || k.includes('damaged') ? '<g opacity="0.6"><ellipse cx="200" cy="135" rx="50" ry="22" fill="#3a2520"/><ellipse cx="200" cy="135" rx="35" ry="14" fill="#1a0a08"/></g><g transform="translate(310,80)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g><path d="M260 130 L290 110 L275 130 L295 130 L270 165 L285 145 L255 155 Z" fill="#f4c430" stroke="#c0392b" stroke-width="1"/>' : '<g transform="translate(310,80)"><circle r="14" fill="#2d6a4f"/><path d="M-5 0 L-1 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g><text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="11" fill="#2d6a4f">230V · 13A · OK</text>');
+  }
+  // ---------- PEST / ANTS / WASP NEST ----------
+  else if (k.includes('ant') || k.includes('wasp') || k.includes('pest') || k.includes('insect') || k.includes('nest')) {
+    const wasp = k.includes('wasp') || k.includes('nest');
+    scene = ''
+      + '<rect width="400" height="300" fill="#d8ccc4"/>'  // wall
+      + '<rect width="400" height="120" fill="#c4b8b0" opacity="0.6"/>'  // upper wall
+      + '<rect x="0" y="220" width="400" height="80" fill="#6b5d52"/>'  // skirting / floor
+      + '<rect x="0" y="218" width="400" height="6" fill="#3a2f25"/>'
+      + (wasp
+        ? '<g transform="translate(180,90)"><ellipse rx="60" ry="38" fill="#a08260"/><ellipse rx="50" ry="30" fill="#c4a378"/><circle cx="-20" cy="-5" r="4" fill="#5a4530"/><circle cx="-5" cy="8" r="4" fill="#5a4530"/><circle cx="15" cy="-3" r="4" fill="#5a4530"/><circle cx="25" cy="12" r="4" fill="#5a4530"/><circle cx="-30" cy="10" r="4" fill="#5a4530"/></g><g transform="translate(290,140)"><ellipse rx="9" ry="5" fill="#f4c430"/><ellipse rx="9" ry="5" fill="#1a1a1a" transform="scale(0.7,1)"/><line x1="-9" y1="0" x2="-15" y2="-4" stroke="#1a1a1a"/><line x1="-9" y1="0" x2="-15" y2="4" stroke="#1a1a1a"/></g>'
+        : '<g fill="#1a1a1a">'  // ant trail along skirting
+          + '<ellipse cx="60" cy="240" rx="3" ry="2"/><ellipse cx="80" cy="245" rx="3" ry="2"/><ellipse cx="105" cy="240" rx="3" ry="2"/><ellipse cx="130" cy="245" rx="3" ry="2"/><ellipse cx="155" cy="242" rx="3" ry="2"/><ellipse cx="180" cy="246" rx="3" ry="2"/><ellipse cx="205" cy="241" rx="3" ry="2"/><ellipse cx="230" cy="245" rx="3" ry="2"/><ellipse cx="255" cy="240" rx="3" ry="2"/><ellipse cx="280" cy="246" rx="3" ry="2"/><ellipse cx="305" cy="241" rx="3" ry="2"/><ellipse cx="330" cy="245" rx="3" ry="2"/>'
+          + '</g>')
+      + '<g transform="translate(310,40)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>';
+  }
+  // ---------- WARDROBE / DOOR / TRACK ----------
+  else if (k.includes('wardrobe') || k.includes('track') || k.includes('door') || k.includes('cabinet')) {
+    const broken = k.includes('off') || k.includes('bent') || k.includes('worn') || k.includes('before') || k.includes('scrape');
+    scene = ''
+      + '<defs><linearGradient id="wd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9b7a52"/><stop offset="1" stop-color="#6e5538"/></linearGradient>'
+      + '<linearGradient id="wd2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#88683f"/><stop offset="1" stop-color="#5a4525"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="#e2d8cd"/>'  // room wall
+      + '<rect x="40" y="40" width="320" height="220" fill="url(#wd)" stroke="#3a2f1f" stroke-width="2"/>'
+      + '<rect x="48" y="48" width="156" height="200" fill="url(#wd2)" stroke="#3a2f1f"/>'  // left door
+      + (broken ? '<g transform="rotate(-3 280 145)"><rect x="204" y="48" width="156" height="200" fill="url(#wd2)" stroke="#3a2f1f"/><circle cx="220" cy="140" r="3" fill="#dcc888"/></g><line x1="200" y1="240" x2="220" y2="265" stroke="#3a2f1f" stroke-width="2"/>' : '<rect x="204" y="48" width="156" height="200" fill="url(#wd2)" stroke="#3a2f1f"/><circle cx="220" cy="140" r="3" fill="#dcc888"/>')
+      + '<circle cx="184" cy="140" r="3" fill="#dcc888"/>'
+      + '<rect x="40" y="240" width="320" height="20" fill="#3a2f1f"/>'  // bottom track
+      + (broken ? '<g transform="translate(310,60)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>' : '<g transform="translate(310,60)"><circle r="14" fill="#2d6a4f"/><path d="M-5 0 L-1 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g>');
+  }
+  // ---------- CURTAIN ROD / WALL MOUNT ----------
+  else if (k.includes('curtain') || k.includes('rod') || k.includes('mount') || k.includes('anchor') || k.includes('bracket')) {
+    const onFloor = k.includes('floor') || k.includes('curtains');
+    scene = ''
+      + '<rect width="400" height="300" fill="#e8e0d6"/>'  // wall
+      + '<rect width="400" height="80" fill="rgba(255,255,255,0.4)"/>'  // light from window above
+      + (onFloor
+        ? '<rect x="0" y="220" width="400" height="80" fill="#a89882"/>'  // floor
+          + '<rect x="0" y="218" width="400" height="6" fill="#7a6e5a"/>'
+          + '<g transform="translate(120,235) rotate(-8)"><rect width="200" height="10" rx="3" fill="#888"/><circle cx="0" cy="5" r="6" fill="#5a5045"/><circle cx="200" cy="5" r="6" fill="#5a5045"/></g>'
+          + '<path d="M80 245 Q150 220 250 240 Q330 250 360 230 L370 280 L60 280 Z" fill="#a8826a" opacity="0.85"/>'
+          + '<path d="M90 250 Q160 230 240 245" fill="none" stroke="#7a5a48" stroke-width="2" opacity="0.5"/>'
+        : '<g transform="translate(70,55)"><rect width="14" height="30" fill="#3a3530"/><rect x="-3" y="0" width="20" height="6" fill="#3a3530"/></g>'
+          + '<circle cx="80" cy="80" r="8" fill="#1a1a1a"/><circle cx="80" cy="80" r="4" fill="#3a2520"/>'  // anchor hole 1
+          + '<g transform="translate(310,55)"><rect width="14" height="30" fill="#3a3530"/><rect x="-3" y="0" width="20" height="6" fill="#3a3530"/></g>'
+          + '<circle cx="320" cy="80" r="8" fill="#1a1a1a"/><circle cx="320" cy="80" r="4" fill="#3a2520"/>'
+          + '<g opacity="0.4"><line x1="65" y1="78" x2="95" y2="82" stroke="#5a4530" stroke-width="2"/><line x1="305" y1="78" x2="335" y2="82" stroke="#5a4530" stroke-width="2"/></g>'  // tear marks
+          + '<text x="200" y="170" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#7a6e5a" opacity="0.6">— rod missing —</text>')
+      + '<g transform="translate(360,30)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>';
+  }
+  // ---------- WALL SCUFF / PAINT ----------
+  else if (k.includes('scuff') || k.includes('paint') || k.includes('wall') || k.includes('stain') || k.includes('sofa')) {
+    scene = ''
+      + '<defs><linearGradient id="pntw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0e8dc"/><stop offset="1" stop-color="#d8cdbc"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="url(#pntw)"/>'
+      + '<rect x="0" y="240" width="400" height="60" fill="#a89882"/>'  // floor
+      + '<rect x="0" y="238" width="400" height="6" fill="#7a6e5a"/>'
+      + '<rect x="0" y="225" width="400" height="14" fill="#fafafa" stroke="#bfb5a8" stroke-width="0.5"/>'  // skirting board
+      + '<g opacity="0.6"><path d="M50 180 Q90 175 130 182 Q170 188 220 180 Q260 174 300 182" stroke="#5a4530" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M55 184 Q120 180 200 188 Q260 192 310 184" stroke="#5a4530" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/></g>'
+      + '<g transform="translate(310,40)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>';
+  }
+  // ---------- SHOWER / BATHROOM ----------
+  else if (k.includes('shower') || k.includes('mixer') || k.includes('bath')) {
+    scene = ''
+      + '<rect width="400" height="300" fill="#e8e2dc"/>'
+      + '<g stroke="#cabfb3" stroke-width="0.5"><line x1="0" y1="100" x2="400" y2="100"/><line x1="0" y1="200" x2="400" y2="200"/><line x1="100" y1="0" x2="100" y2="300"/><line x1="200" y1="0" x2="200" y2="300"/><line x1="300" y1="0" x2="300" y2="300"/></g>'
+      + '<circle cx="200" cy="120" r="22" fill="#bcbfc4" stroke="#888" stroke-width="2"/>'  // mixer plate
+      + '<circle cx="200" cy="120" r="14" fill="#fafafa"/>'
+      + '<rect x="195" y="100" width="10" height="40" rx="3" fill="#888"/>'  // handle
+      + '<rect x="195" y="155" width="10" height="50" fill="#bcbfc4"/>'  // pipe down
+      + '<path d="M195 205 L185 215 L215 215 L205 205 Z" fill="#888"/>'  // shower head pipe
+      + (k.includes('leak') || k.includes('drip') || k.includes('before') || k.includes('water') ? '<g><line x1="200" y1="142" x2="200" y2="155" stroke="#88b8d0" stroke-width="2" stroke-dasharray="2 2"/><circle cx="200" cy="165" r="3" fill="#88b8d0"/><circle cx="200" cy="180" r="2.5" fill="#88b8d0"/></g><ellipse cx="200" cy="265" rx="80" ry="14" fill="#88b8d0" opacity="0.55"/><g transform="translate(310,40)"><circle r="14" fill="#c0392b"/><text y="4" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">!</text></g>' : '<g transform="translate(310,40)"><circle r="14" fill="#2d6a4f"/><path d="M-5 0 L-1 4 L6 -4" stroke="#fff" stroke-width="2.5" fill="none"/></g>');
+  }
+  // ---------- DEFAULT FALLBACK ----------
+  else {
+    scene = ''
+      + '<defs><linearGradient id="dflt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+(bg||'#a89a92')+'"/><stop offset="1" stop-color="'+(accent||bg||'#7a6f66')+'"/></linearGradient></defs>'
+      + '<rect width="400" height="300" fill="url(#dflt)"/>'
+      + '<rect x="40" y="40" width="320" height="220" rx="12" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>'
+      + '<circle cx="200" cy="130" r="34" fill="rgba(255,255,255,0.85)"/>'
+      + '<path d="M186 130 L196 140 L216 120" stroke="'+(fg||'#1a1a1a')+'" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  }
+  // Caption strip at the bottom
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">'
+    + scene
+    + '<rect x="0" y="262" width="400" height="38" fill="rgba(0,0,0,0.6)"/>'
+    + '<text x="14" y="280" font-family="sans-serif" font-size="13" font-weight="600" fill="#fff">'+label+'</text>'
+    + (sub ? '<text x="14" y="294" font-family="sans-serif" font-size="10" fill="#dadada">'+sub+'</text>' : '')
+    + '</svg>'
+  );
+};
 const initialData = {
   currentUser: { name: 'Hassan Al-PM', email: 'hassan@pinnaclepm.ae', phone: '+971 50 999 0001', role: 'Property Manager' },
   property: { name: 'VARS Property Management', location: 'Abu Dhabi, UAE', timezone: 'Asia/Dubai (GMT+4)', towers: 5, totalFlats: 4740, occupiedFlats: 4110 },
@@ -21117,7 +21269,7 @@ try {
   }
 } catch(e) { console.log('Supabase init error:', e.message); }
 
-const DATA_VERSION = 'v63';
+const DATA_VERSION = 'v64';
 const loadPersistedData = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -21443,7 +21595,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
       fmTechnician: { name: user.name, role: user.specialty, phone: user.phone, expectedArrival: s.time || '—' }
     } : s)}));
     setCloseoutForm({workDone:''});
-    showToast('Service marked complete — resident notified');
+    showToast('Task completed — updated in dashboard, resident notified');
     setPage('success');
   };
 
@@ -21636,6 +21788,48 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           <div style={{fontSize:10,fontWeight:600,color:'#8a7f76',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8}}>Internal Note <span style={{color:'#a89a92',fontWeight:400,textTransform:'none'}}>(visible to FM only)</span></div>
           <textarea value={executionNotes[wo.id] || ''} onChange={e => setExecutionNotes(prev => ({...prev, [wo.id]: e.target.value}))} placeholder="Add internal note..." rows={2} style={{width:'100%',padding:8,border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,resize:'vertical',fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
         </div>
+
+        {/* Inline decision card — visible at bottom of content for Assigned tasks */}
+        {wo.woStatus === 'Assigned' && (
+          <div style={{background:'linear-gradient(135deg,#fff8e8,#fdf0d0)',border:'1px solid #e8d5a5',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'#b08a4a'}}/>
+              <div style={{fontSize:13,fontWeight:600,color:'#7a6040'}}>Decision required</div>
+            </div>
+            <div style={{fontSize:12,color:'#7a6040',lineHeight:1.45,marginBottom:14}}>This task was assigned to you by <strong>{wo.assignedBy || 'your supervisor'}</strong>. Please accept to take responsibility, or reject with a written explanation.</div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={() => setShowRejectModal(true)} style={{flex:1,padding:14,background:'#fff',color:'#c0392b',border:'1px solid #e0c4c0',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                Reject
+              </button>
+              <button onClick={() => setShowAcceptConfirm(true)} style={{flex:2,padding:14,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,boxShadow:'0 4px 12px rgba(45,106,79,0.25)'}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+                Accept task
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Inline Start work — visible when accepted */}
+        {wo.woStatus === 'Accepted' && (
+          <div style={{background:'linear-gradient(135deg,#eef0eb,#dfe4d7)',border:'1px solid #ccd0c2',borderRadius:14,padding:16,marginBottom:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'#5a6b4f'}}/>
+              <div style={{fontSize:13,fontWeight:600,color:'#3a4a30'}}>Ready to begin</div>
+            </div>
+            <div style={{fontSize:12,color:'#3a4a30',lineHeight:1.45,marginBottom:14}}>Task accepted{wo.acceptedAt ? ' · ' + FmHelpers.timeAgo(wo.acceptedAt) : ''}. Tap Start work when you arrive on site to begin the timer.</div>
+            <button onClick={() => {
+              const ts = new Date().toISOString();
+              setExecutionTimers(prev => ({...prev, [wo.id]: Date.now()}));
+              setData(FmHelpers.transitionWO(wo.id, { status: 'In Progress', startedAt: ts }));
+              showToast('Work started — timer running');
+              setPage('execution');
+            }} style={{width:'100%',padding:14,background:'#5a6b4f',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,boxShadow:'0 4px 12px rgba(90,107,79,0.25)'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start work
+            </button>
+          </div>
+        )}
 
         {/* Action buttons — depend on woStatus. Lifted above bottom nav (bottom:60) so always visible */}
         <div style={{position:'fixed',bottom:60,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',display:'flex',gap:8,zIndex:50}}>
@@ -22110,7 +22304,7 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
     const checklistComplete = tpl.checklist.length === 0 || tpl.checklist.every((_, i) => checklist[i]);
     const valid = closeoutForm.workDone.trim().length > 0 && afterPhotos.length >= 1 && checklistComplete;
     return (
-      <div style={{padding:'12px 16px',paddingBottom:180}}>
+      <div style={{padding:'12px 16px',paddingBottom:200}}>
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
           <button onClick={() => setPage('execution')} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex',alignItems:'center',gap:4,color:'#6b5d52',fontSize:13,fontWeight:500}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -22204,36 +22398,36 @@ const FmTechnicianApp = ({ user, onSwitchRole, onSignOut }) => {
           </div>
         )}
 
-        {/* Inline primary CTA — always visible inside the close-out content */}
-        <div style={{marginBottom:14}}>
+        {/* Validation hint when not yet ready */}
+        {!valid && (
+          <div style={{padding:'10px 12px',background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:8,fontSize:12,color:'#7a6040',marginBottom:12,lineHeight:1.4}}>
+            To enable Task completed: finish all checklist steps, add at least one After photo, and write a summary.
+          </div>
+        )}
+
+        {/* Fixed bottom action bar — primary Task completed CTA + Back link */}
+        <div style={{position:'fixed',bottom:60,left:0,right:0,padding:'12px 16px',background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',zIndex:50,display:'flex',flexDirection:'column',gap:6}}>
           <button disabled={!valid} onClick={() => {
             if (!checklistComplete) { showToast('Complete or mark N/A all checklist steps'); return; }
             if (afterPhotos.length === 0) { showToast('At least one after-photo is required'); return; }
             if (!closeoutForm.workDone.trim()) { showToast('Please describe the work done'); return; }
             setShowCompleteConfirm(true);
-          }} style={{width:'100%',padding:16,background: valid ? '#2d6a4f':'#c4b8b0',color:'#fff',border:'none',borderRadius:12,fontSize:15,fontWeight:600,cursor: valid ? 'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow: valid ? '0 4px 12px rgba(45,106,79,0.25)':'none'}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M20 6L9 17l-5-5"/></svg>
-            Complete the service
+          }} style={{width:'100%',padding:16,background: valid ? '#2d6a4f':'#c4b8b0',color:'#fff',border:'none',borderRadius:12,fontSize:15,fontWeight:700,cursor: valid ? 'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow: valid ? '0 4px 14px rgba(45,106,79,0.3)':'none',letterSpacing:'-0.01em'}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+            Task completed
           </button>
-          {!valid && (
-            <div style={{fontSize:11,color:'#a89a92',textAlign:'center',marginTop:6}}>Complete the checklist, add at least one after-photo, and write a summary.</div>
-          )}
-        </div>
-
-        {/* Fixed footer — Back to execution, lifted above bottom nav */}
-        <div style={{position:'fixed',bottom:60,left:0,right:0,padding:'10px 16px',background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid #ebe7e3',zIndex:50}}>
-          <button onClick={() => setPage('execution')} style={{width:'100%',padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back to execution</button>
+          <button onClick={() => setPage('execution')} style={{width:'100%',padding:'8px 0',background:'none',color:'#8a7f76',border:'none',fontSize:12,fontWeight:500,cursor:'pointer'}}>← Back to execution</button>
         </div>
 
         {/* Complete confirmation */}
         {showCompleteConfirm && (
           <div onClick={() => setShowCompleteConfirm(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
             <div onClick={e => e.stopPropagation()} style={{background:'#fff',borderRadius:14,padding:24,width:'100%',maxWidth:360}}>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Complete the service?</div>
-              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>This will mark the service as <strong>Complete</strong> in the system, notify the resident, and share the after-photos.</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:8,color:'#1a1a1a'}}>Mark task as completed?</div>
+              <div style={{fontSize:13,color:'#6b5d52',lineHeight:1.5,marginBottom:18}}>This will mark <strong>{wo.id}</strong> as <strong>Completed</strong> in the main dashboard, notify the resident, and share the after-photos.</div>
               <div style={{display:'flex',gap:8}}>
-                <button onClick={() => setShowCompleteConfirm(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Back</button>
-                <button onClick={() => { setShowCompleteConfirm(false); submitCloseOut(wo); }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm complete</button>
+                <button onClick={() => setShowCompleteConfirm(false)} style={{flex:1,padding:12,background:'#fff',color:'#6b5d52',border:'1px solid #d5cfc8',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancel</button>
+                <button onClick={() => { setShowCompleteConfirm(false); submitCloseOut(wo); }} style={{flex:1,padding:12,background:'#2d6a4f',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}>Confirm</button>
               </div>
             </div>
           </div>
@@ -22485,19 +22679,19 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
     const tech = fmUsers.find(u => u.id === wo.assignedTo);
     const techName = tech ? tech.name : '—';
     const st = wo.woStatus;
-    // Compute current step number from status
+    // Compute current step number from status (9-step timeline — "en route" removed)
     let currentStep = 1;
     if (st === 'Assigned' || st === 'Pending Approval') currentStep = 3;
-    else if (st === 'Accepted' || st === 'En route') currentStep = 5;
-    else if (st === 'Arrived') currentStep = 6;
-    else if (st === 'Assessment shared') currentStep = 7;
-    else if (st === 'In Progress' || st === 'On Hold') currentStep = 8;
-    else if (st === 'Completed') currentStep = 9;
-    else if (st === 'Done' || st === 'Closed' || st === 'Confirmed' || wo.rating) currentStep = 10;
-    else if (st === 'Reopened') currentStep = 9;
-    // If 'Done' status but no rating yet, awaiting feedback → step 10 is current
+    else if (st === 'Accepted' || st === 'En route') currentStep = 4;
+    else if (st === 'Arrived') currentStep = 5;
+    else if (st === 'Assessment shared') currentStep = 6;
+    else if (st === 'In Progress' || st === 'On Hold') currentStep = 7;
+    else if (st === 'Completed') currentStep = 8;
+    else if (st === 'Done' || st === 'Closed' || st === 'Confirmed' || wo.rating) currentStep = 9;
+    else if (st === 'Reopened') currentStep = 8;
+    // If completed/done but no rating yet, awaiting feedback → step 9 is current
     const ratingDone = !!(wo.rating || wo.autoConfirmed);
-    if (currentStep === 10 && !ratingDone && (st === 'Done' || st === 'Completed')) currentStep = 10; // step 10 still current
+    if (currentStep === 9 && !ratingDone && (st === 'Done' || st === 'Completed')) currentStep = 9;
 
     const truncate = (s, n) => {
       if (!s) return '';
@@ -22520,12 +22714,11 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
       { id:2, label:'Assigned to ' + techName, ts: wo.assignedAt ? FmHelpers.timeAgo(wo.assignedAt) : '', note: wo.assignedBy ? 'By ' + wo.assignedBy : '' },
       { id:3, label:'Awaiting technician confirmation', ts: wo.assignedAt ? FmHelpers.timeAgo(wo.assignedAt) : '', note: (currentStep === 3 && elapsedFromAssigned > 10) ? ('Sent ' + elapsedFromAssigned + ' min ago — no response yet') : '' },
       { id:4, label:'Technician accepted', ts: wo.acceptedAt ? FmHelpers.timeAgo(wo.acceptedAt) : '', note: wo.acceptedAt && tech ? 'Confirmed by ' + tech.name : '' },
-      { id:5, label:'Technician en route', ts: wo.acceptedAt ? FmHelpers.timeAgo(wo.acceptedAt) : '', note:'' },
-      { id:6, label:'Technician arrived at unit', ts: wo.arrivedAt ? FmHelpers.timeAgo(wo.arrivedAt) : '', note:'' },
-      { id:7, label:'On-site assessment shared', ts: wo.assessmentSharedAt ? FmHelpers.timeAgo(wo.assessmentSharedAt) : '', note: firstSentence(wo.assessmentDescription) },
-      { id:8, label:'Work in progress', ts: wo.startedAt ? FmHelpers.timeAgo(wo.startedAt) : '', note: '', live: currentStep === 8 ? liveTimerStr : '', onHold: st === 'On Hold' ? (wo.holdReason || 'paused') : '' },
-      { id:9, label:'Job completed', ts: wo.completedAt ? wo.completedAt : '', note: firstSentence(wo.workDone) },
-      { id:10, label:'Resident feedback received', ts: wo.ratedAt ? FmHelpers.timeAgo(wo.ratedAt) : (wo.autoConfirmed ? 'auto-confirmed' : ''), note: wo.rating ? ('★'.repeat(Math.floor(wo.rating)) + ' ' + wo.rating.toFixed(1) + ' / 5 — confirmed') : (wo.autoConfirmed ? 'Auto-confirmed — no response' : '') }
+      { id:5, label:'Technician arrived at unit', ts: wo.arrivedAt ? FmHelpers.timeAgo(wo.arrivedAt) : '', note:'' },
+      { id:6, label:'On-site assessment shared', ts: wo.assessmentSharedAt ? FmHelpers.timeAgo(wo.assessmentSharedAt) : '', note: firstSentence(wo.assessmentDescription) },
+      { id:7, label:'Work in progress', ts: wo.startedAt ? FmHelpers.timeAgo(wo.startedAt) : '', note: '', live: currentStep === 7 ? liveTimerStr : '', onHold: st === 'On Hold' ? (wo.holdReason || 'paused') : '' },
+      { id:8, label:'Job completed', ts: wo.completedAt ? wo.completedAt : '', note: firstSentence(wo.workDone) },
+      { id:9, label:'Resident feedback received', ts: wo.ratedAt ? FmHelpers.timeAgo(wo.ratedAt) : (wo.autoConfirmed ? 'auto-confirmed' : ''), note: wo.rating ? ('★'.repeat(Math.floor(wo.rating)) + ' ' + wo.rating.toFixed(1) + ' / 5 — confirmed') : (wo.autoConfirmed ? 'Auto-confirmed — no response' : '') }
     ];
 
     // Compute states + reopen note
@@ -22533,10 +22726,10 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
       let state = 'upcoming';
       if (s.id < currentStep) state = 'done';
       else if (s.id === currentStep) state = 'current';
-      // Reopened — keep step 9 current and add red note on step 10
+      // Reopened — keep step 8 (job completed) green and add red note on step 9 (feedback)
       if (st === 'Reopened') {
-        if (s.id <= 9) state = 'done';
-        if (s.id === 10) { state = 'current'; s.reopened = true; s.reopenNote = wo.reopenReason || 'Reopened by resident'; }
+        if (s.id <= 8) state = 'done';
+        if (s.id === 9) { state = 'current'; s.reopened = true; s.reopenNote = wo.reopenReason || 'Reopened by resident'; }
       }
       return { ...s, state };
     });
@@ -23147,11 +23340,11 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
                     {e.state === 'current' && e.live && (
                       <div style={{fontSize:11,color:'#3a5a8a',fontWeight:600,marginTop:4,fontFeatureSettings:"'tnum' 1"}}>● Timer running — {e.live} elapsed</div>
                     )}
-                    {/* On hold sub-note for step 8 */}
-                    {e.id === 8 && e.onHold && (
+                    {/* On hold sub-note — sits under "Work in progress" (now step 7) */}
+                    {e.id === 7 && e.onHold && (
                       <div style={{fontSize:11,color:'#7a6040',marginTop:4,padding:'6px 8px',background:'#fdf6e8',border:'1px solid #e8d5a5',borderRadius:6,lineHeight:1.4}}>● On hold — {e.onHold}</div>
                     )}
-                    {/* Reopen sub-note for step 10 */}
+                    {/* Reopen sub-note — under "Resident feedback" (now step 9) */}
                     {e.reopened && (
                       <div style={{fontSize:11,color:'#8b3a30',marginTop:4,padding:'6px 8px',background:'#fbeeec',border:'1px solid #e5c6c1',borderRadius:6,lineHeight:1.4}}>● {e.reopenNote}</div>
                     )}
