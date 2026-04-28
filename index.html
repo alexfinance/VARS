@@ -13975,9 +13975,12 @@ const ResidentApp = ({ onLogout }) => {
   const [resVisFilterOpen, setResVisFilterOpen] = useState(false);
   const [showServiceBookingModal, setShowServiceBookingModal] = useState(false);
   const [bookingMode, setBookingMode] = useState('amenity'); // 'amenity' or 'service'
-  const [serviceBooking, setServiceBooking] = useState({ type:'', location:'', date:'', time:'', duration:'1 hour', guests:1 });
+  const [serviceBooking, setServiceBooking] = useState({ type:'', areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:1, attachments:[] });
   const [editingAmenityId, setEditingAmenityId] = useState(null); // null = new booking, id = editing existing
+  const [editingServiceId, setEditingServiceId] = useState(null); // null = new service request, id = editing existing
   const [showAmenityDetail, setShowAmenityDetail] = useState(null); // holds amenity booking object for detail/edit/delete
+  const [showServiceDetail, setShowServiceDetail] = useState(null); // holds service request object for detail/edit/cancel
+  const [serviceAttachmentPreview, setServiceAttachmentPreview] = useState(null); // {name, type, dataUrl} for full-screen preview
   // Payment gateway modal state
   const [showPayModal, setShowPayModal] = useState(false);
   const [payStep, setPayStep] = useState('method'); // 'method' | 'details' | 'processing'
@@ -14617,7 +14620,7 @@ const ResidentApp = ({ onLogout }) => {
               </div>
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
                 {bookAmenities.map((svc, i) => (
-                  <div key={i} onClick={() => {setBookingMode('amenity'); setServiceBooking({type:svc.label, location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
+                  <div key={i} onClick={() => {setBookingMode('amenity'); setEditingServiceId(null); setServiceBooking({type:svc.label, areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:'', attachments:[]}); setShowServiceBookingModal(true);}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0'}}>
                     <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.5)',boxShadow:'0 2px 8px rgba(120,100,90,0.05)'}}>
                       {svc.icon}
                     </div>
@@ -14746,7 +14749,7 @@ const ResidentApp = ({ onLogout }) => {
                         <span onClick={() => setCurrentPage('services')} style={{fontSize:11,color:'#a89a92',cursor:'pointer'}}>{t('res.seeAllSmall')}</span>
                       </div>
                       {upcoming.map(s => (
-                        <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec'}}>
+                        <div key={s.id} onClick={() => setShowServiceDetail(s)} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',cursor:'pointer'}}>
                           <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
                           </div>
@@ -14767,7 +14770,7 @@ const ResidentApp = ({ onLogout }) => {
                         <span onClick={() => setCurrentPage('services')} style={{fontSize:11,color:'#a89a92',cursor:'pointer'}}>{t('res.seeAllSmall')}</span>
                       </div>
                       {past.map(s => (
-                        <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',opacity:0.5}}>
+                        <div key={s.id} onClick={() => setShowServiceDetail(s)} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',opacity:0.5,cursor:'pointer'}}>
                           <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
                           </div>
@@ -15203,7 +15206,7 @@ const ResidentApp = ({ onLogout }) => {
                   );
                 });
               })()}
-              <button onClick={() => {setBookingMode('amenity'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>{t('res.bookAmenity')}</button>
+              <button onClick={() => {setBookingMode('amenity'); setEditingServiceId(null); setServiceBooking({type:'', areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:'', attachments:[]}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:8,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>{t('res.bookAmenity')}</button>
             </div>
 
             {/* Upcoming Service — booked separately */}
@@ -15245,7 +15248,7 @@ const ResidentApp = ({ onLogout }) => {
                   const dp = iso.split('-');
                   const dl = iso === svcTodayISO ? t('res.today') : (parseInt(dp[2]) + ' ' + svcMonths[parseInt(dp[1])-1]);
                   return (
-                    <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec'}}>
+                    <div key={s.id} onClick={() => setShowServiceDetail(s)} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10,paddingBottom:10,borderBottom:'1px solid #f2efec',cursor:'pointer'}}>
                       <div style={{width:40,height:40,borderRadius:'50%',background:'#e8e3de',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
                       </div>
@@ -15259,7 +15262,7 @@ const ResidentApp = ({ onLogout }) => {
                   );
                 });
               })()}
-              <button onClick={() => {setBookingMode('service'); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:'Normal', comments:''}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>{t('res.addServiceRequest')}</button>
+              <button onClick={() => {setBookingMode('service'); setEditingServiceId(null); setServiceBooking({type:'', areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:'Normal', comments:'', attachments:[]}); setShowServiceBookingModal(true);}} style={{width:'100%',marginTop:4,padding:'13px 0',borderRadius:14,border:'1px solid rgba(26,26,26,0.12)',background:'rgba(255,255,255,0.5)',color:'#1a1a1a',fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'-0.01em'}}>{t('res.addServiceRequest')}</button>
             </div>
 
             {/* Recent Announcements */}
@@ -16362,32 +16365,59 @@ const ResidentApp = ({ onLogout }) => {
       {/* Booking Modal — amenity or service */}
       {showServiceBookingModal && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowServiceBookingModal(false)}>
-          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:420,width:'100%',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
+          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:440,width:'100%',maxHeight:'92vh',overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>Book {serviceBooking.type || (bookingMode === 'service' ? 'Service' : 'Amenity')}</h3>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>{bookingMode === 'service' ? (editingServiceId ? 'Edit Service Request' : 'New Service Request') : (editingAmenityId ? 'Edit Amenity Booking' : 'Book ' + (serviceBooking.type || 'Amenity'))}</h3>
               <button onClick={() => setShowServiceBookingModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
             </div>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Service Type' : 'Amenity Type'}</label>
-              {serviceBooking.type ? (
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Service Category' : 'Amenity Type'} <span style={{color:'#c0392b'}}>*</span></label>
+              {serviceBooking.type && bookingMode === 'amenity' && !editingAmenityId ? (
                 <input value={serviceBooking.type} disabled style={{width:'100%',padding:10,border:'1px solid #e0e0e0',borderRadius:6,fontSize:13,background:'#f5f5f5',color:'#8a8a8a'}}/>
               ) : (
                 <select value={serviceBooking.type} onChange={e => setServiceBooking(f => ({...f, type: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
                   {bookingMode === 'service' ? (
-                    <>{['', 'Plumbing', 'Electrician', 'Housekeeping', 'AC Repair', 'Pest Control', 'Locksmith', 'Painter', 'Carpenter'].map(v => <option key={v} value={v}>{v || 'Select service'}</option>)}</>
+                    <>{['', 'Plumbing', 'Electrician', 'Housekeeping', 'AC Repair', 'Pest Control', 'Locksmith', 'Painter', 'Carpenter', 'Others'].map(v => <option key={v} value={v}>{v || 'Please select a service'}</option>)}</>
                   ) : (
-                    <>{['', 'Swimming Pool', 'Table Tennis', 'Squash', 'Gym', 'Sauna', 'BBQ Area', 'Kids Area', 'Yoga Room'].map(v => <option key={v} value={v}>{v || 'Select amenity'}</option>)}</>
+                    <>{['', 'Swimming Pool', 'Table Tennis', 'Squash', 'Gym', 'Sauna', 'BBQ Area', 'Kids Area', 'Yoga Room'].map(v => <option key={v} value={v}>{v || 'Please select an amenity'}</option>)}</>
                   )}
                 </select>
               )}
             </div>
             {bookingMode === 'service' && (
+            <>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Location</label>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Service Area <span style={{color:'#c0392b'}}>*</span></label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                {['Unit Area','Common Area'].map(v => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setServiceBooking(f => ({...f, areaType: v, location: ''}))}
+                    style={{
+                      padding:'12px 10px',
+                      border:'1px solid '+(serviceBooking.areaType === v ? '#928989' : '#ebe7e3'),
+                      borderRadius:6,
+                      background: serviceBooking.areaType === v ? '#f5efe9' : '#fff',
+                      color: serviceBooking.areaType === v ? '#1a1a1a' : '#8a7f76',
+                      fontSize:13,
+                      fontWeight: serviceBooking.areaType === v ? 600 : 500,
+                      cursor:'pointer',
+                      textAlign:'center'
+                    }}>{v}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Specific Location <span style={{color:'#c0392b'}}>*</span></label>
               <select value={serviceBooking.location} onChange={e => setServiceBooking(f => ({...f, location: e.target.value}))} style={{width:'100%',padding:12,border:'1px solid #ebe7e3',borderRadius:6,fontSize:15,outline:'none'}}>
-                {['', 'Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Common Area', 'Balcony'].map(v => <option key={v} value={v}>{v || 'Select location'}</option>)}
+                {(serviceBooking.areaType === 'Common Area'
+                  ? ['', 'Lobby', 'Lift', 'Corridor', 'Garage Area', 'General']
+                  : ['', 'Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Balcony', 'Other']
+                ).map(v => <option key={v} value={v}>{v || 'Please select a location'}</option>)}
               </select>
             </div>
+            </>
             )}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
               <div>
@@ -16408,41 +16438,100 @@ const ResidentApp = ({ onLogout }) => {
                   </select>
                 </div>
                 <div>
-                  <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Number of People</label>
+                  <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Number of Guests</label>
                   <input type="number" value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: parseInt(e.target.value)||1}))} min="1" max="10" style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}/>
                 </div>
               </div>
             ) : (
               <div style={{marginBottom:16}}>
-                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Urgency</label>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Priority Level</label>
                 <select value={serviceBooking.guests} onChange={e => setServiceBooking(f => ({...f, guests: e.target.value}))} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none'}}>
-                  <option value="Normal">Normal</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option>
+                  <option value="Normal">Standard</option><option value="Urgent">Urgent</option><option value="Emergency">Emergency</option>
                 </select>
               </div>
             )}
+            {bookingMode === 'service' && (
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Attachments</label>
+                <div style={{fontSize:11,color:'#a89a92',marginBottom:8}}>Upload photos or supporting documents (PNG, JPG, PDF). You may attach multiple files.</div>
+                <input
+                  type="file"
+                  id="svc-attach-input"
+                  multiple
+                  accept="image/png,image/jpeg,image/jpg,application/pdf"
+                  style={{display:'none'}}
+                  onChange={e => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length === 0) return;
+                    const readers = files.map(file => new Promise(resolve => {
+                      const reader = new FileReader();
+                      reader.onload = ev => resolve({ id: 'AT-'+Date.now()+'-'+Math.random().toString(36).slice(2,8), name: file.name, type: file.type, size: file.size, dataUrl: ev.target.result });
+                      reader.readAsDataURL(file);
+                    }));
+                    Promise.all(readers).then(items => {
+                      setServiceBooking(f => ({...f, attachments: [...(f.attachments || []), ...items]}));
+                    });
+                    e.target.value = '';
+                  }}
+                />
+                <button type="button" onClick={() => document.getElementById('svc-attach-input').click()} style={{width:'100%',padding:'10px 12px',border:'1px dashed #c4b8b0',borderRadius:6,background:'#faf8f6',color:'#6b5d52',fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Add Files
+                </button>
+                {(serviceBooking.attachments || []).length > 0 && (
+                  <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:6}}>
+                    {(serviceBooking.attachments || []).map((att, idx) => {
+                      const isImg = att.type && att.type.startsWith('image/');
+                      return (
+                        <div key={att.id || idx} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:'#f5f3f0',borderRadius:6,border:'1px solid #ebe7e3'}}>
+                          {isImg ? (
+                            <img src={att.dataUrl} alt={att.name} style={{width:36,height:36,objectFit:'cover',borderRadius:4,cursor:'pointer'}} onClick={() => setServiceAttachmentPreview(att)}/>
+                          ) : (
+                            <div onClick={() => setServiceAttachmentPreview(att)} style={{width:36,height:36,background:'#e8e3de',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                          )}
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:12,fontWeight:500,color:'#1a1a1a',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{att.name}</div>
+                            <div style={{fontSize:10,color:'#a89a92'}}>{(att.size/1024).toFixed(1)} KB</div>
+                          </div>
+                          <button type="button" onClick={() => setServiceBooking(f => ({...f, attachments: (f.attachments || []).filter((_, i) => i !== idx)}))} style={{background:'none',border:'none',color:'#c0392b',cursor:'pointer',fontSize:16,padding:'2px 6px'}}>&times;</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>Comments</label>
-              <textarea value={serviceBooking.comments || ''} onChange={e => setServiceBooking(f => ({...f, comments: e.target.value}))} placeholder={bookingMode === 'service' ? 'Describe the issue or any special requirements...' : 'Any special requests or notes...'} rows={3} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',resize:'vertical',boxSizing:'border-box'}}/>
+              <label style={{fontSize:12,color:'#8a7f76',fontWeight:500,display:'block',marginBottom:6}}>{bookingMode === 'service' ? 'Additional Details' : 'Notes'}</label>
+              <textarea value={serviceBooking.comments || ''} onChange={e => setServiceBooking(f => ({...f, comments: e.target.value}))} placeholder={bookingMode === 'service' ? 'Please describe the issue and any access instructions...' : 'Any special requirements or notes...'} rows={3} style={{width:'100%',padding:10,border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,outline:'none',resize:'vertical',boxSizing:'border-box',fontFamily:'inherit'}}/>
             </div>
             <button onClick={() => {
-              if (!serviceBooking.type || !serviceBooking.date || !serviceBooking.time) {showToast('Please fill in all required fields'); return;}
-              if (bookingMode === 'service' && !serviceBooking.location) {showToast('Please select a location'); return;}
+              if (!serviceBooking.type || !serviceBooking.date || !serviceBooking.time) {showToast('Please complete all required fields'); return;}
+              if (bookingMode === 'service' && (!serviceBooking.areaType || !serviceBooking.location)) {showToast('Please select a service area and specific location'); return;}
               const autoLocation = bookingMode === 'amenity' ? 'Ground Floor' : serviceBooking.location;
               if (bookingMode === 'service') {
-                setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, {id: 'SR-'+Date.now(), type: serviceBooking.type, flat: 'B-102', resident: 'Nitin Sharma', date: serviceBooking.date, time: serviceBooking.time, status: 'Pending Approval', location: serviceBooking.location, urgency: serviceBooking.guests, comments: serviceBooking.comments || ''}]}));
+                if (editingServiceId) {
+                  setData(prev => ({...prev, serviceRequests: (prev.serviceRequests || []).map(s => s.id === editingServiceId ? {...s, type: serviceBooking.type, date: serviceBooking.date, time: serviceBooking.time, location: serviceBooking.location, areaType: serviceBooking.areaType, urgency: serviceBooking.guests, comments: serviceBooking.comments || '', attachments: serviceBooking.attachments || []} : s)}));
+                  showToast('Service request updated');
+                } else {
+                  setData(prev => ({...prev, serviceRequests: [...prev.serviceRequests, {id: 'SR-'+Date.now(), type: serviceBooking.type, flat: 'B-102', resident: 'Nitin Sharma', date: serviceBooking.date, time: serviceBooking.time, status: 'Pending Approval', location: serviceBooking.location, areaType: serviceBooking.areaType, urgency: serviceBooking.guests, comments: serviceBooking.comments || '', attachments: serviceBooking.attachments || []}]}));
+                  showToast('Service request submitted for approval');
+                }
               } else if (editingAmenityId) {
                 setData(prev => ({...prev, amenityBookings: (prev.amenityBookings||[]).map(b => b.id === editingAmenityId ? {...b, type: serviceBooking.type, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, location: autoLocation, comments: serviceBooking.comments || ''} : b)}));
                 showToast(serviceBooking.type + ' booking updated');
               } else {
                 const booking = {id: 'BK-'+Date.now(), type: serviceBooking.type, location: autoLocation, date: serviceBooking.date, time: serviceBooking.time, duration: serviceBooking.duration, guests: serviceBooking.guests, comments: serviceBooking.comments || '', status:'Confirmed'};
                 setData(prev => ({...prev, amenityBookings: [...(prev.amenityBookings||[]), booking]}));
+                showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time);
               }
-              if (!editingAmenityId) showToast(serviceBooking.type + ' booked for ' + serviceBooking.date + ' at ' + serviceBooking.time);
-              setShowServiceBookingModal(false); setEditingAmenityId(null); setServiceBooking({type:'', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:''});
+              setShowServiceBookingModal(false); setEditingAmenityId(null); setEditingServiceId(null); setServiceBooking({type:'', areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:1, comments:'', attachments:[]});
             }} style={{width:'100%',padding:14,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:10}}>
-              {bookingMode === 'service' ? 'Book Service' : (editingAmenityId ? 'Update Booking' : 'Book Amenity')}
+              {bookingMode === 'service' ? (editingServiceId ? 'Save Changes' : 'Submit Service Request') : (editingAmenityId ? 'Save Changes' : 'Confirm Booking')}
             </button>
-            <button onClick={() => { setShowServiceBookingModal(false); setEditingAmenityId(null); }} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
+            <button onClick={() => { setShowServiceBookingModal(false); setEditingAmenityId(null); setEditingServiceId(null); }} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Cancel</button>
           </div>
         </div>
       )}
@@ -16485,6 +16574,131 @@ const ResidentApp = ({ onLogout }) => {
               setShowAmenityDetail(null);
             }} style={{width:'100%',padding:13,background:'none',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:8}}>Cancel Booking</button>
             <button onClick={() => setShowAmenityDetail(null)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Service Request Detail Modal — view / edit / cancel */}
+      {showServiceDetail && (() => {
+        const s = showServiceDetail;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const isoDate = (() => {
+          if (!s.date) return '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s.date)) return s.date;
+          const sp = s.date.split('/'); if (sp.length === 3) return sp[2]+'-'+sp[1].padStart(2,'0')+'-'+sp[0].padStart(2,'0');
+          const mm = s.date.match(/^(\d{1,2})\s+([A-Za-z]{3})(?:\s+(\d{4}))?$/);
+          const mMap = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+          if (mm) return (mm[3]||'2026')+'-'+(mMap[mm[2]]||'01')+'-'+mm[1].padStart(2,'0');
+          return s.date;
+        })();
+        const dp = isoDate.split('-');
+        const dateLabel = dp.length === 3 ? (parseInt(dp[2]) + ' ' + months[parseInt(dp[1])-1] + ' ' + dp[0]) : s.date;
+        const editable = s.status === 'Pending Approval' || s.status === 'Scheduled' || s.status === 'Open';
+        const cancellable = editable || s.status === 'In Progress';
+        const statusColors = {Scheduled:'#5a6b4f','Pending Approval':'#b08a4a','In Progress':'#4a6fa5',Completed:'#2d6a4f',Cancelled:'#888',Closed:'#888'};
+        const attachments = s.attachments || [];
+        return (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setShowServiceDetail(null)}>
+          <div style={{background:'#fff',borderRadius:12,padding:24,maxWidth:420,width:'100%',maxHeight:'92vh',overflowY:'auto',boxShadow:'0 8px 32px rgba(0,0,0,.2)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <h3 style={{margin:0,fontSize:16,fontWeight:600}}>{s.type}</h3>
+              <button onClick={() => setShowServiceDetail(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#a89a92'}}>&times;</button>
+            </div>
+            <div style={{fontSize:11,color:'#a89a92',marginBottom:18}}>Reference: {s.id}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:18}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Status</span><span style={{fontWeight:600,color: statusColors[s.status] || '#5a6b4f'}}>{s.status}</span></div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Date</span><span style={{fontWeight:500}}>{dateLabel}</span></div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Time</span><span style={{fontWeight:500}}>{s.time || '—'}</span></div>
+              {s.areaType && <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Service Area</span><span style={{fontWeight:500}}>{s.areaType}</span></div>}
+              {s.location && <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Location</span><span style={{fontWeight:500}}>{s.location}</span></div>}
+              {s.urgency && <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Priority</span><span style={{fontWeight:500}}>{s.urgency === 'Normal' ? 'Standard' : s.urgency}</span></div>}
+              {s.flat && <div style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1a1a1a'}}><span style={{color:'#8a7f76'}}>Unit</span><span style={{fontWeight:500}}>{s.flat}</span></div>}
+            </div>
+            {s.comments && (
+              <div style={{marginBottom:18,padding:12,background:'#faf8f6',borderRadius:8,border:'1px solid #ebe7e3'}}>
+                <div style={{fontSize:11,color:'#8a7f76',fontWeight:500,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.04em'}}>Additional Details</div>
+                <div style={{fontSize:13,color:'#1a1a1a',lineHeight:1.5,whiteSpace:'pre-wrap'}}>{s.comments}</div>
+              </div>
+            )}
+            {attachments.length > 0 && (
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,color:'#8a7f76',fontWeight:500,marginBottom:8,textTransform:'uppercase',letterSpacing:'0.04em'}}>Attachments ({attachments.length})</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:8}}>
+                  {attachments.map((att, idx) => {
+                    const isImg = att.type && att.type.startsWith('image/');
+                    return (
+                      <div key={att.id || idx} onClick={() => setServiceAttachmentPreview(att)} style={{position:'relative',aspectRatio:'1 / 1',background:'#f5f3f0',borderRadius:8,border:'1px solid #ebe7e3',cursor:'pointer',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        {isImg ? (
+                          <img src={att.dataUrl} alt={att.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                        ) : (
+                          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:6}}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a89a92" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <div style={{fontSize:9,color:'#8a7f76',textAlign:'center',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{att.name}</div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {editable ? (
+              <button onClick={() => {
+                setBookingMode('service');
+                setEditingServiceId(s.id);
+                setServiceBooking({
+                  type: s.type || '',
+                  areaType: s.areaType || (s.location && ['Lobby','Lift','Corridor','Garage Area','General'].includes(s.location) ? 'Common Area' : 'Unit Area'),
+                  location: s.location || '',
+                  date: isoDate,
+                  time: s.time || '',
+                  duration: '1 hour',
+                  guests: s.urgency || 'Normal',
+                  comments: s.comments || '',
+                  attachments: s.attachments || []
+                });
+                setShowServiceDetail(null);
+                setShowServiceBookingModal(true);
+              }} style={{width:'100%',padding:13,background:'#928989',color:'#fff',border:'none',borderRadius:6,fontSize:14,fontWeight:600,cursor:'pointer',marginBottom:8}}>Edit Request</button>
+            ) : (
+              <div style={{padding:10,background:'#faf8f6',border:'1px solid #ebe7e3',borderRadius:6,fontSize:12,color:'#8a7f76',textAlign:'center',marginBottom:8}}>This request can no longer be edited.</div>
+            )}
+            <button onClick={() => {
+              setBookingMode('service');
+              setEditingServiceId(null);
+              setServiceBooking({type:'', areaType:'Unit Area', location:'', date:'', time:'', duration:'1 hour', guests:'Normal', comments:'', attachments:[]});
+              setShowServiceDetail(null);
+              setCurrentPage('book');
+            }} style={{width:'100%',padding:13,background:'none',color:'#6b5d52',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,fontWeight:500,cursor:'pointer',marginBottom:8}}>Go to Bookings</button>
+            {cancellable && (
+              <button onClick={() => {
+                setData(prev => ({...prev, serviceRequests: (prev.serviceRequests || []).map(x => x.id === s.id ? {...x, status: 'Cancelled'} : x)}));
+                showToast('Service request cancelled');
+                setShowServiceDetail(null);
+              }} style={{width:'100%',padding:13,background:'none',color:'#c0392b',border:'1px solid #e0d5d0',borderRadius:6,fontSize:13,fontWeight:600,cursor:'pointer',marginBottom:8}}>Cancel Request</button>
+            )}
+            <button onClick={() => setShowServiceDetail(null)} style={{width:'100%',padding:12,background:'none',color:'#a89a92',border:'1px solid #ebe7e3',borderRadius:6,fontSize:13,cursor:'pointer'}}>Close</button>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* Attachment full-screen preview */}
+      {serviceAttachmentPreview && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.85)',zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}} onClick={() => setServiceAttachmentPreview(null)}>
+          <button onClick={() => setServiceAttachmentPreview(null)} style={{position:'absolute',top:16,right:16,background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',fontSize:24,cursor:'pointer',width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>&times;</button>
+          <div style={{position:'absolute',top:16,left:16,background:'rgba(255,255,255,0.15)',color:'#fff',padding:'8px 14px',borderRadius:20,fontSize:12,maxWidth:'70%',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{serviceAttachmentPreview.name}</div>
+          <div onClick={e => e.stopPropagation()} style={{maxWidth:'95%',maxHeight:'90vh',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            {serviceAttachmentPreview.type && serviceAttachmentPreview.type.startsWith('image/') ? (
+              <img src={serviceAttachmentPreview.dataUrl} alt={serviceAttachmentPreview.name} style={{maxWidth:'100%',maxHeight:'90vh',objectFit:'contain',borderRadius:8}}/>
+            ) : serviceAttachmentPreview.type === 'application/pdf' ? (
+              <iframe src={serviceAttachmentPreview.dataUrl} title={serviceAttachmentPreview.name} style={{width:'90vw',height:'85vh',background:'#fff',borderRadius:8,border:'none'}}/>
+            ) : (
+              <div style={{background:'#fff',padding:24,borderRadius:8,textAlign:'center'}}>
+                <div style={{fontSize:14,marginBottom:12,color:'#1a1a1a'}}>{serviceAttachmentPreview.name}</div>
+                <a href={serviceAttachmentPreview.dataUrl} download={serviceAttachmentPreview.name} style={{display:'inline-block',padding:'10px 18px',background:'#928989',color:'#fff',borderRadius:6,textDecoration:'none',fontSize:13,fontWeight:600}}>Download</a>
+              </div>
+            )}
           </div>
         </div>
       )}
