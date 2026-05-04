@@ -24029,10 +24029,35 @@ const useFMData = () => {
 
   React.useEffect(() => {
     loadAll();
-    // Real-time polling — match existing 4s pattern from main App component
     if (!supabaseReady || !supabaseClient) return;
-    const id = setInterval(() => loadAll(), 4000);
-    return () => clearInterval(id);
+    // === Real-time subscription via Supabase Realtime (replaces 4-second polling) ===
+    // Apply fm_realtime.sql in Supabase Dashboard once to enable this on all FM tables.
+    // Falls back to slow polling if Realtime is unavailable on the tables.
+    let usingRealtime = false;
+    let pollId = null;
+    try {
+      const channel = supabaseClient.channel('fm_app_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_workorders' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_assets' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_locations' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_requests' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_vendors' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_parts' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_procedures' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_meters' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_automations' }, () => loadAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'fm_users' }, () => loadAll())
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') { usingRealtime = true; console.log('[FM] Realtime subscribed — using WebSocket push (replaces 4s polling).'); }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') { console.log('[FM] Realtime unavailable — fallback to 30s polling. Apply fm_realtime.sql to enable.'); if (!pollId) pollId = setInterval(() => loadAll(), 30000); }
+        });
+      const fallback = setTimeout(() => { if (!usingRealtime && !pollId) { console.log('[FM] Realtime not confirmed in 8s — fallback polling at 30s.'); pollId = setInterval(() => loadAll(), 30000); }}, 8000);
+      return () => { clearTimeout(fallback); if (pollId) clearInterval(pollId); supabaseClient.removeChannel(channel); };
+    } catch (e) {
+      console.log('[FM] Realtime setup error:', e.message, '— using 30s polling.');
+      pollId = setInterval(() => loadAll(), 30000);
+      return () => { if (pollId) clearInterval(pollId); };
+    }
   }, [loadAll]);
 
   // CRUD helpers — all return promise<row | null>
