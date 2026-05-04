@@ -23966,7 +23966,7 @@ const useFMData = () => {
 
   // Map Supabase rows to the existing FM_MOCK shape so the UI doesn't change
   const mapLoc = r => ({ id: r.id, name: r.name, address: r.address || '', sub: 0, parent: r.parent_id, isDefault: r.is_default });
-  const mapAsset = r => ({ id: r.id, name: r.name, criticality: r.criticality, status: r.status, location: '', manufacturer: r.manufacturer || '', model: r.model || '', serial: r.serial_number || '' });
+  const mapAsset = r => ({ id: r.id, name: r.name, criticality: r.criticality, status: r.status, location: '', location_id: r.location_id, manufacturer: r.manufacturer || '', model: r.model || '', serial: r.serial_number || '' });
   const mapWO = r => ({ id: '#' + r.seq_no, _id: r.id, title: r.title, priority: r.priority, status: r.status, assignee: '—', dueDate: r.due_date ? new Date(r.due_date).toLocaleDateString('en-GB') : '—', asset: '', location: '', workType: r.work_type, est: (r.estimated_hours || 1) + 'h' });
   const mapReq = r => ({ id: 'R-' + r.seq_no, _id: r.id, title: r.title, priority: r.priority, status: r.status, submittedBy: r.submitter_name || '—', submittedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : '—' });
   const mapVendor = r => ({ id: r.id, name: r.name, type: r.vendor_type || 'Service', phone: r.phone || '—', email: r.email || '—', tradeLicense: r.trade_license || '—', civilDefence: r.civil_defence || '—' });
@@ -24514,6 +24514,20 @@ const FMWorkOrders = ({ data, ops, onCreate, onEdit }) => {
           </div>
         </div>
 
+        {/* Activity log */}
+        {fullWO && fullWO.activity_log && fullWO.activity_log.length > 0 && (
+          <div style={{borderTop:`1px solid ${FM_COLORS.border}`,paddingTop:16,marginTop:16}}>
+            <div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy,marginBottom:8}}>Activity Log</div>
+            {fullWO.activity_log.map((a, i) => (
+              <div key={i} style={{display:'flex',gap:8,padding:'4px 0',fontSize:12,color:FM_COLORS.textSecondary}}>
+                <span style={{minWidth:24,fontSize:14}}>•</span>
+                <span style={{flex:1}}><strong>{a.user_name}</strong> {a.event}</span>
+                <span style={{color:FM_COLORS.textMuted}}>{new Date(a.at).toLocaleString('en-GB')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Comments thread */}
         <div style={{borderTop:`1px solid ${FM_COLORS.border}`,paddingTop:16,marginTop:16}}>
           <div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy,marginBottom:8}}>Comments ({(fullWO?.comments || []).length})</div>
@@ -24536,9 +24550,11 @@ const FMWorkOrders = ({ data, ops, onCreate, onEdit }) => {
   );
 };
 
-const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','Filter 3','Filter 4','+ Add Filter'], primaryAction = '+ New', onCreate, onImport, onRowClick, onRowDelete, statusFilter, onStatusFilterChange, statusOptions }) => {
+const FMTablePage = ({ title, columns, rows, filters = [], primaryAction = '+ New', onCreate, onImport, onRowClick, onRowDelete, statusFilter, onStatusFilterChange, statusOptions, priorityFilter, onPriorityFilterChange, locationFilter, onLocationFilterChange, locationOptions, bulkActions }) => {
   const [search, setSearch] = React.useState('');
-  // Filter rows by search (text match on any cell that's a string) and statusFilter
+  const [selected, setSelected] = React.useState({}); // bulk select: { id: true }
+  const [bulkAction, setBulkAction] = React.useState(null);
+  // Filter rows by search + statusFilter + priorityFilter + locationFilter
   const filtered = rows.filter(r => {
     const cells = (r.cells || r);
     if (search) {
@@ -24546,8 +24562,16 @@ const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','F
       if (!hay.includes(search.toLowerCase())) return false;
     }
     if (statusFilter && r.status && r.status !== statusFilter) return false;
+    if (priorityFilter && r.priority && r.priority !== priorityFilter) return false;
+    if (locationFilter && r.locationId && r.locationId !== locationFilter) return false;
     return true;
   });
+  const selectedIds = Object.keys(selected).filter(k => selected[k]);
+  const allSelected = filtered.length > 0 && filtered.every(r => r.id && selected[r.id]);
+  const toggleAll = () => {
+    if (allSelected) setSelected({});
+    else { const next = {}; filtered.forEach(r => { if (r.id) next[r.id] = true; }); setSelected(next); }
+  };
   return (<>
     <div style={fmStyles.pageHeader}>
       <h2 style={fmStyles.pageTitle}>{title}</h2>
@@ -24564,20 +24588,65 @@ const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','F
           {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       )}
+      {onPriorityFilterChange && (
+        <select value={priorityFilter || ''} onChange={e => onPriorityFilterChange(e.target.value)} style={{...fmStyles.chip,fontFamily:FM_FONT,outline:'none',cursor:'pointer'}}>
+          <option value="">⚙ All priorities</option>
+          {['High','Medium','Low','None'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      )}
+      {locationOptions && onLocationFilterChange && (
+        <select value={locationFilter || ''} onChange={e => onLocationFilterChange(e.target.value)} style={{...fmStyles.chip,fontFamily:FM_FONT,outline:'none',cursor:'pointer'}}>
+          <option value="">⚙ All locations</option>
+          {locationOptions.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>
+      )}
       {filters.map((f,i) => <span key={i} style={fmStyles.chip}>⚙ {f}</span>)}
     </div>
+    {bulkActions && selectedIds.length > 0 && (
+      <div style={{padding:'10px 24px',background:FM_COLORS.blueBg,borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy}}>{selectedIds.length} selected</span>
+        <div style={{display:'flex',gap:8}}>
+          {bulkActions.priority && (
+            <select onChange={async e => { if (e.target.value) { await bulkActions.priority(selectedIds, e.target.value); setSelected({}); e.target.value=''; }}} style={{...fmStyles.chip,fontFamily:FM_FONT,outline:'none',cursor:'pointer'}} defaultValue="">
+              <option value="">Change priority…</option>
+              {['None','Low','Medium','High'].map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          )}
+          {bulkActions.status && (
+            <select onChange={async e => { if (e.target.value) { await bulkActions.status(selectedIds, e.target.value); setSelected({}); e.target.value=''; }}} style={{...fmStyles.chip,fontFamily:FM_FONT,outline:'none',cursor:'pointer'}} defaultValue="">
+              <option value="">Change status…</option>
+              {(bulkActions.statusOptions || ['Open','On Hold','In Progress','Done']).map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+          {bulkActions.delete && (
+            <button onClick={async () => { if (confirm(`Delete ${selectedIds.length} item(s)?`)) { await bulkActions.delete(selectedIds); setSelected({}); }}} style={{...fmStyles.secondaryBtn,color:FM_COLORS.red,borderColor:FM_COLORS.red+'44'}}>🗑 Delete selected</button>
+          )}
+          <button onClick={() => setSelected({})} style={fmStyles.secondaryBtn}>Cancel</button>
+        </div>
+      </div>
+    )}
     <div style={fmStyles.body}>
       <div style={{...fmStyles.card,padding:0,overflow:'hidden'}}>
         <table style={fmStyles.table}>
-          <thead><tr>{columns.map((c,i) => <th key={i} style={fmStyles.th}>{c}</th>)}{(onRowClick || onRowDelete) && <th style={{...fmStyles.th,width:80,textAlign:'right'}}></th>}</tr></thead>
+          <thead><tr>
+            {bulkActions && <th style={{...fmStyles.th,width:36,textAlign:'center'}}><input type="checkbox" checked={allSelected} onChange={toggleAll} style={{cursor:'pointer'}}/></th>}
+            {columns.map((c,i) => <th key={i} style={fmStyles.th}>{c}</th>)}
+            {(onRowClick || onRowDelete) && <th style={{...fmStyles.th,width:80,textAlign:'right'}}></th>}
+          </tr></thead>
           <tbody>
             {filtered.map((r,i) => {
               const cells = r.cells || r;
               const id = r.id;
+              const isSel = id && selected[id];
               return (
-                <tr key={id || i} onClick={() => onRowClick && id && onRowClick(id)} style={{cursor: onRowClick ? 'pointer' : 'default'}}
-                    onMouseOver={e => { if (onRowClick) e.currentTarget.style.background = FM_COLORS.bgSoft; }}
-                    onMouseOut={e => { e.currentTarget.style.background = ''; }}>
+                <tr key={id || i} onClick={() => onRowClick && id && onRowClick(id)} style={{cursor: onRowClick ? 'pointer' : 'default', background: isSel ? FM_COLORS.blueBg : ''}}
+                    onMouseOver={e => { if (onRowClick && !isSel) e.currentTarget.style.background = FM_COLORS.bgSoft; }}
+                    onMouseOut={e => { e.currentTarget.style.background = isSel ? FM_COLORS.blueBg : ''; }}>
+                  {bulkActions && (
+                    <td style={{...fmStyles.td,textAlign:'center'}} onClick={e => e.stopPropagation()}>
+                      {id && <input type="checkbox" checked={!!isSel} onChange={e => setSelected({...selected, [id]: e.target.checked})} style={{cursor:'pointer'}}/>}
+                    </td>
+                  )}
                   {cells.map((cell,j) => <td key={j} style={fmStyles.td}>{cell}</td>)}
                   {(onRowClick || onRowDelete) && (
                     <td style={{...fmStyles.td,textAlign:'right',whiteSpace:'nowrap'}}>
@@ -24654,31 +24723,103 @@ const FMReporting = ({ data }) => {
   </>);
 };
 
-const FMMessages = () => (
-  <div style={{display:'flex',height:'calc(100vh - 142px)'}}>
-    <div style={{width:300,borderRight:`1px solid ${FM_COLORS.border}`,overflowY:'auto'}}>
-      <div style={{padding:'14px 16px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',gap:20,fontSize:13}}>
-        <span style={{borderBottom:`2px solid ${FM_COLORS.blue}`,paddingBottom:8,color:FM_COLORS.blue,fontWeight:600}}>Messages <span style={{background:FM_COLORS.blue,color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:10,marginLeft:4}}>1</span></span>
-        <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Threads</span>
+const FMMessages = () => {
+  const [channels, setChannels] = React.useState([]);
+  const [activeChannel, setActiveChannel] = React.useState(null);
+  const [messages, setMessages] = React.useState([]);
+  const [draft, setDraft] = React.useState('');
+  const scrollRef = React.useRef(null);
+
+  // Load channels on mount
+  React.useEffect(() => {
+    if (!supabaseClient) return;
+    supabaseClient.from('fm_channels').select('*').eq('org_id', FM_ORG_ID).then(({ data }) => {
+      const list = data || [];
+      setChannels(list);
+      if (list.length && !activeChannel) setActiveChannel(list.find(c => c.is_all_team) || list[0]);
+    });
+  }, []);
+
+  // Load messages + poll every 4s for the active channel
+  React.useEffect(() => {
+    if (!activeChannel || !supabaseClient) { setMessages([]); return; }
+    const load = async () => {
+      const { data } = await supabaseClient.from('fm_messages').select('*').eq('channel_id', activeChannel.id).order('created_at', { ascending: true });
+      setMessages(data || []);
+    };
+    load();
+    const id = setInterval(load, 4000);
+    return () => clearInterval(id);
+  }, [activeChannel && activeChannel.id]);
+
+  // Auto-scroll on new message
+  React.useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages.length]);
+
+  const send = async () => {
+    if (!draft.trim() || !activeChannel || !supabaseClient) return;
+    await supabaseClient.from('fm_messages').insert({ channel_id: activeChannel.id, body: draft.trim(), user_name: 'FM Manager' });
+    setDraft('');
+    // Refresh
+    const { data } = await supabaseClient.from('fm_messages').select('*').eq('channel_id', activeChannel.id).order('created_at', { ascending: true });
+    setMessages(data || []);
+  };
+
+  return (
+    <div style={{display:'flex',height:'calc(100vh - 142px)'}}>
+      <div style={{width:300,borderRight:`1px solid ${FM_COLORS.border}`,overflowY:'auto'}}>
+        <div style={{padding:'14px 16px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',gap:20,fontSize:13}}>
+          <span style={{borderBottom:`2px solid ${FM_COLORS.blue}`,paddingBottom:8,color:FM_COLORS.blue,fontWeight:600}}>Messages</span>
+          <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Threads</span>
+        </div>
+        {channels.map(c => (
+          <div key={c.id} onClick={() => setActiveChannel(c)} style={{padding:'14px 16px',background:activeChannel && activeChannel.id===c.id?FM_COLORS.blueBg:'transparent',borderLeft:activeChannel && activeChannel.id===c.id?`3px solid ${FM_COLORS.blue}`:'3px solid transparent',cursor:'pointer'}}>
+            <div style={{display:'flex',justifyContent:'space-between'}}>
+              <div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy}}>
+                <span style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:FM_COLORS.blue,marginRight:6}}/>{c.name}
+              </div>
+            </div>
+            <div style={{fontSize:12,color:FM_COLORS.textSecondary,marginTop:2}}>{c.is_all_team ? 'Organization-wide conversation' : 'Channel'}</div>
+          </div>
+        ))}
+        <div style={{padding:'12px 16px',fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Direct Messages</div>
+        <div style={{padding:24,textAlign:'center',color:FM_COLORS.textMuted,fontSize:13}}>No direct messages yet</div>
       </div>
-      <div style={{padding:'14px 16px',background:FM_COLORS.blueBg,borderLeft:`3px solid ${FM_COLORS.blue}`,cursor:'pointer'}}>
-        <div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy}}><span style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:FM_COLORS.blue,marginRight:6}}/>All Team</div><div style={{fontSize:11,color:FM_COLORS.textMuted}}>21:28</div></div>
-        <div style={{fontSize:12,color:FM_COLORS.textSecondary,marginTop:2}}>Organization-wide conversation</div>
+      <div style={{flex:1,display:'flex',flexDirection:'column'}}>
+        <div style={{padding:'14px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>{activeChannel ? activeChannel.name : 'Select a channel'}</div>
+            <div style={{fontSize:11,color:FM_COLORS.textMuted}}>{messages.length} message{messages.length !== 1 ? 's' : ''}</div>
+          </div>
+          <div style={{fontSize:18,color:FM_COLORS.textMuted}}>🔔</div>
+        </div>
+        <div ref={scrollRef} style={{flex:1,padding:20,overflowY:'auto'}}>
+          {messages.length === 0 ? (
+            <div style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%'}}>
+              <div style={{width:80,height:80,background:FM_COLORS.blueBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,marginBottom:12}}>💬</div>
+              <div style={{fontSize:18,fontWeight:700,color:FM_COLORS.navy,marginBottom:8}}>Start the conversation</div>
+              <div style={{fontSize:13,color:FM_COLORS.textSecondary}}>Go ahead and write the first message!</div>
+            </div>
+          ) : messages.map(m => (
+            <div key={m.id} style={{marginBottom:12}}>
+              <div style={{display:'flex',gap:8,alignItems:'baseline',marginBottom:2}}>
+                <span style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy}}>{m.user_name || 'Unknown'}</span>
+                <span style={{fontSize:11,color:FM_COLORS.textMuted}}>{new Date(m.created_at).toLocaleString('en-GB')}</span>
+              </div>
+              <div style={{fontSize:13,color:FM_COLORS.text,whiteSpace:'pre-wrap'}}>{m.body}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{padding:16,borderTop:`1px solid ${FM_COLORS.border}`,display:'flex',gap:8}}>
+          <span style={{fontSize:18,color:FM_COLORS.textMuted}}>📎</span>
+          <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} style={{flex:1,padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontFamily:FM_FONT,fontSize:13,outline:'none'}} placeholder="Write a message… (Enter to send)"/>
+          <button onClick={send} disabled={!draft.trim()} style={fmStyles.primaryBtn}>Send</button>
+        </div>
       </div>
-      <div style={{padding:'12px 16px',fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Direct Messages</div>
-      <div style={{padding:24,textAlign:'center',color:FM_COLORS.textMuted,fontSize:13}}>No direct messages yet</div>
     </div>
-    <div style={{flex:1,display:'flex',flexDirection:'column'}}>
-      <div style={{padding:'14px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between'}}><div><div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>All Team</div><div style={{fontSize:11,color:FM_COLORS.textMuted}}>View Conversation Information</div></div><div style={{fontSize:18,color:FM_COLORS.textMuted}}>🔔</div></div>
-      <div style={{flex:1,padding:24,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
-        <div style={{width:80,height:80,background:FM_COLORS.blueBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,marginBottom:12}}>💬</div>
-        <div style={{fontSize:18,fontWeight:700,color:FM_COLORS.navy,marginBottom:8}}>Start adding conversations</div>
-        <div style={{fontSize:13,color:FM_COLORS.textSecondary}}>Go ahead and write the first message!</div>
-      </div>
-      <div style={{padding:16,borderTop:`1px solid ${FM_COLORS.border}`,display:'flex',gap:8}}><span style={{fontSize:18,color:FM_COLORS.textMuted}}>📎</span><input style={{flex:1,padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontFamily:FM_FONT,fontSize:13,outline:'none'}} placeholder="Write a message…"/><button style={fmStyles.primaryBtn}>Send</button></div>
-    </div>
-  </div>
-);
+  );
+};
 
 const FMCategories = ({ data }) => (<>
   <div style={fmStyles.pageHeader}><h2 style={fmStyles.pageTitle}>Categories</h2><div style={{display:'flex',gap:8}}><input style={fmStyles.search} placeholder="Search Categories…"/><button style={fmStyles.primaryBtn}>+ New Category</button></div></div>
@@ -24835,6 +24976,53 @@ const FMAIProcedureGenerator = ({ onClose, onGenerated }) => {
           <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:14}}>
             <button onClick={onClose} style={fmStyles.secondaryBtn}>Cancel</button>
             <button onClick={generate} disabled={busy || !prompt.trim() || !apiKey} style={fmStyles.primaryBtn}>{busy ? 'Generating…' : '✨ Generate'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// QR Code generator modal — uses the qrcodejs library already loaded in <head>
+const FMQRCodeModal = ({ entity, entityType, onClose, onSaved }) => {
+  const [code, setCode] = React.useState(entity.qr_code || '');
+  const [generated, setGenerated] = React.useState(null);
+  const ref = React.useRef(null);
+  const generate = () => {
+    const newCode = 'VARS-' + entityType.toUpperCase().replace('FM_','') + '-' + Date.now().toString(36).toUpperCase();
+    setCode(newCode);
+    setGenerated(newCode);
+  };
+  const save = async () => {
+    if (!supabaseClient || !code) return;
+    await supabaseClient.from(entityType).update({ qr_code: code }).eq('id', entity.id);
+    if (onSaved) onSaved();
+    onClose();
+  };
+  React.useEffect(() => {
+    if (!ref.current || !window.QRCode || !code) return;
+    ref.current.innerHTML = '';
+    try { new window.QRCode(ref.current, { text: code, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#FFFFFF' }); } catch(e) { console.log('QR error', e.message); }
+  }, [code]);
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div onClick={e => e.stopPropagation()} style={{background:FM_COLORS.bg,borderRadius:8,width:420,maxWidth:'90%',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',fontFamily:FM_FONT}}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:600,color:FM_COLORS.navy}}>QR Code — {entity.name || entity.full_name}</h3>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:FM_COLORS.textMuted,cursor:'pointer'}}>×</button>
+        </div>
+        <div style={{padding:24,textAlign:'center'}}>
+          <input value={code} onChange={e => setCode(e.target.value)} placeholder="Code (or click Generate)" style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none',marginBottom:16}}/>
+          <div ref={ref} style={{display:'flex',justifyContent:'center',marginBottom:16,minHeight:180}}>
+            {!code && <div style={{padding:60,color:FM_COLORS.textMuted,fontSize:13}}>Enter or generate a code</div>}
+          </div>
+          <p style={{fontSize:11,color:FM_COLORS.textMuted,margin:'0 0 16px'}}>Print this QR and stick it on the {entityType.replace('fm_','').replace(/s$/,'')}. Scan it on the mobile app to deep-link directly to this record.</p>
+          <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
+            <button onClick={generate} style={fmStyles.secondaryBtn}>🔄 Generate New Code</button>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={onClose} style={fmStyles.secondaryBtn}>Cancel</button>
+              <button onClick={save} disabled={!code} style={fmStyles.primaryBtn}>Save</button>
+            </div>
           </div>
         </div>
       </div>
@@ -25039,6 +25227,7 @@ const FMApp = ({ onLogout }) => {
   const [procedureBuilder, setProcedureBuilder] = React.useState(null); // { initial }
   const [aiGenOpen, setAiGenOpen] = React.useState(false);
   const [importDialog, setImportDialog] = React.useState(null); // entity_type
+  const [qrModal, setQrModal] = React.useState(null); // { entity, entityType }
   const { data, ops, syncStatus } = useFMData();
 
   // Map module → create-modal config
@@ -25076,6 +25265,11 @@ const FMApp = ({ onLogout }) => {
           { name: 'work_type', label: 'Work Type', type: 'select', options: [{value:'Reactive',label:'Reactive'},{value:'Preventive',label:'Preventive'},{value:'Inspection',label:'Inspection'},{value:'Other',label:'Other'}] },
           { name: 'asset_id', label: 'Asset', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
           { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'procedure_id', label: 'Attach Procedure', type: 'select', options: (data.procedures || []).map(p => ({ value: p.id, label: p.name })) },
+          { name: 'category_id', label: 'Category', type: 'select', options: (data.categories || []).map(c => ({ value: c.id, label: c.name })) },
+          { name: 'vendor_id', label: 'Vendor', type: 'select', options: (data.vendors || []).map(v => ({ value: v.id, label: v.name })) },
+          { name: 'assignee_user_id', label: 'Assign to', type: 'select', options: (data.users || []).filter(u => u.id).map(u => ({ value: u.id, label: u.name + ' (' + u.role + ')' })) },
+          { name: 'start_date', label: 'Start Date', type: 'date' },
           { name: 'due_date', label: 'Due Date (required to enable Recurrence)', type: 'date' },
           { name: 'estimated_hours', label: 'Estimated Hours', type: 'number' },
           { name: 'recurrence_freq', label: 'Recurrence (only applies if Due Date is set)', type: 'select', options: [
@@ -25085,16 +25279,18 @@ const FMApp = ({ onLogout }) => {
             {value:'monthly',label:'Monthly'},
             {value:'yearly',label:'Yearly'},
           ] },
-          { name: 'parent_wo_id', label: 'Parent Work Order (sub-WO)', type: 'select', options: (data.workOrders || []).filter(w => w._id).map(w => ({ value: w._id, label: w.id + ' — ' + w.title })) },
+          { name: 'parent_wo_id', label: 'Parent Work Order (makes this a sub-WO)', type: 'select', options: (data.workOrders || []).filter(w => w._id).map(w => ({ value: w._id, label: w.id + ' — ' + w.title })) },
         ],
         onSubmit: async (vals) => {
-          // Build proper payload: pull recurrence into a nested object, only valid if due_date set
+          // Build proper payload
           const payload = { ...vals };
           if (payload.due_date && payload.recurrence_freq) {
             payload.recurrence = { freq: payload.recurrence_freq, interval: 1 };
           }
           delete payload.recurrence_freq;
           if (!payload.parent_wo_id) delete payload.parent_wo_id;
+          if (payload.category_id) { payload.category_ids = [payload.category_id]; delete payload.category_id; }
+          if (payload.vendor_id) { payload.vendor_ids = [payload.vendor_id]; delete payload.vendor_id; }
           return ops.createWorkOrder(payload);
         },
       },
@@ -25134,6 +25330,106 @@ const FMApp = ({ onLogout }) => {
           { name: 'vendor_id', label: 'Vendor', type: 'select', options: (data.vendors || []).map(v => ({ value: v.id, label: v.name })) },
         ],
         onSubmit: ops.createPart,
+      },
+      meter: {
+        title: 'New Meter',
+        fields: [
+          { name: 'name', label: 'Meter Name', required: true },
+          { name: 'asset_id', label: 'Asset', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
+          { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'meter_type', label: 'Meter Type', type: 'select', options: [{value:'Reading',label:'Reading'},{value:'Counter',label:'Counter'},{value:'Gauge',label:'Gauge'}] },
+          { name: 'unit', label: 'Unit (e.g. kWh, m³, hours)' },
+          { name: 'current_reading', label: 'Current Reading', type: 'number' },
+          { name: 'trigger_threshold', label: 'Trigger Threshold (auto-create WO when exceeded)', type: 'number' },
+        ],
+        onSubmit: async (vals) => {
+          if (!supabaseClient) return null;
+          const { data: r } = await supabaseClient.from('fm_meters').insert({ ...vals, org_id: FM_ORG_ID, history: [] }).select().single();
+          if (r) ops.refresh();
+          return r;
+        },
+      },
+      automation: {
+        title: 'New Automation',
+        fields: [
+          { name: 'name', label: 'Automation Name', required: true },
+          { name: 'trigger_event', label: 'Trigger Event', type: 'select', required: true, options: [
+            {value:'wo_created',label:'When Work Order Created'},
+            {value:'wo_status_changed',label:'When WO Status Changes'},
+            {value:'request_approved',label:'When Request Approved'},
+            {value:'asset_offline',label:'When Asset Goes Offline'},
+            {value:'meter_threshold',label:'When Meter Reading Above Threshold'},
+            {value:'wo_overdue',label:'When WO Becomes Overdue'},
+          ]},
+          { name: 'action_type', label: 'Action', type: 'select', required: true, options: [
+            {value:'create_wo_from_template',label:'Create Work Order from Template'},
+            {value:'send_notification',label:'Send Notification (Email/SMS/Push)'},
+            {value:'change_status',label:'Change Status'},
+            {value:'assign_user',label:'Assign User'},
+          ]},
+          { name: 'enabled', label: 'Enabled', type: 'select', options: [{value:'true',label:'Yes — enabled now'},{value:'false',label:'No — save disabled'}] },
+        ],
+        onSubmit: async (vals) => {
+          if (!supabaseClient) return null;
+          const payload = {
+            org_id: FM_ORG_ID,
+            name: vals.name,
+            trigger: { event: vals.trigger_event },
+            action: { type: vals.action_type },
+            enabled: vals.enabled !== 'false',
+          };
+          const { data: r } = await supabaseClient.from('fm_automations').insert(payload).select().single();
+          if (r) ops.refresh();
+          return r;
+        },
+      },
+      wotemplate: {
+        title: 'New Work Order Template',
+        fields: [
+          { name: 'name', label: 'Template Name', required: true },
+          { name: 'title', label: 'Default WO Title' },
+          { name: 'description', label: 'Description', type: 'textarea' },
+          { name: 'priority', label: 'Default Priority', type: 'select', options: [{value:'None',label:'None'},{value:'Low',label:'Low'},{value:'Medium',label:'Medium'},{value:'High',label:'High'}] },
+          { name: 'asset_id', label: 'Default Asset', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
+          { name: 'location_id', label: 'Default Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'procedure_id', label: 'Linked Procedure', type: 'select', options: (data.procedures || []).map(p => ({ value: p.id, label: p.name })) },
+          { name: 'estimated_hours', label: 'Estimated Hours', type: 'number' },
+          { name: 'recurrence_freq', label: 'Recurrence', type: 'select', options: [
+            {value:'',label:'Manual (no auto-generate)'},
+            {value:'daily',label:'Daily'},
+            {value:'weekly',label:'Weekly'},
+            {value:'monthly',label:'Monthly'},
+            {value:'yearly',label:'Yearly'},
+          ]},
+        ],
+        onSubmit: async (vals) => {
+          if (!supabaseClient) return null;
+          const payload = { ...vals, org_id: FM_ORG_ID };
+          if (payload.recurrence_freq) payload.recurrence = { freq: payload.recurrence_freq, interval: 1 };
+          delete payload.recurrence_freq;
+          const { data: r } = await supabaseClient.from('fm_wo_templates').insert(payload).select().single();
+          if (r) ops.refresh();
+          return r;
+        },
+      },
+      user: {
+        title: 'Invite User',
+        fields: [
+          { name: 'full_name', label: 'Full Name', required: true },
+          { name: 'email', label: 'Email', type: 'email' },
+          { name: 'phone', label: 'Phone (for SMS invite)' },
+          { name: 'role', label: 'Role', type: 'select', required: true, options: [
+            {value:'Requester',label:'Requester (free, request-only)'},
+            {value:'Full User',label:'Full User (paid, can manage WOs)'},
+            {value:'Administrator',label:'Administrator (full access)'},
+          ]},
+        ],
+        onSubmit: async (vals) => {
+          if (!supabaseClient) return null;
+          const { data: r } = await supabaseClient.from('fm_users').insert({ ...vals, org_id: FM_ORG_ID }).select().single();
+          if (r) ops.refresh();
+          return r;
+        },
       },
     };
     setCreateModal(cfgs[kind]);
@@ -25228,8 +25524,23 @@ const FMApp = ({ onLogout }) => {
     { id: 'vendors', label: 'Vendors', icon: '🏢' },
   ];
 
-  // Per-module status filter state — persists while user navigates within FM App
+  // Per-module filter state — persists while user navigates within FM App
   const [statusFilters, setStatusFilters] = React.useState({});
+  const [priorityFilters, setPriorityFilters] = React.useState({});
+  const [locationFilters, setLocationFilters] = React.useState({});
+
+  // Bulk action helpers (defined here so they have access to ops + supabaseClient)
+  const bulkActionsForRequests = {
+    priority: async (ids, p) => { if (!supabaseClient) return; await supabaseClient.from('fm_requests').update({ priority: p }).in('id', ids); ops.refresh(); },
+    status: async (ids, s) => { if (!supabaseClient) return; await supabaseClient.from('fm_requests').update({ status: s }).in('id', ids); ops.refresh(); },
+    statusOptions: ['Pending Review','Approved','Declined','On Hold'],
+    delete: async (ids) => { if (!supabaseClient) return; await supabaseClient.from('fm_requests').delete().in('id', ids); ops.refresh(); },
+  };
+  const bulkActionsForAssets = {
+    delete: async (ids) => { if (!supabaseClient) return; await supabaseClient.from('fm_assets').delete().in('id', ids); ops.refresh(); },
+    status: async (ids, s) => { if (!supabaseClient) return; await supabaseClient.from('fm_assets').update({ status: s }).in('id', ids); ops.refresh(); },
+    statusOptions: ['Online','Offline','Standby','Decommissioned','Do Not Track'],
+  };
 
   const renderModule = () => {
     const D = data;
@@ -25237,12 +25548,26 @@ const FMApp = ({ onLogout }) => {
       case 'setup': return <FMSetupCenter data={D}/>;
       case 'workorders': return <FMWorkOrders data={D} ops={ops} onCreate={() => openCreate('workorder')} onEdit={(id) => openEdit('workorder', id)}/>;
       case 'reporting': return <FMReporting data={D}/>;
-      case 'requests': return <FMTablePage title="Requests" columns={['ID','Title','Submitted By','Submitted','Priority','Status']} rows={(D.requests || []).map(r => ({ id: r._id, status: r.status, cells: [r.id,r.title,r.submittedBy,r.submittedDate,<FMPriorityPill p={r.priority}/>,<FMStatusPill s={r.status}/>] }))} filters={['Asset','Location','Priority','+ Add Filter']} primaryAction="+ New Request" onCreate={() => openCreate('request')} onRowClick={(id) => openEdit('request', id)} onRowDelete={ops.deleteRequest} statusOptions={['Pending Review','Approved','Declined','On Hold']} statusFilter={statusFilters.requests} onStatusFilterChange={v => setStatusFilters({...statusFilters, requests: v})}/>;
-      case 'assets': return <FMTablePage title="Assets" columns={['Name','Criticality','Status','Manufacturer','Model']} rows={(D.assets || []).map(a => ({ id: a.id, status: a.status, cells: [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.manufacturer,a.model] }))} filters={['Criticality','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset" onCreate={() => openCreate('asset')} onImport={() => setImportDialog('fm_assets')} onRowClick={(id) => openEdit('asset', id)} onRowDelete={ops.deleteAsset} statusOptions={['Online','Offline','Standby','Decommissioned','Do Not Track']} statusFilter={statusFilters.assets} onStatusFilterChange={v => setStatusFilters({...statusFilters, assets: v})}/>;
+      case 'requests': return <FMTablePage title="Requests" columns={['ID','Title','Submitted By','Submitted','Priority','Status','Actions']} rows={(D.requests || []).map(r => ({ id: r._id, status: r.status, priority: r.priority, cells: [r.id,r.title,r.submittedBy,r.submittedDate,<FMPriorityPill p={r.priority}/>,<FMStatusPill s={r.status}/>,
+        r.status === 'Pending Review' ? (
+          <div onClick={e => e.stopPropagation()} style={{display:'flex',gap:6}}>
+            <button onClick={async () => {
+              if (!supabaseClient) return;
+              const { data: row } = await supabaseClient.from('fm_requests').select('*').eq('id', r._id).single();
+              if (row) await ops.approveRequest(r._id, row);
+            }} style={{padding:'4px 10px',background:FM_COLORS.green,color:'#fff',border:'none',borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer'}}>✓ Approve</button>
+            <button onClick={async () => {
+              const reason = prompt('Decline reason (optional):');
+              await ops.declineRequest(r._id, reason || '');
+            }} style={{padding:'4px 10px',background:FM_COLORS.bg,color:FM_COLORS.red,border:`1px solid ${FM_COLORS.red}44`,borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer'}}>× Decline</button>
+          </div>
+        ) : (r.status === 'Approved' ? <span style={{fontSize:11,color:FM_COLORS.greenText}}>WO created</span> : <span style={{fontSize:11,color:FM_COLORS.textMuted}}>—</span>)
+      ] }))} filters={['Asset','+ Add Filter']} primaryAction="+ New Request" onCreate={() => openCreate('request')} onRowClick={(id) => openEdit('request', id)} onRowDelete={ops.deleteRequest} statusOptions={['Pending Review','Approved','Declined','On Hold']} statusFilter={statusFilters.requests} onStatusFilterChange={v => setStatusFilters({...statusFilters, requests: v})} priorityFilter={priorityFilters.requests} onPriorityFilterChange={v => setPriorityFilters({...priorityFilters, requests: v})} bulkActions={bulkActionsForRequests}/>;
+      case 'assets': return <FMTablePage title="Assets" columns={['Name','Criticality','Status','Manufacturer','Model']} rows={(D.assets || []).map(a => ({ id: a.id, status: a.status, locationId: a.location_id, cells: [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.manufacturer,a.model] }))} filters={['Criticality','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset" onCreate={() => openCreate('asset')} onImport={() => setImportDialog('fm_assets')} onRowClick={(id) => openEdit('asset', id)} onRowDelete={ops.deleteAsset} statusOptions={['Online','Offline','Standby','Decommissioned','Do Not Track']} statusFilter={statusFilters.assets} onStatusFilterChange={v => setStatusFilters({...statusFilters, assets: v})} locationOptions={(D.locations || []).filter(l => !l.parent)} locationFilter={locationFilters.assets} onLocationFilterChange={v => setLocationFilters({...locationFilters, assets: v})} bulkActions={bulkActionsForAssets}/>;
       case 'messages': return <FMMessages/>;
       case 'categories': return <FMCategories data={D}/>;
       case 'parts': return <FMTablePage title="Parts Inventory" columns={['Part Name','Stock','Min','Cost / Unit']} rows={(D.parts || []).map(p => ({ id: p.id, cells: [p.name,<span style={{color:p.stock<p.min?FM_COLORS.red:FM_COLORS.text,fontWeight:p.stock<p.min?700:400}}>{p.stock}</span>,p.min,p.cost] }))} filters={['Needs Restock','Part Types','Location','Asset','Vendor','+ Add Filter']} primaryAction="+ New Part" onCreate={() => openCreate('part')} onImport={() => setImportDialog('fm_parts')} onRowClick={(id) => openEdit('part', id)} onRowDelete={ops.deletePart}/>;
-      case 'wotemplates': return <FMTablePage title="Work Order Templates" columns={['Name','Recurrence','Linked Procedure']} rows={(D.woTemplates || []).map(t => ({ id: t.id, cells: [t.name,t.recurrence,t.linkedProcedure] }))} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="+ New Template"/>;
+      case 'wotemplates': return <FMTablePage title="Work Order Templates" columns={['Name','Recurrence','Linked Procedure']} rows={(D.woTemplates || []).map(t => ({ id: t.id, cells: [t.name,t.recurrence,t.linkedProcedure] }))} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="+ New Template" onCreate={() => openCreate('wotemplate')} onRowDelete={async (id) => { if (!supabaseClient) return; await supabaseClient.from('fm_wo_templates').delete().eq('id', id); ops.refresh(); }}/>;
       case 'procedures': return (
         <>
           <div style={fmStyles.pageHeader}>
@@ -25273,10 +25598,30 @@ const FMApp = ({ onLogout }) => {
           </div>
         </>
       );
-      case 'meters': return <FMTablePage title="Meters" columns={['Meter Name','Asset','Unit','Current Reading','Last Reading']} rows={(D.meters || []).map(m => ({ id: m.id, cells: [m.name,m.asset,m.unit,m.current,m.lastReading] }))} filters={['Asset','Location','Meter Type','+ Add Filter']} primaryAction="+ New Meter"/>;
-      case 'automations': return <FMTablePage title="Automations" columns={['Name','Trigger','Action','Status']} rows={(D.automations || []).map(a => ({ id: a.id, cells: [a.name,a.trigger,a.action,<FMStatusPill s={a.enabled?'Online':'Offline'}/>] }))} filters={['Status','+ Add Filter']} primaryAction="+ New Automation"/>;
+      case 'meters': return <FMTablePage title="Meters" columns={['Meter Name','Asset','Unit','Current Reading','Actions']} rows={(D.meters || []).map(m => ({ id: m.id, cells: [m.name,m.asset,m.unit,m.current,
+        <div onClick={e => e.stopPropagation()}>
+          <button onClick={async () => {
+            const v = prompt(`Log new reading for "${m.name}" (current: ${m.current} ${m.unit}):`);
+            if (!v || !supabaseClient) return;
+            const value = parseFloat(v);
+            if (isNaN(value)) return alert('Invalid number');
+            const { data: meterRow } = await supabaseClient.from('fm_meters').select('history').eq('id', m.id).single();
+            const history = [...((meterRow && meterRow.history) || []), { value, at: new Date().toISOString(), user_name: 'FM Manager' }];
+            await supabaseClient.from('fm_meters').update({ current_reading: value, history }).eq('id', m.id);
+            ops.refresh();
+          }} style={{padding:'4px 10px',background:FM_COLORS.blue,color:'#fff',border:'none',borderRadius:4,fontSize:11,fontWeight:600,cursor:'pointer'}}>📐 Log reading</button>
+        </div>
+      ] }))} filters={['Asset','Location','Meter Type','+ Add Filter']} primaryAction="+ New Meter" onCreate={() => openCreate('meter')} onRowDelete={async (id) => { if (!supabaseClient) return; await supabaseClient.from('fm_meters').delete().eq('id', id); ops.refresh(); }}/>;
+      case 'automations': return <FMTablePage title="Automations" columns={['Name','Trigger','Action','Status']} rows={(D.automations || []).map(a => ({ id: a.id, cells: [a.name,a.trigger,a.action,
+        <span onClick={async (e) => {
+          e.stopPropagation();
+          if (!supabaseClient) return;
+          await supabaseClient.from('fm_automations').update({ enabled: !a.enabled }).eq('id', a.id);
+          ops.refresh();
+        }} style={{cursor:'pointer'}}><FMStatusPill s={a.enabled?'Online':'Offline'}/></span>
+      ] }))} filters={['Status','+ Add Filter']} primaryAction="+ New Automation" onCreate={() => openCreate('automation')} onRowDelete={async (id) => { if (!supabaseClient) return; await supabaseClient.from('fm_automations').delete().eq('id', id); ops.refresh(); }}/>;
       case 'locations': return <FMTablePage title="Locations" columns={['Name','Address','Sub-Locations','Parent']} rows={(D.locations || []).map(l => ({ id: l.id, cells: [l.isDefault?<><span style={{fontWeight:600}}>{l.name}</span> <span style={{fontSize:10,padding:'1px 6px',background:FM_COLORS.bgSoft,borderRadius:4,color:FM_COLORS.textMuted,marginLeft:4}}>default</span></>:l.name,l.address,l.sub||0,l.parent?((D.locations || []).find(x => x.id===l.parent)?.name||'—'):'—'] }))} filters={['Teams in Charge','Asset','Part','Procedure','+ Add Filter']} primaryAction="+ New Location" onCreate={() => openCreate('location')} onImport={() => setImportDialog('fm_locations')} onRowClick={(id) => openEdit('location', id)} onRowDelete={ops.deleteLocation}/>;
-      case 'users': return <FMTablePage title="Teams / Users" columns={['Full Name','Role','Teams','Last Visit']} rows={(D.users || []).map((u,i) => ({ id: u.id || i, cells: [u.name,u.role,u.teams,u.lastVisit] }))} filters={['Role','Team','+ Add Filter']} primaryAction="+ Invite Users" onImport={() => setImportDialog('fm_users')}/>;
+      case 'users': return <FMTablePage title="Teams / Users" columns={['Full Name','Role','Teams','Last Visit']} rows={(D.users || []).map((u,i) => ({ id: u.id || i, cells: [u.name,u.role,u.teams,u.lastVisit] }))} filters={['Role','Team','+ Add Filter']} primaryAction="+ Invite Users" onCreate={() => openCreate('user')} onImport={() => setImportDialog('fm_users')} onRowDelete={async (id) => { if (!supabaseClient || typeof id !== 'string') return; await supabaseClient.from('fm_users').delete().eq('id', id); ops.refresh(); }}/>;
       case 'vendors': return <FMTablePage title="Vendors" columns={['Name','Type','Phone','Email','Trade Licence','Civil Defence']} rows={(D.vendors || []).map(v => ({ id: v.id, cells: [v.name,v.type,v.phone,v.email,v.tradeLicense,v.civilDefence] }))} filters={['Asset','Location','Part','Vendor Types','+ Add Filter']} primaryAction="+ New Vendor" onCreate={() => openCreate('vendor')} onRowClick={(id) => openEdit('vendor', id)} onRowDelete={ops.deleteVendor}/>;
       case 'settings': return <FMSettings/>;
       default: return <FMSetupCenter data={D}/>;
@@ -25400,6 +25745,14 @@ const FMApp = ({ onLogout }) => {
           entityType={importDialog}
           onClose={() => setImportDialog(null)}
           onImported={() => ops.refresh && ops.refresh()}
+        />
+      )}
+      {qrModal && (
+        <FMQRCodeModal
+          entity={qrModal.entity}
+          entityType={qrModal.entityType}
+          onClose={() => setQrModal(null)}
+          onSaved={() => ops.refresh && ops.refresh()}
         />
       )}
     </div>
