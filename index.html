@@ -4752,7 +4752,8 @@ const LoginPage = ({ onLogin, syncStatus }) => {
     resident: { email: 'nitin@resident.ae', password: 'resident123' },
     security: { email: 'suresh@security.ae', password: 'guard123' },
     manager: { email: 'hassan@pinnaclepm.ae', password: 'admin123' },
-    fm: { email: 'omar@facility.ae', password: 'facility123' }
+    fm: { email: 'omar@facility.ae', password: 'facility123' },
+    fmApp: { email: 'fm@vars.ae', password: 'fmapp123' }
   };
 
   useEffect(() => {
@@ -4797,6 +4798,17 @@ const LoginPage = ({ onLogin, syncStatus }) => {
         <path d="M21.5 5.5a5 5 0 00-6.3 6.3L4 23l5 5 11.2-11.2a5 5 0 006.3-6.3l-3.1 3.1-2.8-2.8 3.1-3.1-2.2-2.2z" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" fill="none" strokeLinejoin="round"/>
         <circle cx="7.5" cy="24.5" r="1" fill={active?'#2c2c2c':'#bbb'}/>
       </svg>
+    ),
+    fmApp: (active) => (
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+        {/* Clipboard + checklist — FM App / CMMS surface */}
+        <rect x="8" y="5" width="16" height="22" rx="2" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" fill="none"/>
+        <rect x="12" y="3" width="8" height="4" rx="1" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" fill="none"/>
+        <path d="M11.5 13l1.5 1.5 3-3" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.5 13h3" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" strokeLinecap="round"/>
+        <path d="M11.5 19l1.5 1.5 3-3" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.5 19h3" stroke={active?'#2c2c2c':'#bbb'} strokeWidth="1.4" strokeLinecap="round"/>
+      </svg>
     )
   };
 
@@ -4821,12 +4833,13 @@ const LoginPage = ({ onLogin, syncStatus }) => {
 
         {/* Role Selection */}
         <div style={{fontSize:10,letterSpacing:'0.1em',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:10,fontWeight:500}}>{t('login.selectRole')}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:28}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5, 1fr)',gap:8,marginBottom:28}}>
           {[
             {id:'resident',label:t('role.resident'),sub:''},
             {id:'security',label:t('role.security'),sub:''},
             {id:'manager',label:t('role.manager'),sub:''},
-            {id:'fm',label:t('role.fm'),sub:''}
+            {id:'fm',label:t('role.fm'),sub:''},
+            {id:'fmApp',label:'FM App',sub:''}
           ].map(role => {
             const active = selectedRole === role.id;
             return (
@@ -23805,21 +23818,28 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   );
 };
 
-// ==================== FM APP MODULE (MaintainX-style) ====================
-// Pixel-faithful clone of MaintainX's CMMS surface. All 16 modules per spec.
+// ==================== FM APP MODULE (VARS-styled) ====================
+// All 16 modules per spec, structured like MaintainX's CMMS surface but
+// dressed in VARS's warm-sand palette + Helvetica Now Text typography.
 // Mock data baked in. Self-contained styling under .fm-app-root scope.
 const FM_COLORS = {
-  bg: '#FFFFFF', bgSoft: '#F8FAFC', bgHover: '#F1F5F9',
-  navy: '#0F172A', navyMuted: '#1E293B',
-  blue: '#2563EB', blueLight: '#DBEAFE', blueBg: '#EFF6FF',
-  text: '#0F172A', textSecondary: '#475569', textMuted: '#64748B',
-  border: '#E2E8F0', borderLight: '#F1F5F9',
-  red: '#DC2626', redBg: '#FEF2F2', redText: '#991B1B',
-  amber: '#D97706', amberBg: '#FFFBEB', amberText: '#92400E',
-  green: '#16A34A', greenBg: '#F0FDF4', greenText: '#166534',
-  purple: '#7C3AED', purpleBg: '#F5F3FF', purpleText: '#5B21B6',
+  // Surfaces — VARS warm whites
+  bg: '#FFFFFF', bgSoft: '#faf8f6', bgHover: '#f5f3f0',
+  // Brand "navy" replaced by VARS dark text on warm background
+  navy: '#1a1a1a', navyMuted: '#3a3633',
+  // Primary accent — VARS warm sand (replaces MaintainX blue)
+  blue: '#6b5d52', blueLight: '#d9cfc8', blueBg: '#e8e3de',
+  // Text
+  text: '#1a1a1a', textSecondary: '#7a6f66', textMuted: '#a89a92',
+  // Borders
+  border: '#ebe7e3', borderLight: '#f2eeea',
+  // Status colours — kept semantic but warm-tinted for VARS palette
+  red: '#a8463c', redBg: '#f5e8e5', redText: '#8b3a30',
+  amber: '#b08a3a', amberBg: '#f5ede0', amberText: '#7a5c1f',
+  green: '#5a8060', greenBg: '#e8efe9', greenText: '#3e5a45',
+  purple: '#7a6890', purpleBg: '#ece7f0', purpleText: '#574a6c',
 };
-const FM_FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const FM_FONT = "'Helvetica Now Text','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif";
 
 // Mock data for the FM App
 const FM_MOCK = {
@@ -23929,7 +23949,7 @@ const fmStyles = {
   navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', margin: '0 8px', borderRadius: 6, color: active ? FM_COLORS.blue : FM_COLORS.textSecondary, background: active ? FM_COLORS.blueBg : 'transparent', fontSize: 13, fontWeight: active ? 600 : 500, cursor: 'pointer', transition: 'all .12s' }),
   navSection: { fontSize: 10, fontWeight: 600, letterSpacing: 1, color: FM_COLORS.textMuted, padding: '14px 16px 4px', textTransform: 'uppercase' },
   main: { flex: 1, background: FM_COLORS.bg, minWidth: 0 },
-  topBanner: { background: '#EFF6FF', borderBottom: `1px solid ${FM_COLORS.blueLight}`, padding: '10px 24px', fontSize: 13, color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  topBanner: { background: FM_COLORS.bgSoft, borderBottom: `1px solid ${FM_COLORS.border}`, padding: '10px 24px', fontSize: 13, color: FM_COLORS.textSecondary, display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   pageHeader: { padding: '20px 24px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottom: `1px solid ${FM_COLORS.border}` },
   pageTitle: { fontSize: 22, fontWeight: 700, color: FM_COLORS.navy, letterSpacing: '-0.02em', margin: 0 },
   search: { padding: '8px 12px', border: `1px solid ${FM_COLORS.border}`, borderRadius: 6, background: FM_COLORS.bgSoft, fontSize: 13, fontFamily: FM_FONT, width: 280, color: FM_COLORS.text, outline: 'none' },
@@ -23958,7 +23978,7 @@ const FMPriorityPill = ({ p }) => {
 
 const FMStatusPill = ({ s }) => {
   const map = {
-    'Open': { bg: FM_COLORS.blueBg, color: '#1E40AF' },
+    'Open': { bg: FM_COLORS.blueBg, color: FM_COLORS.navy },
     'On Hold': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText },
     'In Progress': { bg: FM_COLORS.purpleBg, color: FM_COLORS.purpleText },
     'Done': { bg: FM_COLORS.greenBg, color: FM_COLORS.greenText },
@@ -24196,9 +24216,10 @@ const FMSettings = () => (<>
 </>);
 
 // FM App main component
-const FMApp = () => {
+const FMApp = ({ onLogout }) => {
   const [module, setModule] = React.useState('setup');
   const [libraryOpen, setLibraryOpen] = React.useState(true);
+  const [profileOpen, setProfileOpen] = React.useState(false);
   const navItems = [
     { id: 'setup', label: 'Setup Center', icon: '🚀', dot: true },
     { id: 'workorders', label: 'Work Orders', icon: '📋' },
@@ -24249,10 +24270,13 @@ const FMApp = () => {
     <div className="fm-app-root" style={fmStyles.page}>
       <div style={fmStyles.sidebar}>
         <div style={fmStyles.sidebarBrand}>
-          <div style={fmStyles.brandLogo}>X</div>
+          <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="VARS" style={{flexShrink:0,borderRadius:6}}>
+            <rect width="100" height="100" rx="4" fill="#928989"/>
+            <path d="M33.3 16.7 L50 16.7 L58.1 25.2 L66.7 33.3 L66.7 83.3 L50 83.3 L33.3 66.7 Z" fill="#ffffff"/>
+          </svg>
           <div>
-            <div style={fmStyles.brandText}>FM App</div>
-            <div style={{fontSize:10,color:FM_COLORS.textMuted,marginTop:2}}>VARS — Property Manager</div>
+            <div style={fmStyles.brandText}>VARS FM App</div>
+            <div style={{fontSize:10,color:FM_COLORS.textMuted,marginTop:2,letterSpacing:'0.08em',textTransform:'uppercase'}}>Facility Management</div>
           </div>
         </div>
         <nav style={{display:'flex',flexDirection:'column',gap:1}}>
@@ -24260,7 +24284,7 @@ const FMApp = () => {
             <div key={it.id} style={fmStyles.navItem(module===it.id)} onClick={() => setModule(it.id)}>
               <span style={{fontSize:14}}>{it.icon}</span>
               <span style={{flex:1}}>{it.label}</span>
-              {it.dot && <span style={{width:6,height:6,borderRadius:'50%',background:'#10B981'}}/>}
+              {it.dot && <span style={{width:6,height:6,borderRadius:'50%',background:FM_COLORS.green}}/>}
               {it.badge && <span style={{background:FM_COLORS.blue,color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:600}}>{it.badge}</span>}
             </div>
           ))}
@@ -24284,13 +24308,36 @@ const FMApp = () => {
             </div>
           ))}
           <div style={{...fmStyles.navSection}}>Support</div>
-          <div style={{padding:'10px 16px',fontSize:12,color:FM_COLORS.textMuted}}>FM App v1 — Mock data demo</div>
+          <div style={{padding:'10px 16px',fontSize:12,color:FM_COLORS.textMuted,marginBottom:8}}>FM App v1 — Mock data demo</div>
         </nav>
+        {/* Profile / logout footer */}
+        <div style={{position:'relative',borderTop:`1px solid ${FM_COLORS.border}`,padding:'10px 12px',background:FM_COLORS.bg}}>
+          {profileOpen && (
+            <div onClick={() => setProfileOpen(false)} style={{position:'fixed',inset:0,zIndex:5}}/>
+          )}
+          {profileOpen && (
+            <div style={{position:'absolute',bottom:60,left:12,right:12,background:FM_COLORS.bg,border:`1px solid ${FM_COLORS.border}`,borderRadius:8,boxShadow:'0 8px 24px rgba(146,137,137,0.18)',padding:6,zIndex:10}}>
+              <div onClick={() => { setModule('settings'); setProfileOpen(false); }} style={{padding:'10px 12px',fontSize:13,color:FM_COLORS.text,cursor:'pointer',borderRadius:6}} onMouseOver={e => e.currentTarget.style.background=FM_COLORS.bgSoft} onMouseOut={e => e.currentTarget.style.background='transparent'}>⚙  Settings</div>
+              <div style={{padding:'10px 12px',fontSize:13,color:FM_COLORS.text,cursor:'pointer',borderRadius:6}} onMouseOver={e => e.currentTarget.style.background=FM_COLORS.bgSoft} onMouseOut={e => e.currentTarget.style.background='transparent'}>👤  Profile preferences</div>
+              <div style={{padding:'10px 12px',fontSize:13,color:FM_COLORS.text,cursor:'pointer',borderRadius:6}} onMouseOver={e => e.currentTarget.style.background=FM_COLORS.bgSoft} onMouseOut={e => e.currentTarget.style.background='transparent'}>🔔  Notification settings</div>
+              <div style={{height:1,background:FM_COLORS.borderLight,margin:'4px 0'}}/>
+              <div onClick={() => { setProfileOpen(false); if (onLogout) onLogout(); }} style={{padding:'10px 12px',fontSize:13,color:FM_COLORS.red,cursor:'pointer',borderRadius:6,fontWeight:500}} onMouseOver={e => e.currentTarget.style.background=FM_COLORS.redBg} onMouseOut={e => e.currentTarget.style.background='transparent'}>↪  Sign out</div>
+            </div>
+          )}
+          <div onClick={() => setProfileOpen(!profileOpen)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 8px',borderRadius:6,cursor:'pointer'}}>
+            <div style={{width:32,height:32,borderRadius:'50%',background:FM_COLORS.blue,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:13,flexShrink:0}}>FM</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>FM Manager</div>
+              <div style={{fontSize:11,color:FM_COLORS.textMuted}}>Settings</div>
+            </div>
+            <span style={{color:FM_COLORS.textMuted,fontSize:14}}>›</span>
+          </div>
+        </div>
       </div>
       <div style={fmStyles.main}>
         <div style={fmStyles.topBanner}>
-          <span><span style={{marginRight:8}}>ℹ</span>This is a demo of the VARS FM App — modelled on the MaintainX CMMS surface. Data is local mock data.</span>
-          <span style={{cursor:'pointer',fontWeight:600}}>Continue Setup ›</span>
+          <span><span style={{marginRight:8,color:FM_COLORS.textMuted}}>ℹ</span>VARS FM App — internal demo with mock data. Connect Supabase to wire live data.</span>
+          <span style={{cursor:'pointer',fontWeight:600,color:FM_COLORS.blue}}>Continue Setup ›</span>
         </div>
         {renderModule()}
       </div>
@@ -24572,6 +24619,17 @@ const App = () => {
     return (
       <AppContext.Provider value={{ data, setData, showToast, language, setLanguage, t }}>
         <FmExecutorApp onLogout={handleLogout}/>
+        <SyncDot/>
+        {toast && <div className="toast">{toast}</div>}
+      </AppContext.Provider>
+    );
+  }
+
+  // If logged in as FM App (admin-side CMMS surface, MaintainX-style)
+  if (role === 'fmApp') {
+    return (
+      <AppContext.Provider value={{ data, setData, showToast, language, setLanguage, t }}>
+        <FMApp onLogout={handleLogout}/>
         <SyncDot/>
         {toast && <div className="toast">{toast}</div>}
       </AppContext.Provider>
