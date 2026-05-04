@@ -5052,6 +5052,7 @@ const Sidebar = ({ page, setPage, isOpen, onClose, onLogout }) => {
     { id: 'visitors', label: t('nav.visitors'), icon: 'visitors' },
     { id: 'guards', label: t('nav.guards'), icon: 'guards' },
     { id: 'reports', label: t('nav.reports'), icon: 'reports' },
+    { id: 'fmApp', label: 'FM App', icon: 'service' },
     { id: 'settings', label: t('nav.settings'), icon: 'settings' },
   ];
 
@@ -23804,6 +23805,499 @@ const FmSupervisorApp = ({ user, onSwitchRole, onSignOut }) => {
   );
 };
 
+// ==================== FM APP MODULE (MaintainX-style) ====================
+// Pixel-faithful clone of MaintainX's CMMS surface. All 16 modules per spec.
+// Mock data baked in. Self-contained styling under .fm-app-root scope.
+const FM_COLORS = {
+  bg: '#FFFFFF', bgSoft: '#F8FAFC', bgHover: '#F1F5F9',
+  navy: '#0F172A', navyMuted: '#1E293B',
+  blue: '#2563EB', blueLight: '#DBEAFE', blueBg: '#EFF6FF',
+  text: '#0F172A', textSecondary: '#475569', textMuted: '#64748B',
+  border: '#E2E8F0', borderLight: '#F1F5F9',
+  red: '#DC2626', redBg: '#FEF2F2', redText: '#991B1B',
+  amber: '#D97706', amberBg: '#FFFBEB', amberText: '#92400E',
+  green: '#16A34A', greenBg: '#F0FDF4', greenText: '#166534',
+  purple: '#7C3AED', purpleBg: '#F5F3FF', purpleText: '#5B21B6',
+};
+const FM_FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+// Mock data for the FM App
+const FM_MOCK = {
+  locations: [
+    { id: 'L1', name: 'General', address: 'Default location', sub: 0, parent: null, isDefault: true },
+    { id: 'L2', name: 'Aljil Tower', address: 'Al Reem Island, Abu Dhabi', sub: 4, parent: null },
+    { id: 'L3', name: 'Amaya Tower', address: 'Al Reem Island, Abu Dhabi', sub: 3, parent: null },
+    { id: 'L4', name: 'Eclipse Twin Towers', address: 'Al Reem Island, Abu Dhabi', sub: 6, parent: null },
+    { id: 'L5', name: 'Sea View Tower', address: 'Al Reem Island, Abu Dhabi', sub: 2, parent: null },
+    { id: 'L2.1', name: 'Lobby', address: 'Ground floor', sub: 0, parent: 'L2' },
+    { id: 'L2.2', name: 'AHU Room', address: 'Roof level', sub: 0, parent: 'L2' },
+  ],
+  assets: [
+    { id: 'A1', name: 'Lobby Air Handler Unit', criticality: 'Critical', status: 'Online', location: 'Aljil Tower / AHU Room', manufacturer: 'Daikin', model: 'AHU-2400', serial: 'DK-2024-0142' },
+    { id: 'A2', name: 'Service Lift A', criticality: 'Critical', status: 'Online', location: 'Aljil Tower / Lobby', manufacturer: 'KONE', model: 'MonoSpace 700', serial: 'KN-MS700-0089' },
+    { id: 'A3', name: 'Backup Generator', criticality: 'Critical', status: 'Standby', location: 'Aljil Tower', manufacturer: 'Caterpillar', model: 'C18', serial: 'CAT-C18-2088' },
+    { id: 'A4', name: 'Pool Pump', criticality: 'Important', status: 'Online', location: 'Amaya Tower', manufacturer: 'Pentair', model: 'IntelliFlo VS', serial: 'PT-IF-1245' },
+    { id: 'A5', name: 'Lobby AHU', criticality: 'Critical', status: 'Offline', location: 'Eclipse Twin Towers', manufacturer: 'Daikin', model: 'AHU-1800', serial: 'DK-2024-0156' },
+    { id: 'A6', name: 'Fire Alarm Panel', criticality: 'Critical', status: 'Online', location: 'Sea View Tower', manufacturer: 'Honeywell', model: 'NOTIFIER NFS2-3030', serial: 'HW-NF-3398' },
+    { id: 'A7', name: 'Garage Exhaust Fan', criticality: 'Normal', status: 'Online', location: 'Aljil Tower', manufacturer: 'Greenheck', model: 'CSP-A1410', serial: 'GH-CSP-7785' },
+    { id: 'A8', name: 'Water Tank Level Sensor', criticality: 'Important', status: 'Do Not Track', location: 'Amaya Tower', manufacturer: 'Endress+Hauser', model: 'Liquicap T', serial: 'EH-LCT-2210' },
+  ],
+  workOrders: [
+    { id: '#42', title: 'Lobby AC not cooling', priority: 'High', status: 'Open', assignee: 'Ahmed Khan', dueDate: '06/05/2026', asset: 'Lobby Air Handler Unit', location: 'Aljil Tower / Lobby', workType: 'Reactive', est: '1h' },
+    { id: '#41', title: 'Quarterly fire alarm inspection', priority: 'Medium', status: 'In Progress', assignee: 'Hassan Karim', dueDate: '08/05/2026', asset: 'Fire Alarm Panel', location: 'Sea View Tower', workType: 'Preventive', est: '3h' },
+    { id: '#40', title: 'Lift A annual maintenance', priority: 'High', status: 'In Progress', assignee: 'Ahmed Khan', dueDate: '10/05/2026', asset: 'Service Lift A', location: 'Aljil Tower / Lobby', workType: 'Preventive', est: '4h' },
+    { id: '#39', title: 'Generator load test', priority: 'Medium', status: 'Open', assignee: 'Mahmoud Ali', dueDate: '15/05/2026', asset: 'Backup Generator', location: 'Aljil Tower', workType: 'Inspection', est: '2h' },
+    { id: '#38', title: 'Pool pump bearing replacement', priority: 'Low', status: 'On Hold', assignee: 'Vikram Pillai', dueDate: '20/05/2026', asset: 'Pool Pump', location: 'Amaya Tower', workType: 'Reactive', est: '1.5h' },
+    { id: '#37', title: 'Garage fan filter cleaning', priority: 'None', status: 'Done', assignee: 'Rashid Mansoor', dueDate: '01/05/2026', asset: 'Garage Exhaust Fan', location: 'Aljil Tower', workType: 'Preventive', est: '0.5h', completedDate: '01/05/2026' },
+  ],
+  requests: [
+    { id: 'R-12', title: 'Hot water not working - Unit 1204', priority: 'High', status: 'Pending Review', submittedBy: 'Resident A-1204', submittedDate: '04/05/2026' },
+    { id: 'R-11', title: 'Lift making strange noise', priority: 'Medium', status: 'Approved', submittedBy: 'Security Desk', submittedDate: '03/05/2026' },
+    { id: 'R-10', title: 'Lobby light bulb out', priority: 'Low', status: 'Pending Review', submittedBy: 'Resident A-0312', submittedDate: '03/05/2026' },
+  ],
+  procedures: [
+    { id: 'P1', name: 'Monthly fire extinguisher inspection', steps: 12, category: 'Safety', linkedAssets: 8, lastUpdated: '12 Apr 2026' },
+    { id: 'P2', name: 'AHU filter replacement', steps: 8, category: 'Mechanical', linkedAssets: 4, lastUpdated: '20 Apr 2026' },
+    { id: 'P3', name: 'Lift annual safety inspection', steps: 18, category: 'Inspection', linkedAssets: 6, lastUpdated: '02 May 2026' },
+    { id: 'P4', name: 'Generator weekly test', steps: 6, category: 'Preventive', linkedAssets: 3, lastUpdated: '28 Apr 2026' },
+  ],
+  woTemplates: [
+    { id: 'T1', name: 'Quarterly fire safety check', recurrence: 'Quarterly', linkedProcedure: 'Monthly fire extinguisher inspection' },
+    { id: 'T2', name: 'Monthly water tank cleaning', recurrence: 'Monthly', linkedProcedure: '—' },
+    { id: 'T3', name: 'Annual lift overhaul', recurrence: 'Yearly', linkedProcedure: 'Lift annual safety inspection' },
+  ],
+  parts: [
+    { id: 'PT1', name: 'AHU Filter MERV 13', stock: 24, min: 20, location: 'Aljil Tower stockroom', vendor: 'Filtec', cost: 'AED 85' },
+    { id: 'PT2', name: 'Lift door roller', stock: 6, min: 4, location: 'Central warehouse', vendor: 'KONE Parts', cost: 'AED 220' },
+    { id: 'PT3', name: 'Engine oil 15W-40 (5L)', stock: 3, min: 5, location: 'Generator room', vendor: 'Caterpillar', cost: 'AED 145' },
+    { id: 'PT4', name: 'LED bulb 12W warm', stock: 180, min: 50, location: 'Aljil Tower stockroom', vendor: 'Philips', cost: 'AED 18' },
+    { id: 'PT5', name: 'Pool pump bearing', stock: 1, min: 2, location: 'Central warehouse', vendor: 'Pentair', cost: 'AED 340' },
+  ],
+  categories: [
+    { id: 'C1', name: 'Damage', icon: '⚠', color: '#EF4444' },
+    { id: 'C2', name: 'Electrical', icon: '⚡', color: '#F59E0B' },
+    { id: 'C3', name: 'Inspection', icon: '📋', color: '#8B5CF6' },
+    { id: 'C4', name: 'Mechanical', icon: '🔧', color: '#A855F7' },
+    { id: 'C5', name: 'Preventive', icon: '🔄', color: '#10B981' },
+    { id: 'C6', name: 'Project', icon: '📁', color: '#F97316' },
+    { id: 'C7', name: 'Refrigeration', icon: '❄', color: '#0EA5E9' },
+    { id: 'C8', name: 'Safety', icon: '🛡', color: '#22C55E' },
+  ],
+  vendors: [
+    { id: 'V1', name: 'CoolAir Technicians', type: 'Service', phone: '+971 50 111 2233', email: 'ops@coolair.ae', tradeLicense: 'CN-1234567', civilDefence: 'CD-887' },
+    { id: 'V2', name: 'KONE Elevators UAE', type: 'Service', phone: '+971 4 880 4444', email: 'service@kone.ae', tradeLicense: 'CN-998877', civilDefence: 'CD-401' },
+    { id: 'V3', name: 'Filtec Trading LLC', type: 'Supplier', phone: '+971 50 555 6677', email: 'sales@filtec.ae', tradeLicense: 'CN-445566', civilDefence: '—' },
+  ],
+  meters: [
+    { id: 'M1', name: 'Generator runtime hours', asset: 'Backup Generator', unit: 'hours', current: 1248, lastReading: '03/05/2026' },
+    { id: 'M2', name: 'Chiller energy consumption', asset: 'Lobby Air Handler Unit', unit: 'kWh', current: 18420, lastReading: '04/05/2026' },
+    { id: 'M3', name: 'Water tank level', asset: 'Water Tank Level Sensor', unit: '%', current: 78, lastReading: '04/05/2026' },
+  ],
+  automations: [
+    { id: 'AU1', name: 'Auto-create WO for high-priority requests', trigger: 'Request approved', action: 'Create Work Order from Template', enabled: true },
+    { id: 'AU2', name: 'Notify supervisor on Critical asset offline', trigger: 'Asset goes Offline (Critical)', action: 'Send Notification', enabled: true },
+  ],
+  teams: [
+    { id: 'TM1', name: 'HVAC Team', members: 3, admin: 'Ahmed Khan' },
+    { id: 'TM2', name: 'Plumbing Team', members: 2, admin: 'Mahmoud Ali' },
+    { id: 'TM3', name: 'Electrical Team', members: 2, admin: 'Rashid Mansoor' },
+  ],
+  users: [
+    { name: 'Hassan Al-PM', role: 'Administrator', teams: '—', lastVisit: 'Today' },
+    { name: 'Ahmed Khan', role: 'Full User', teams: 'HVAC Team', lastVisit: 'Today' },
+    { name: 'Mahmoud Ali', role: 'Full User', teams: 'Plumbing Team', lastVisit: 'Yesterday' },
+    { name: 'Rashid Mansoor', role: 'Full User', teams: 'Electrical Team', lastVisit: '2 days ago' },
+    { name: 'Resident A-1204', role: 'Requester', teams: '—', lastVisit: 'Today' },
+  ],
+  setupSteps: [
+    { phase: 1, label: 'Self-Led Implementation Training', sub: 'Learn how to set up and manage your MaintainX organization with MaintainX Academy.', time: '1h 45m', status: 'optional', done: true },
+    { phase: 1, label: 'Locations', sub: 'Add at least 5 facilities or areas where work happens.', time: '5 min', status: 'pending', done: true },
+    { phase: 1, label: 'Assets', sub: 'Add at least 5 assets, starting with equipment that would disrupt operations if offline.', time: '5 min', status: 'pending', done: true },
+    { phase: 1, label: 'Team Members', sub: 'Invite your core team and assign roles so the right people can manage work orders.', time: '5 min', status: 'pending', done: true },
+    { phase: 2, label: 'Procedures', sub: 'Create at least 5 step-by-step procedures so work is done consistently.', time: '15 min', status: 'pending', done: false },
+    { phase: 2, label: 'Preventive Maintenance', sub: 'Set up your first recurring Work Order template.', time: '5 min', status: 'pending', done: false },
+  ],
+};
+
+// FM App style helpers
+const fmStyles = {
+  page: { fontFamily: FM_FONT, background: FM_COLORS.bg, color: FM_COLORS.text, minHeight: '100%', display: 'flex', position: 'relative' },
+  sidebar: { width: 232, background: FM_COLORS.bg, borderRight: `1px solid ${FM_COLORS.border}`, padding: '0 0 12px 0', flexShrink: 0, position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: 'calc(100vh - 52px)', overflowY: 'auto' },
+  sidebarBrand: { padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${FM_COLORS.border}`, marginBottom: 8 },
+  brandLogo: { width: 32, height: 32, background: FM_COLORS.navy, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: FM_COLORS.bg, fontSize: 14, fontFamily: FM_FONT },
+  brandText: { fontWeight: 600, color: FM_COLORS.navy, fontSize: 13, letterSpacing: '-0.01em' },
+  navItem: (active) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', margin: '0 8px', borderRadius: 6, color: active ? FM_COLORS.blue : FM_COLORS.textSecondary, background: active ? FM_COLORS.blueBg : 'transparent', fontSize: 13, fontWeight: active ? 600 : 500, cursor: 'pointer', transition: 'all .12s' }),
+  navSection: { fontSize: 10, fontWeight: 600, letterSpacing: 1, color: FM_COLORS.textMuted, padding: '14px 16px 4px', textTransform: 'uppercase' },
+  main: { flex: 1, background: FM_COLORS.bg, minWidth: 0 },
+  topBanner: { background: '#EFF6FF', borderBottom: `1px solid ${FM_COLORS.blueLight}`, padding: '10px 24px', fontSize: 13, color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  pageHeader: { padding: '20px 24px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderBottom: `1px solid ${FM_COLORS.border}` },
+  pageTitle: { fontSize: 22, fontWeight: 700, color: FM_COLORS.navy, letterSpacing: '-0.02em', margin: 0 },
+  search: { padding: '8px 12px', border: `1px solid ${FM_COLORS.border}`, borderRadius: 6, background: FM_COLORS.bgSoft, fontSize: 13, fontFamily: FM_FONT, width: 280, color: FM_COLORS.text, outline: 'none' },
+  primaryBtn: { padding: '9px 14px', background: FM_COLORS.blue, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: FM_FONT },
+  secondaryBtn: { padding: '8px 12px', background: FM_COLORS.bg, color: FM_COLORS.textSecondary, border: `1px solid ${FM_COLORS.border}`, borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FM_FONT },
+  filterBar: { padding: '12px 24px', display: 'flex', gap: 8, flexWrap: 'wrap', borderBottom: `1px solid ${FM_COLORS.border}`, background: FM_COLORS.bg },
+  chip: { padding: '6px 12px', background: FM_COLORS.bgSoft, border: `1px solid ${FM_COLORS.border}`, borderRadius: 6, fontSize: 12, fontWeight: 500, color: FM_COLORS.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 },
+  body: { padding: '20px 24px' },
+  card: { background: FM_COLORS.bg, border: `1px solid ${FM_COLORS.border}`, borderRadius: 8, padding: 16, marginBottom: 12 },
+  table: { width: '100%', borderCollapse: 'collapse', background: FM_COLORS.bg, fontSize: 13, fontFamily: FM_FONT },
+  th: { textAlign: 'left', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: FM_COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${FM_COLORS.border}`, background: FM_COLORS.bgSoft },
+  td: { padding: '12px', borderBottom: `1px solid ${FM_COLORS.borderLight}`, color: FM_COLORS.text, verticalAlign: 'middle' },
+};
+
+// Status / priority pill components
+const FMPriorityPill = ({ p }) => {
+  const map = {
+    'High': { bg: FM_COLORS.redBg, color: FM_COLORS.redText, dot: FM_COLORS.red, label: 'High' },
+    'Medium': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText, dot: FM_COLORS.amber, label: 'Medium' },
+    'Low': { bg: FM_COLORS.greenBg, color: FM_COLORS.greenText, dot: FM_COLORS.green, label: 'Low' },
+    'None': { bg: FM_COLORS.bgSoft, color: FM_COLORS.textMuted, dot: FM_COLORS.textMuted, label: 'None' },
+  };
+  const s = map[p] || map['None'];
+  return <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:s.bg,color:s.color,borderRadius:4,fontSize:11,fontWeight:600}}><span style={{width:6,height:6,borderRadius:'50%',background:s.dot}}></span>{s.label}</span>;
+};
+
+const FMStatusPill = ({ s }) => {
+  const map = {
+    'Open': { bg: FM_COLORS.blueBg, color: '#1E40AF' },
+    'On Hold': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText },
+    'In Progress': { bg: FM_COLORS.purpleBg, color: FM_COLORS.purpleText },
+    'Done': { bg: FM_COLORS.greenBg, color: FM_COLORS.greenText },
+    'Online': { bg: FM_COLORS.greenBg, color: FM_COLORS.greenText },
+    'Offline': { bg: FM_COLORS.redBg, color: FM_COLORS.redText },
+    'Standby': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText },
+    'Do Not Track': { bg: FM_COLORS.bgSoft, color: FM_COLORS.textMuted },
+    'Pending Review': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText },
+    'Approved': { bg: FM_COLORS.greenBg, color: FM_COLORS.greenText },
+    'Critical': { bg: FM_COLORS.redBg, color: FM_COLORS.redText },
+    'Important': { bg: FM_COLORS.amberBg, color: FM_COLORS.amberText },
+    'Normal': { bg: FM_COLORS.bgSoft, color: FM_COLORS.textSecondary },
+  };
+  const c = map[s] || { bg: FM_COLORS.bgSoft, color: FM_COLORS.textSecondary };
+  return <span style={{padding:'2px 8px',background:c.bg,color:c.color,borderRadius:4,fontSize:11,fontWeight:600}}>{s}</span>;
+};
+
+// Module-specific renderers
+const FMSetupCenter = () => (
+  <div style={fmStyles.body}>
+    <div style={{maxWidth:880}}>
+      <h2 style={{fontSize:24,fontWeight:700,color:FM_COLORS.navy,margin:0,letterSpacing:'-0.02em'}}>Welcome to the FM App Setup Center</h2>
+      <p style={{color:FM_COLORS.textSecondary,fontSize:14,margin:'8px 0 24px'}}>Build a strong maintenance operation and move from reactive work to preventive maintenance.</p>
+      {[1,2].map(phase => {
+        const steps = FM_MOCK.setupSteps.filter(s => s.phase === phase);
+        const phaseTitle = phase === 1 ? 'Reactive Maintenance' : 'Preventive Maintenance';
+        const phaseCta = phase === 1 ? 'Build the Foundation' : 'Reduce Downtime';
+        const totalTime = phase === 1 ? '15 min' : '20 min';
+        return (
+          <div key={phase} style={{...fmStyles.card,padding:0,overflow:'hidden',marginBottom:16}}>
+            <div style={{padding:'14px 18px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:28,height:28,background:FM_COLORS.blueBg,color:FM_COLORS.blue,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13}}>{phase}</div>
+                <div>
+                  <div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:500,textTransform:'uppercase',letterSpacing:0.5}}>Phase</div>
+                  <div style={{fontSize:15,fontWeight:600,color:FM_COLORS.navy}}>{phaseTitle}</div>
+                </div>
+              </div>
+              <span style={{...fmStyles.chip,background:FM_COLORS.blueBg,color:FM_COLORS.blue,border:`1px solid ${FM_COLORS.blueLight}`}}>{phaseCta}</span>
+            </div>
+            {steps.map((s,i) => (
+              <div key={i} style={{padding:'14px 18px',borderBottom:i < steps.length-1 ? `1px solid ${FM_COLORS.borderLight}` : 'none',display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:32,height:32,background:s.done?FM_COLORS.greenBg:FM_COLORS.bgSoft,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>{s.done ? '✓' : '○'}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>{s.label}</div>
+                  <div style={{fontSize:12,color:FM_COLORS.textSecondary,marginTop:2}}>{s.sub}</div>
+                </div>
+                {s.status === 'optional' && <span style={{fontSize:10,color:FM_COLORS.textMuted,fontWeight:500,padding:'2px 8px',background:FM_COLORS.bgSoft,borderRadius:4}}>optional</span>}
+                <span style={{fontSize:11,color:FM_COLORS.textMuted,minWidth:50,textAlign:'right'}}>⏱ {s.time}</span>
+              </div>
+            ))}
+            <div style={{padding:'10px 18px',background:FM_COLORS.bgSoft,fontSize:12,color:FM_COLORS.textMuted,display:'flex',justifyContent:'space-between'}}>
+              <span>{steps.filter(s => s.status !== 'optional').length} required steps</span>
+              <span>{totalTime}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const FMWorkOrders = () => {
+  const [selected, setSelected] = React.useState(FM_MOCK.workOrders[0]);
+  const todo = FM_MOCK.workOrders.filter(w => w.status !== 'Done');
+  return (
+    <div style={{display:'flex',height:'calc(100vh - 142px)'}}>
+      <div style={{width:'42%',borderRight:`1px solid ${FM_COLORS.border}`,overflowY:'auto'}}>
+        <div style={{padding:'12px 18px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',gap:24,fontSize:13}}>
+          <div style={{borderBottom:`2px solid ${FM_COLORS.blue}`,paddingBottom:8,color:FM_COLORS.blue,fontWeight:600}}>To Do</div>
+          <div style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Done</div>
+        </div>
+        <div style={{padding:'10px 18px',borderBottom:`1px solid ${FM_COLORS.borderLight}`,fontSize:12,color:FM_COLORS.textSecondary}}>Sort By: <span style={{color:FM_COLORS.blue,fontWeight:500}}>Priority: Highest First ▾</span></div>
+        {todo.map(w => (
+          <div key={w.id} onClick={() => setSelected(w)} style={{padding:'14px 18px',borderBottom:`1px solid ${FM_COLORS.borderLight}`,cursor:'pointer',background:selected.id===w.id?FM_COLORS.blueBg:'transparent',borderLeft:selected.id===w.id?`3px solid ${FM_COLORS.blue}`:'3px solid transparent'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{w.title}</div>
+                <div style={{fontSize:12,color:FM_COLORS.textMuted}}>Requested by Property Manager · Due {w.dueDate}</div>
+              </div>
+              <div style={{fontSize:11,color:FM_COLORS.textMuted}}>{w.id}</div>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:8}}>
+              <FMStatusPill s={w.status}/>
+              <FMPriorityPill p={w.priority}/>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{flex:1,overflowY:'auto',padding:24}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
+          <div>
+            <h2 style={{margin:0,fontSize:20,fontWeight:700,color:FM_COLORS.navy}}>{selected.title} <span style={{color:FM_COLORS.textMuted,fontWeight:400,fontSize:14}}>{selected.id}</span></h2>
+            <div style={{fontSize:12,color:FM_COLORS.textMuted,marginTop:4}}>📅 Created on 04/05/2026</div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button style={fmStyles.secondaryBtn}>💬 Comments</button>
+            <button style={fmStyles.primaryBtn}>Mark as Done ✓</button>
+          </div>
+        </div>
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>Status</div>
+          <div style={{display:'flex',gap:6,padding:4,background:FM_COLORS.bgSoft,borderRadius:6,width:'fit-content'}}>
+            {['Open','On Hold','In Progress','Done'].map(st => (
+              <button key={st} style={{padding:'6px 12px',background:selected.status===st?FM_COLORS.bg:'transparent',color:selected.status===st?FM_COLORS.navy:FM_COLORS.textMuted,border:'none',borderRadius:4,fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:selected.status===st?'0 1px 2px rgba(0,0,0,0.05)':'none'}}>{st}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+          {[['Priority',<FMPriorityPill p={selected.priority}/>],['Work Order ID',selected.id],['Asset',selected.asset],['Location',selected.location],['Assignee',selected.assignee],['Due Date',selected.dueDate],['Estimated Time',selected.est],['Work Type',selected.workType]].map(([l,v],i) => (
+            <div key={i}><div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5,marginBottom:4}}>{l}</div><div style={{fontSize:14,color:FM_COLORS.navy}}>{v}</div></div>
+          ))}
+        </div>
+        <div style={{borderTop:`1px solid ${FM_COLORS.border}`,paddingTop:16}}>
+          <div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy,marginBottom:8}}>Time & Cost Tracking</div>
+          {['Parts','Time','Other Costs'].map((c,i) => (<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:i<2?`1px solid ${FM_COLORS.borderLight}`:'none'}}><span style={{fontSize:13,color:FM_COLORS.textSecondary}}>{c}</span><a style={{color:FM_COLORS.blue,fontSize:12,fontWeight:600,textDecoration:'none'}}>Add ›</a></div>))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','Filter 3','Filter 4','+ Add Filter'], primaryAction = '+ New' }) => (
+  <>
+    <div style={fmStyles.pageHeader}>
+      <h2 style={fmStyles.pageTitle}>{title}</h2>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <input style={fmStyles.search} placeholder={`Search ${title}…`}/>
+        <button style={fmStyles.primaryBtn}>{primaryAction}</button>
+      </div>
+    </div>
+    <div style={fmStyles.filterBar}>{filters.map((f,i) => <span key={i} style={fmStyles.chip}>⚙ {f}</span>)}</div>
+    <div style={fmStyles.body}>
+      <div style={{...fmStyles.card,padding:0,overflow:'hidden'}}>
+        <table style={fmStyles.table}>
+          <thead><tr>{columns.map((c,i) => <th key={i} style={fmStyles.th}>{c}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((r,i) => (
+              <tr key={i} style={{cursor:'pointer'}}>
+                {r.map((cell,j) => <td key={j} style={fmStyles.td}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{padding:'10px 16px',fontSize:11,color:FM_COLORS.textMuted,textAlign:'right',background:FM_COLORS.bgSoft}}>{rows.length} of {rows.length}</div>
+      </div>
+    </div>
+  </>
+);
+
+const FMReporting = () => {
+  const cards = [
+    { title: 'Created vs. Completed', big: '6 / 1', sub: 'Last 30 days' },
+    { title: 'Open Work Orders', big: '5', sub: '3 high priority' },
+    { title: 'Overdue', big: '0', sub: 'On track' },
+    { title: 'Avg. Time to Complete', big: '2.4h', sub: 'Trending down' },
+    { title: 'PPM Completion %', big: '94%', sub: 'Last 30 days' },
+    { title: 'First-Time Fix Rate', big: '82%', sub: 'Healthy' },
+  ];
+  return (<>
+    <div style={fmStyles.pageHeader}>
+      <h2 style={fmStyles.pageTitle}>Reporting <span style={{fontSize:11,fontWeight:600,padding:'2px 8px',background:FM_COLORS.bgSoft,borderRadius:4,color:FM_COLORS.textMuted,marginLeft:8,verticalAlign:'middle'}}>📅 16/03/2026 – 04/05/2026</span></h2>
+      <div style={{display:'flex',gap:8}}><button style={fmStyles.secondaryBtn}>Export ▾</button><button style={fmStyles.primaryBtn}>🔒 Build Report</button></div>
+    </div>
+    <div style={{padding:'12px 24px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',gap:24,fontSize:13}}>
+      <span style={{borderBottom:`2px solid ${FM_COLORS.blue}`,paddingBottom:8,color:FM_COLORS.blue,fontWeight:600}}>Work Orders</span>
+      <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>🔒 Asset Health</span>
+      <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Reporting Details</span>
+      <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Recent Activity</span>
+      <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Export Data</span>
+      <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Custom Dashboards</span>
+    </div>
+    <div style={fmStyles.body}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:12}}>
+        {cards.map((c,i) => (
+          <div key={i} style={{...fmStyles.card,marginBottom:0}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div style={{fontSize:13,color:FM_COLORS.textSecondary,fontWeight:500}}>{c.title}</div>
+              <button style={{...fmStyles.chip,fontSize:10,padding:'3px 8px'}}>+ Dashboard</button>
+            </div>
+            <div style={{fontSize:32,fontWeight:700,color:FM_COLORS.navy,marginTop:8,letterSpacing:'-0.02em'}}>{c.big}</div>
+            <div style={{fontSize:11,color:FM_COLORS.textMuted,marginTop:4}}>{c.sub}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </>);
+};
+
+const FMMessages = () => (
+  <div style={{display:'flex',height:'calc(100vh - 142px)'}}>
+    <div style={{width:300,borderRight:`1px solid ${FM_COLORS.border}`,overflowY:'auto'}}>
+      <div style={{padding:'14px 16px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',gap:20,fontSize:13}}>
+        <span style={{borderBottom:`2px solid ${FM_COLORS.blue}`,paddingBottom:8,color:FM_COLORS.blue,fontWeight:600}}>Messages <span style={{background:FM_COLORS.blue,color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:10,marginLeft:4}}>1</span></span>
+        <span style={{paddingBottom:8,color:FM_COLORS.textMuted}}>Threads</span>
+      </div>
+      <div style={{padding:'14px 16px',background:FM_COLORS.blueBg,borderLeft:`3px solid ${FM_COLORS.blue}`,cursor:'pointer'}}>
+        <div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontSize:13,fontWeight:600,color:FM_COLORS.navy}}><span style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:FM_COLORS.blue,marginRight:6}}/>All Team</div><div style={{fontSize:11,color:FM_COLORS.textMuted}}>21:28</div></div>
+        <div style={{fontSize:12,color:FM_COLORS.textSecondary,marginTop:2}}>Organization-wide conversation</div>
+      </div>
+      <div style={{padding:'12px 16px',fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Direct Messages</div>
+      <div style={{padding:24,textAlign:'center',color:FM_COLORS.textMuted,fontSize:13}}>No direct messages yet</div>
+    </div>
+    <div style={{flex:1,display:'flex',flexDirection:'column'}}>
+      <div style={{padding:'14px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between'}}><div><div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>All Team</div><div style={{fontSize:11,color:FM_COLORS.textMuted}}>View Conversation Information</div></div><div style={{fontSize:18,color:FM_COLORS.textMuted}}>🔔</div></div>
+      <div style={{flex:1,padding:24,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
+        <div style={{width:80,height:80,background:FM_COLORS.blueBg,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,marginBottom:12}}>💬</div>
+        <div style={{fontSize:18,fontWeight:700,color:FM_COLORS.navy,marginBottom:8}}>Start adding conversations</div>
+        <div style={{fontSize:13,color:FM_COLORS.textSecondary}}>Go ahead and write the first message!</div>
+      </div>
+      <div style={{padding:16,borderTop:`1px solid ${FM_COLORS.border}`,display:'flex',gap:8}}><span style={{fontSize:18,color:FM_COLORS.textMuted}}>📎</span><input style={{flex:1,padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontFamily:FM_FONT,fontSize:13,outline:'none'}} placeholder="Write a message…"/><button style={fmStyles.primaryBtn}>Send</button></div>
+    </div>
+  </div>
+);
+
+const FMCategories = () => (<>
+  <div style={fmStyles.pageHeader}><h2 style={fmStyles.pageTitle}>Categories</h2><div style={{display:'flex',gap:8}}><input style={fmStyles.search} placeholder="Search Categories…"/><button style={fmStyles.primaryBtn}>+ New Category</button></div></div>
+  <div style={fmStyles.body}><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
+    {FM_MOCK.categories.map(c => (<div key={c.id} style={{...fmStyles.card,marginBottom:0,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}><div style={{width:36,height:36,background:c.color+'22',color:c.color,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{c.icon}</div><div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>{c.name}</div></div>))}
+  </div></div>
+</>);
+
+const FMSettings = () => (<>
+  <div style={fmStyles.pageHeader}><h2 style={fmStyles.pageTitle}>Settings</h2></div>
+  <div style={fmStyles.body}><div style={{maxWidth:760}}>
+    {[{section:'Organization Settings',items:['General','Features','Subscription','Manage Teammates','Customizations','Integrations']},{section:'My Account',items:['Profile Preferences','Notification Settings','Open Download Center']},{section:'Quick links',items:['Get the Mobile App','Invite Users']}].map((g,i) => (
+      <div key={i} style={{marginBottom:24}}>
+        <div style={{fontSize:11,fontWeight:600,color:FM_COLORS.textMuted,textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>{g.section}</div>
+        <div style={{...fmStyles.card,padding:0,overflow:'hidden',marginBottom:0}}>
+          {g.items.map((it,j) => (<div key={j} style={{padding:'12px 16px',borderBottom:j<g.items.length-1?`1px solid ${FM_COLORS.borderLight}`:'none',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:13,color:FM_COLORS.navy,fontWeight:500}}>{it}</span><span style={{color:FM_COLORS.textMuted}}>›</span></div>))}
+        </div>
+      </div>
+    ))}
+  </div></div>
+</>);
+
+// FM App main component
+const FMApp = () => {
+  const [module, setModule] = React.useState('setup');
+  const [libraryOpen, setLibraryOpen] = React.useState(true);
+  const navItems = [
+    { id: 'setup', label: 'Setup Center', icon: '🚀', dot: true },
+    { id: 'workorders', label: 'Work Orders', icon: '📋' },
+    { id: 'reporting', label: 'Reporting', icon: '📊' },
+    { id: 'requests', label: 'Requests', icon: '📥' },
+    { id: 'assets', label: 'Assets', icon: '📦' },
+    { id: 'messages', label: 'Messages', icon: '💬', badge: '1' },
+  ];
+  const navItems2 = [
+    { id: 'categories', label: 'Categories', icon: '🏷' },
+    { id: 'parts', label: 'Parts Inventory', icon: '⚙' },
+  ];
+  const libraryItems = [
+    { id: 'wotemplates', label: 'Work Orders' },
+    { id: 'procedures', label: 'Procedures' },
+  ];
+  const navItems3 = [
+    { id: 'meters', label: 'Meters', icon: '📐' },
+    { id: 'automations', label: 'Automations', icon: '⚡' },
+    { id: 'locations', label: 'Locations', icon: '📍' },
+    { id: 'users', label: 'Teams / Users', icon: '👥' },
+    { id: 'vendors', label: 'Vendors', icon: '🏢' },
+  ];
+
+  const renderModule = () => {
+    switch (module) {
+      case 'setup': return <FMSetupCenter/>;
+      case 'workorders': return <FMWorkOrders/>;
+      case 'reporting': return <FMReporting/>;
+      case 'requests': return <FMTablePage title="Requests" columns={['ID','Title','Submitted By','Submitted','Priority','Status']} rows={FM_MOCK.requests.map(r => [r.id,r.title,r.submittedBy,r.submittedDate,<FMPriorityPill p={r.priority}/>,<FMStatusPill s={r.status}/>])} filters={['Asset','Location','Priority','Status','+ Add Filter']} primaryAction="+ New Request"/>;
+      case 'assets': return <FMTablePage title="Assets" columns={['Name','Criticality','Status','Location','Manufacturer','Model']} rows={FM_MOCK.assets.map(a => [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.location,a.manufacturer,a.model])} filters={['Criticality','Status','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset"/>;
+      case 'messages': return <FMMessages/>;
+      case 'categories': return <FMCategories/>;
+      case 'parts': return <FMTablePage title="Parts Inventory" columns={['Part Name','Stock','Min','Location','Vendor','Cost / Unit']} rows={FM_MOCK.parts.map(p => [p.name,<span style={{color:p.stock<p.min?FM_COLORS.red:FM_COLORS.text,fontWeight:p.stock<p.min?700:400}}>{p.stock}</span>,p.min,p.location,p.vendor,p.cost])} filters={['Needs Restock','Part Types','Location','Asset','Vendor','+ Add Filter']} primaryAction="+ New Part"/>;
+      case 'wotemplates': return <FMTablePage title="Work Order Templates" columns={['Name','Recurrence','Linked Procedure']} rows={FM_MOCK.woTemplates.map(t => [t.name,t.recurrence,t.linkedProcedure])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="+ New Template"/>;
+      case 'procedures': return <FMTablePage title="Procedures" columns={['Name','Steps','Category','Linked Assets','Last Updated']} rows={FM_MOCK.procedures.map(p => [p.name,p.steps,p.category,p.linkedAssets,p.lastUpdated])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="✨ + New Procedure"/>;
+      case 'meters': return <FMTablePage title="Meters" columns={['Meter Name','Asset','Unit','Current Reading','Last Reading']} rows={FM_MOCK.meters.map(m => [m.name,m.asset,m.unit,m.current,m.lastReading])} filters={['Asset','Location','Meter Type','+ Add Filter']} primaryAction="+ New Meter"/>;
+      case 'automations': return <FMTablePage title="Automations" columns={['Name','Trigger','Action','Status']} rows={FM_MOCK.automations.map(a => [a.name,a.trigger,a.action,<FMStatusPill s={a.enabled?'Online':'Offline'}/>])} filters={['Status','+ Add Filter']} primaryAction="+ New Automation"/>;
+      case 'locations': return <FMTablePage title="Locations" columns={['Name','Address','Sub-Locations','Parent']} rows={FM_MOCK.locations.map(l => [l.isDefault?<><span style={{fontWeight:600}}>{l.name}</span> <span style={{fontSize:10,padding:'1px 6px',background:FM_COLORS.bgSoft,borderRadius:4,color:FM_COLORS.textMuted,marginLeft:4}}>default</span></>:l.name,l.address,l.sub,l.parent?FM_MOCK.locations.find(x => x.id===l.parent)?.name||'—':'—'])} filters={['Teams in Charge','Asset','Part','Procedure','+ Add Filter']} primaryAction="+ New Location"/>;
+      case 'users': return <FMTablePage title="Teams / Users" columns={['Full Name','Role','Teams','Last Visit']} rows={FM_MOCK.users.map(u => [u.name,u.role,u.teams,u.lastVisit])} filters={['Role','Team','+ Add Filter']} primaryAction="+ Invite Users"/>;
+      case 'vendors': return <FMTablePage title="Vendors" columns={['Name','Type','Phone','Email','Trade Licence','Civil Defence']} rows={FM_MOCK.vendors.map(v => [v.name,v.type,v.phone,v.email,v.tradeLicense,v.civilDefence])} filters={['Asset','Location','Part','Vendor Types','+ Add Filter']} primaryAction="+ New Vendor"/>;
+      case 'settings': return <FMSettings/>;
+      default: return <FMSetupCenter/>;
+    }
+  };
+
+  return (
+    <div className="fm-app-root" style={fmStyles.page}>
+      <div style={fmStyles.sidebar}>
+        <div style={fmStyles.sidebarBrand}>
+          <div style={fmStyles.brandLogo}>X</div>
+          <div>
+            <div style={fmStyles.brandText}>FM App</div>
+            <div style={{fontSize:10,color:FM_COLORS.textMuted,marginTop:2}}>VARS — Property Manager</div>
+          </div>
+        </div>
+        <nav style={{display:'flex',flexDirection:'column',gap:1}}>
+          {navItems.map(it => (
+            <div key={it.id} style={fmStyles.navItem(module===it.id)} onClick={() => setModule(it.id)}>
+              <span style={{fontSize:14}}>{it.icon}</span>
+              <span style={{flex:1}}>{it.label}</span>
+              {it.dot && <span style={{width:6,height:6,borderRadius:'50%',background:'#10B981'}}/>}
+              {it.badge && <span style={{background:FM_COLORS.blue,color:'#fff',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:600}}>{it.badge}</span>}
+            </div>
+          ))}
+          <div style={{height:8}}/>
+          {navItems2.map(it => (
+            <div key={it.id} style={fmStyles.navItem(module===it.id)} onClick={() => setModule(it.id)}>
+              <span style={{fontSize:14}}>{it.icon}</span><span>{it.label}</span>
+            </div>
+          ))}
+          <div style={fmStyles.navItem(false)} onClick={() => setLibraryOpen(!libraryOpen)}>
+            <span style={{fontSize:14}}>📚</span><span style={{flex:1}}>Library</span><span style={{transform:libraryOpen?'rotate(180deg)':'none',fontSize:10,transition:'transform .15s'}}>▾</span>
+          </div>
+          {libraryOpen && libraryItems.map(it => (
+            <div key={it.id} style={{...fmStyles.navItem(module===it.id),paddingLeft:42}} onClick={() => setModule(it.id)}>
+              <span>{it.label}</span>
+            </div>
+          ))}
+          {navItems3.map(it => (
+            <div key={it.id} style={fmStyles.navItem(module===it.id)} onClick={() => setModule(it.id)}>
+              <span style={{fontSize:14}}>{it.icon}</span><span>{it.label}</span>
+            </div>
+          ))}
+          <div style={{...fmStyles.navSection}}>Support</div>
+          <div style={{padding:'10px 16px',fontSize:12,color:FM_COLORS.textMuted}}>FM App v1 — Mock data demo</div>
+        </nav>
+      </div>
+      <div style={fmStyles.main}>
+        <div style={fmStyles.topBanner}>
+          <span><span style={{marginRight:8}}>ℹ</span>This is a demo of the VARS FM App — modelled on the MaintainX CMMS surface. Data is local mock data.</span>
+          <span style={{cursor:'pointer',fontWeight:600}}>Continue Setup ›</span>
+        </div>
+        {renderModule()}
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN APP ====================
 const App = () => {
   const [role, setRole] = useState(() => {
@@ -24104,6 +24598,7 @@ const App = () => {
       case 'moveinout': return <MoveInOutPage/>;
       case 'occupancy': return <OccupancyPage/>;
       case 'adoption': return <AppAdoptionPage/>;
+      case 'fmApp': return <FMApp/>;
       default: return <OverviewPage setPage={setPage}/>;
     }
   };
