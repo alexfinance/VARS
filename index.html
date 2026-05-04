@@ -23939,6 +23939,220 @@ const FM_MOCK = {
   ],
 };
 
+// FM App Supabase data layer
+// Loads all FM entities on mount from Supabase. Falls back to FM_MOCK if
+// Supabase isn't available or tables don't exist yet (run fm_schema.sql first).
+const FM_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
+const useFMData = () => {
+  const [data, setData] = React.useState({
+    locations: FM_MOCK.locations,
+    assets: FM_MOCK.assets,
+    workOrders: FM_MOCK.workOrders,
+    requests: FM_MOCK.requests,
+    procedures: FM_MOCK.procedures,
+    woTemplates: FM_MOCK.woTemplates,
+    parts: FM_MOCK.parts,
+    categories: FM_MOCK.categories,
+    vendors: FM_MOCK.vendors,
+    meters: FM_MOCK.meters,
+    automations: FM_MOCK.automations,
+    teams: FM_MOCK.teams,
+    users: FM_MOCK.users,
+    setupSteps: FM_MOCK.setupSteps,
+  });
+  const [syncStatus, setSyncStatus] = React.useState('connecting');
+  const [error, setError] = React.useState(null);
+
+  // Map Supabase rows to the existing FM_MOCK shape so the UI doesn't change
+  const mapLoc = r => ({ id: r.id, name: r.name, address: r.address || '', sub: 0, parent: r.parent_id, isDefault: r.is_default });
+  const mapAsset = r => ({ id: r.id, name: r.name, criticality: r.criticality, status: r.status, location: '', manufacturer: r.manufacturer || '', model: r.model || '', serial: r.serial_number || '' });
+  const mapWO = r => ({ id: '#' + r.seq_no, _id: r.id, title: r.title, priority: r.priority, status: r.status, assignee: '—', dueDate: r.due_date ? new Date(r.due_date).toLocaleDateString('en-GB') : '—', asset: '', location: '', workType: r.work_type, est: (r.estimated_hours || 1) + 'h' });
+  const mapReq = r => ({ id: 'R-' + r.seq_no, _id: r.id, title: r.title, priority: r.priority, status: r.status, submittedBy: r.submitter_name || '—', submittedDate: r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : '—' });
+  const mapVendor = r => ({ id: r.id, name: r.name, type: r.vendor_type || 'Service', phone: r.phone || '—', email: r.email || '—', tradeLicense: r.trade_license || '—', civilDefence: r.civil_defence || '—' });
+  const mapPart = r => ({ id: r.id, name: r.name, stock: r.qty_in_stock, min: r.min_qty, location: '—', vendor: '—', cost: r.cost_per_unit ? 'AED ' + r.cost_per_unit : '—' });
+  const mapCat = r => ({ id: r.id, name: r.name, icon: r.icon || '🏷', color: r.color || '#a89a92' });
+  const mapUser = r => ({ name: r.full_name, role: r.role, teams: '—', lastVisit: r.last_visit ? new Date(r.last_visit).toLocaleDateString('en-GB') : '—' });
+  const mapTeam = r => ({ id: r.id, name: r.name, members: 0, admin: '—' });
+  const mapMeter = r => ({ id: r.id, name: r.name, asset: '—', unit: r.unit || '', current: r.current_reading || 0, lastReading: r.updated_at ? new Date(r.updated_at).toLocaleDateString('en-GB') : '—' });
+  const mapAutomation = r => ({ id: r.id, name: r.name, trigger: (r.trigger && r.trigger.event) || '—', action: (r.action && r.action.type) || '—', enabled: r.enabled });
+  const mapProc = r => ({ id: r.id, name: r.name, steps: (r.steps || []).length, category: '—', linkedAssets: 0, lastUpdated: r.updated_at ? new Date(r.updated_at).toLocaleDateString('en-GB') : '—' });
+  const mapTemplate = r => ({ id: r.id, name: r.name, recurrence: (r.recurrence && r.recurrence.freq) || 'None', linkedProcedure: '—' });
+
+  // Hydrate from Supabase
+  const loadAll = React.useCallback(async () => {
+    if (!supabaseReady || !supabaseClient) {
+      setSyncStatus('local');
+      return;
+    }
+    try {
+      const [locs, assets, wos, reqs, vendors, parts, cats, users, teams, meters, autos, procs, tmpls] = await Promise.all([
+        supabaseClient.from('fm_locations').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_assets').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_workorders').select('*').eq('org_id', FM_ORG_ID).order('seq_no', { ascending: false }),
+        supabaseClient.from('fm_requests').select('*').eq('org_id', FM_ORG_ID).order('seq_no', { ascending: false }),
+        supabaseClient.from('fm_vendors').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_parts').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_categories').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_users').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_teams').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_meters').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_automations').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_procedures').select('*').eq('org_id', FM_ORG_ID),
+        supabaseClient.from('fm_wo_templates').select('*').eq('org_id', FM_ORG_ID),
+      ]);
+      // If the very first call returned a "table does not exist" error, fall back to mock
+      if (locs.error && /does not exist/i.test(locs.error.message)) {
+        console.log('[FM] tables not yet created — apply fm_schema.sql in Supabase. Using mock data.');
+        setSyncStatus('schema_missing');
+        return;
+      }
+      setData(prev => ({
+        ...prev,
+        locations: (locs.data || []).map(mapLoc),
+        assets: (assets.data || []).map(mapAsset),
+        workOrders: (wos.data || []).map(mapWO),
+        requests: (reqs.data || []).map(mapReq),
+        vendors: (vendors.data || []).map(mapVendor),
+        parts: (parts.data || []).map(mapPart),
+        categories: (cats.data || []).length ? (cats.data || []).map(mapCat) : prev.categories,
+        users: (users.data || []).map(mapUser),
+        teams: (teams.data || []).map(mapTeam),
+        meters: (meters.data || []).map(mapMeter),
+        automations: (autos.data || []).map(mapAutomation),
+        procedures: (procs.data || []).map(mapProc),
+        woTemplates: (tmpls.data || []).map(mapTemplate),
+      }));
+      setSyncStatus('online');
+      console.log('[FM] loaded from Supabase: ' + (wos.data || []).length + ' WOs, ' + (locs.data || []).length + ' locations, ' + (assets.data || []).length + ' assets');
+    } catch (e) {
+      console.log('[FM] load error:', e.message);
+      setError(e.message);
+      setSyncStatus('offline');
+    }
+  }, []);
+
+  React.useEffect(() => { loadAll(); }, [loadAll]);
+
+  // CRUD helpers — all return promise<row | null>
+  const insert = async (table, row) => {
+    if (!supabaseReady || !supabaseClient) return null;
+    const { data: r, error } = await supabaseClient.from(table).insert({ ...row, org_id: FM_ORG_ID }).select().single();
+    if (error) { console.log('[FM] insert ' + table + ' error:', error.message); return null; }
+    return r;
+  };
+  const update = async (table, id, patch) => {
+    if (!supabaseReady || !supabaseClient) return null;
+    const { data: r, error } = await supabaseClient.from(table).update(patch).eq('id', id).select().single();
+    if (error) { console.log('[FM] update ' + table + ' error:', error.message); return null; }
+    return r;
+  };
+  const remove = async (table, id) => {
+    if (!supabaseReady || !supabaseClient) return false;
+    const { error } = await supabaseClient.from(table).delete().eq('id', id);
+    if (error) { console.log('[FM] delete ' + table + ' error:', error.message); return false; }
+    return true;
+  };
+
+  // Domain-specific operations (the cleanly-typed surface for components)
+  const ops = {
+    // LOCATIONS
+    createLocation: async ({ name, address, description, parent_id }) => {
+      const r = await insert('fm_locations', { name, address, description, parent_id: parent_id || null });
+      if (r) await loadAll();
+      return r;
+    },
+    deleteLocation: async (id) => { const ok = await remove('fm_locations', id); if (ok) await loadAll(); return ok; },
+    // ASSETS
+    createAsset: async ({ name, criticality, status, location_id, manufacturer, model, serial_number }) => {
+      const r = await insert('fm_assets', { name, criticality: criticality || 'Normal', status: status || 'Online', location_id: location_id || null, manufacturer, model, serial_number });
+      if (r) await loadAll();
+      return r;
+    },
+    deleteAsset: async (id) => { const ok = await remove('fm_assets', id); if (ok) await loadAll(); return ok; },
+    // WORK ORDERS
+    createWorkOrder: async ({ title, description, priority, asset_id, location_id, due_date, estimated_hours, work_type }) => {
+      // Compute next seq_no client-side
+      const maxSeq = (data.workOrders || []).reduce((m, w) => Math.max(m, parseInt((w.id || '#0').replace('#',''), 10) || 0), 0);
+      const r = await insert('fm_workorders', {
+        seq_no: maxSeq + 1,
+        title,
+        description: description || null,
+        status: 'Open',
+        priority: priority || 'None',
+        work_type: work_type || 'Reactive',
+        asset_id: asset_id || null,
+        location_id: location_id || null,
+        due_date: due_date || null,
+        estimated_hours: estimated_hours || 1,
+      });
+      if (r) await loadAll();
+      return r;
+    },
+    updateWorkOrderStatus: async (woRowId, status) => {
+      const patch = { status };
+      if (status === 'Done') patch.completed_at = new Date().toISOString();
+      const r = await update('fm_workorders', woRowId, patch);
+      if (r) await loadAll();
+      return r;
+    },
+    deleteWorkOrder: async (id) => { const ok = await remove('fm_workorders', id); if (ok) await loadAll(); return ok; },
+    // REQUESTS
+    createRequest: async ({ title, description, priority, asset_id, location_id, submitter_name, unit_number, area_type, preferred_contact }) => {
+      const maxSeq = (data.requests || []).reduce((m, r) => Math.max(m, parseInt((r.id || 'R-0').replace('R-',''), 10) || 0), 0);
+      const r = await insert('fm_requests', {
+        seq_no: maxSeq + 1,
+        title, description: description || null,
+        priority: priority || 'None',
+        status: 'Pending Review',
+        asset_id: asset_id || null,
+        location_id: location_id || null,
+        submitter_name, unit_number, area_type, preferred_contact,
+      });
+      if (r) await loadAll();
+      return r;
+    },
+    approveRequest: async (requestRowId, requestData) => {
+      // Create a WO from the request, then mark the request approved
+      const maxSeq = (data.workOrders || []).reduce((m, w) => Math.max(m, parseInt((w.id || '#0').replace('#',''), 10) || 0), 0);
+      const wo = await insert('fm_workorders', {
+        seq_no: maxSeq + 1,
+        title: requestData.title || 'Approved request',
+        request_id: requestRowId,
+        status: 'Open',
+        priority: requestData.priority || 'None',
+        work_type: 'Reactive',
+        asset_id: requestData.asset_id || null,
+        location_id: requestData.location_id || null,
+      });
+      if (wo) {
+        await update('fm_requests', requestRowId, { status: 'Approved', workorder_id: wo.id, triaged_at: new Date().toISOString() });
+        await loadAll();
+      }
+      return wo;
+    },
+    declineRequest: async (id, reason) => {
+      const r = await update('fm_requests', id, { status: 'Declined', decline_reason: reason || null, triaged_at: new Date().toISOString() });
+      if (r) await loadAll();
+      return r;
+    },
+    deleteRequest: async (id) => { const ok = await remove('fm_requests', id); if (ok) await loadAll(); return ok; },
+    // VENDORS
+    createVendor: async (v) => { const r = await insert('fm_vendors', v); if (r) await loadAll(); return r; },
+    deleteVendor: async (id) => { const ok = await remove('fm_vendors', id); if (ok) await loadAll(); return ok; },
+    // PARTS
+    createPart: async (p) => { const r = await insert('fm_parts', p); if (r) await loadAll(); return r; },
+    deletePart: async (id) => { const ok = await remove('fm_parts', id); if (ok) await loadAll(); return ok; },
+    // PROCEDURES
+    createProcedure: async (p) => { const r = await insert('fm_procedures', p); if (r) await loadAll(); return r; },
+    deleteProcedure: async (id) => { const ok = await remove('fm_procedures', id); if (ok) await loadAll(); return ok; },
+    // GENERIC
+    refresh: loadAll,
+  };
+
+  return { data, syncStatus, error, ops };
+};
+
 // FM App style helpers
 const fmStyles = {
   page: { fontFamily: FM_FONT, background: FM_COLORS.bg, color: FM_COLORS.text, minHeight: '100%', display: 'flex', position: 'relative' },
@@ -23996,14 +24210,14 @@ const FMStatusPill = ({ s }) => {
   return <span style={{padding:'2px 8px',background:c.bg,color:c.color,borderRadius:4,fontSize:11,fontWeight:600}}>{s}</span>;
 };
 
-// Module-specific renderers
-const FMSetupCenter = () => (
+// Module-specific renderers (now data-driven from useFMData)
+const FMSetupCenter = ({ data }) => (
   <div style={fmStyles.body}>
     <div style={{maxWidth:880}}>
       <h2 style={{fontSize:24,fontWeight:700,color:FM_COLORS.navy,margin:0,letterSpacing:'-0.02em'}}>Welcome to the FM App Setup Center</h2>
       <p style={{color:FM_COLORS.textSecondary,fontSize:14,margin:'8px 0 24px'}}>Build a strong maintenance operation and move from reactive work to preventive maintenance.</p>
       {[1,2].map(phase => {
-        const steps = FM_MOCK.setupSteps.filter(s => s.phase === phase);
+        const steps = (data?.setupSteps || FM_MOCK.setupSteps).filter(s => s.phase === phase);
         const phaseTitle = phase === 1 ? 'Reactive Maintenance' : 'Preventive Maintenance';
         const phaseCta = phase === 1 ? 'Build the Foundation' : 'Reduce Downtime';
         const totalTime = phase === 1 ? '15 min' : '20 min';
@@ -24041,9 +24255,16 @@ const FMSetupCenter = () => (
   </div>
 );
 
-const FMWorkOrders = () => {
-  const [selected, setSelected] = React.useState(FM_MOCK.workOrders[0]);
-  const todo = FM_MOCK.workOrders.filter(w => w.status !== 'Done');
+const FMWorkOrders = ({ data, ops }) => {
+  const list = (data?.workOrders || FM_MOCK.workOrders);
+  const [selectedId, setSelectedId] = React.useState(null);
+  const selected = list.find(w => (w._id || w.id) === selectedId) || list[0] || FM_MOCK.workOrders[0];
+  const setSelected = w => setSelectedId(w._id || w.id);
+  const todo = list.filter(w => w.status !== 'Done');
+  const handleStatusChange = async (newStatus) => {
+    if (!selected || !selected._id || !ops) return;
+    await ops.updateWorkOrderStatus(selected._id, newStatus);
+  };
   return (
     <div style={{display:'flex',height:'calc(100vh - 142px)'}}>
       <div style={{width:'42%',borderRight:`1px solid ${FM_COLORS.border}`,overflowY:'auto'}}>
@@ -24076,14 +24297,14 @@ const FMWorkOrders = () => {
           </div>
           <div style={{display:'flex',gap:8}}>
             <button style={fmStyles.secondaryBtn}>💬 Comments</button>
-            <button style={fmStyles.primaryBtn}>Mark as Done ✓</button>
+            <button onClick={() => handleStatusChange('Done')} style={fmStyles.primaryBtn}>Mark as Done ✓</button>
           </div>
         </div>
         <div style={{marginBottom:24}}>
           <div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>Status</div>
           <div style={{display:'flex',gap:6,padding:4,background:FM_COLORS.bgSoft,borderRadius:6,width:'fit-content'}}>
             {['Open','On Hold','In Progress','Done'].map(st => (
-              <button key={st} style={{padding:'6px 12px',background:selected.status===st?FM_COLORS.bg:'transparent',color:selected.status===st?FM_COLORS.navy:FM_COLORS.textMuted,border:'none',borderRadius:4,fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:selected.status===st?'0 1px 2px rgba(0,0,0,0.05)':'none'}}>{st}</button>
+              <button key={st} onClick={() => handleStatusChange(st)} style={{padding:'6px 12px',background:selected.status===st?FM_COLORS.bg:'transparent',color:selected.status===st?FM_COLORS.navy:FM_COLORS.textMuted,border:'none',borderRadius:4,fontSize:12,fontWeight:600,cursor:'pointer',boxShadow:selected.status===st?'0 1px 2px rgba(0,0,0,0.05)':'none'}}>{st}</button>
             ))}
           </div>
         </div>
@@ -24101,13 +24322,13 @@ const FMWorkOrders = () => {
   );
 };
 
-const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','Filter 3','Filter 4','+ Add Filter'], primaryAction = '+ New' }) => (
+const FMTablePage = ({ title, columns, rows, filters = ['Filter 1','Filter 2','Filter 3','Filter 4','+ Add Filter'], primaryAction = '+ New', onCreate }) => (
   <>
     <div style={fmStyles.pageHeader}>
       <h2 style={fmStyles.pageTitle}>{title}</h2>
       <div style={{display:'flex',gap:8,alignItems:'center'}}>
         <input style={fmStyles.search} placeholder={`Search ${title}…`}/>
-        <button style={fmStyles.primaryBtn}>{primaryAction}</button>
+        <button style={fmStyles.primaryBtn} onClick={onCreate}>{primaryAction}</button>
       </div>
     </div>
     <div style={fmStyles.filterBar}>{filters.map((f,i) => <span key={i} style={fmStyles.chip}>⚙ {f}</span>)}</div>
@@ -24194,12 +24415,56 @@ const FMMessages = () => (
   </div>
 );
 
-const FMCategories = () => (<>
+const FMCategories = ({ data }) => (<>
   <div style={fmStyles.pageHeader}><h2 style={fmStyles.pageTitle}>Categories</h2><div style={{display:'flex',gap:8}}><input style={fmStyles.search} placeholder="Search Categories…"/><button style={fmStyles.primaryBtn}>+ New Category</button></div></div>
   <div style={fmStyles.body}><div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:12}}>
-    {FM_MOCK.categories.map(c => (<div key={c.id} style={{...fmStyles.card,marginBottom:0,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}><div style={{width:36,height:36,background:c.color+'22',color:c.color,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{c.icon}</div><div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>{c.name}</div></div>))}
+    {(data?.categories || FM_MOCK.categories).map(c => (<div key={c.id} style={{...fmStyles.card,marginBottom:0,display:'flex',alignItems:'center',gap:12,cursor:'pointer'}}><div style={{width:36,height:36,background:c.color+'22',color:c.color,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>{c.icon}</div><div style={{fontSize:14,fontWeight:600,color:FM_COLORS.navy}}>{c.name}</div></div>))}
   </div></div>
 </>);
+
+// Generic create modal — used for Locations, Assets, Vendors, etc.
+const FMCreateModal = ({ title, fields, onClose, onSubmit }) => {
+  const [vals, setVals] = React.useState({});
+  const [busy, setBusy] = React.useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    await onSubmit(vals);
+    setBusy(false);
+    onClose();
+  };
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div onClick={e => e.stopPropagation()} style={{background:FM_COLORS.bg,borderRadius:8,width:480,maxWidth:'90%',maxHeight:'85vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',fontFamily:FM_FONT}}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:600,color:FM_COLORS.navy}}>{title}</h3>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:FM_COLORS.textMuted,cursor:'pointer'}}>×</button>
+        </div>
+        <form onSubmit={submit} style={{padding:20}}>
+          {fields.map(f => (
+            <div key={f.name} style={{marginBottom:14}}>
+              <label style={{display:'block',fontSize:11,fontWeight:600,color:FM_COLORS.textMuted,textTransform:'uppercase',letterSpacing:0.5,marginBottom:6}}>{f.label}{f.required && <span style={{color:FM_COLORS.red}}> *</span>}</label>
+              {f.type === 'textarea' ? (
+                <textarea value={vals[f.name] || ''} onChange={e => setVals({...vals, [f.name]: e.target.value})} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none',resize:'vertical',minHeight:60}}/>
+              ) : f.type === 'select' ? (
+                <select value={vals[f.name] || ''} onChange={e => setVals({...vals, [f.name]: e.target.value})} required={f.required} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none',background:FM_COLORS.bg}}>
+                  <option value="">— Select —</option>
+                  {(f.options || []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              ) : (
+                <input type={f.type || 'text'} value={vals[f.name] || ''} onChange={e => setVals({...vals, [f.name]: e.target.value})} required={f.required} placeholder={f.placeholder} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none'}}/>
+              )}
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:16,paddingTop:16,borderTop:`1px solid ${FM_COLORS.borderLight}`}}>
+            <button type="button" onClick={onClose} style={fmStyles.secondaryBtn}>Cancel</button>
+            <button type="submit" disabled={busy} style={fmStyles.primaryBtn}>{busy ? 'Saving…' : 'Create'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const FMSettings = () => (<>
   <div style={fmStyles.pageHeader}><h2 style={fmStyles.pageTitle}>Settings</h2></div>
@@ -24220,6 +24485,89 @@ const FMApp = ({ onLogout }) => {
   const [module, setModule] = React.useState('setup');
   const [libraryOpen, setLibraryOpen] = React.useState(true);
   const [profileOpen, setProfileOpen] = React.useState(false);
+  const [createModal, setCreateModal] = React.useState(null); // { kind, fields, onSubmit }
+  const { data, ops, syncStatus } = useFMData();
+
+  // Map module → create-modal config
+  const openCreate = (kind) => {
+    const cfgs = {
+      location: {
+        title: 'New Location',
+        fields: [
+          { name: 'name', label: 'Location Name', required: true },
+          { name: 'address', label: 'Address' },
+          { name: 'description', label: 'Description', type: 'textarea' },
+          { name: 'parent_id', label: 'Parent Location', type: 'select', options: (data.locations || []).filter(l => !l.parent).map(l => ({ value: l.id, label: l.name })) },
+        ],
+        onSubmit: ops.createLocation,
+      },
+      asset: {
+        title: 'New Asset',
+        fields: [
+          { name: 'name', label: 'Asset Name', required: true },
+          { name: 'criticality', label: 'Criticality', type: 'select', options: [{value:'Critical',label:'Critical'},{value:'Important',label:'Important'},{value:'Normal',label:'Normal'}] },
+          { name: 'status', label: 'Status', type: 'select', options: [{value:'Online',label:'Online'},{value:'Offline',label:'Offline'},{value:'Standby',label:'Standby'},{value:'Decommissioned',label:'Decommissioned'},{value:'Do Not Track',label:'Do Not Track'}] },
+          { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'manufacturer', label: 'Manufacturer' },
+          { name: 'model', label: 'Model' },
+          { name: 'serial_number', label: 'Serial Number' },
+        ],
+        onSubmit: ops.createAsset,
+      },
+      workorder: {
+        title: 'New Work Order',
+        fields: [
+          { name: 'title', label: 'Title (What needs to be done?)', required: true },
+          { name: 'description', label: 'Description', type: 'textarea' },
+          { name: 'priority', label: 'Priority', type: 'select', options: [{value:'None',label:'None'},{value:'Low',label:'Low'},{value:'Medium',label:'Medium'},{value:'High',label:'High'}] },
+          { name: 'work_type', label: 'Work Type', type: 'select', options: [{value:'Reactive',label:'Reactive'},{value:'Preventive',label:'Preventive'},{value:'Inspection',label:'Inspection'},{value:'Other',label:'Other'}] },
+          { name: 'asset_id', label: 'Asset', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
+          { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'due_date', label: 'Due Date', type: 'date' },
+          { name: 'estimated_hours', label: 'Estimated Hours', type: 'number' },
+        ],
+        onSubmit: ops.createWorkOrder,
+      },
+      request: {
+        title: 'New Request',
+        fields: [
+          { name: 'title', label: 'Title', required: true },
+          { name: 'description', label: 'Description', type: 'textarea' },
+          { name: 'priority', label: 'Priority', type: 'select', options: [{value:'None',label:'None'},{value:'Low',label:'Low'},{value:'Medium',label:'Medium'},{value:'High',label:'High'}] },
+          { name: 'submitter_name', label: 'Submitter Name' },
+          { name: 'unit_number', label: 'Unit Number' },
+          { name: 'area_type', label: 'Area Type', type: 'select', options: [{value:'Common Area',label:'Common Area'},{value:'In-Unit',label:'In-Unit'},{value:'Outdoor',label:'Outdoor'}] },
+          { name: 'preferred_contact', label: 'Preferred Contact', type: 'select', options: [{value:'WhatsApp',label:'WhatsApp'},{value:'SMS',label:'SMS'},{value:'Email',label:'Email'},{value:'Phone',label:'Phone'}] },
+        ],
+        onSubmit: ops.createRequest,
+      },
+      vendor: {
+        title: 'New Vendor',
+        fields: [
+          { name: 'name', label: 'Vendor Name', required: true },
+          { name: 'vendor_type', label: 'Vendor Type', type: 'select', options: [{value:'Service',label:'Service'},{value:'Supplier',label:'Supplier'},{value:'Contractor',label:'Contractor'}] },
+          { name: 'phone', label: 'Phone' },
+          { name: 'email', label: 'Email', type: 'email' },
+          { name: 'trade_license', label: 'Trade Licence Number' },
+          { name: 'civil_defence', label: 'Civil Defence Approval' },
+        ],
+        onSubmit: ops.createVendor,
+      },
+      part: {
+        title: 'New Part',
+        fields: [
+          { name: 'name', label: 'Part Name', required: true },
+          { name: 'qty_in_stock', label: 'Quantity in Stock', type: 'number' },
+          { name: 'min_qty', label: 'Minimum Quantity', type: 'number' },
+          { name: 'cost_per_unit', label: 'Cost per Unit (AED)', type: 'number' },
+          { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'vendor_id', label: 'Vendor', type: 'select', options: (data.vendors || []).map(v => ({ value: v.id, label: v.name })) },
+        ],
+        onSubmit: ops.createPart,
+      },
+    };
+    setCreateModal(cfgs[kind]);
+  };
   const navItems = [
     { id: 'setup', label: 'Setup Center', icon: '🚀', dot: true },
     { id: 'workorders', label: 'Work Orders', icon: '📋' },
@@ -24245,24 +24593,25 @@ const FMApp = ({ onLogout }) => {
   ];
 
   const renderModule = () => {
+    const D = data;
     switch (module) {
-      case 'setup': return <FMSetupCenter/>;
-      case 'workorders': return <FMWorkOrders/>;
+      case 'setup': return <FMSetupCenter data={D}/>;
+      case 'workorders': return <FMWorkOrders data={D} ops={ops}/>;
       case 'reporting': return <FMReporting/>;
-      case 'requests': return <FMTablePage title="Requests" columns={['ID','Title','Submitted By','Submitted','Priority','Status']} rows={FM_MOCK.requests.map(r => [r.id,r.title,r.submittedBy,r.submittedDate,<FMPriorityPill p={r.priority}/>,<FMStatusPill s={r.status}/>])} filters={['Asset','Location','Priority','Status','+ Add Filter']} primaryAction="+ New Request"/>;
-      case 'assets': return <FMTablePage title="Assets" columns={['Name','Criticality','Status','Location','Manufacturer','Model']} rows={FM_MOCK.assets.map(a => [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.location,a.manufacturer,a.model])} filters={['Criticality','Status','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset"/>;
+      case 'requests': return <FMTablePage title="Requests" columns={['ID','Title','Submitted By','Submitted','Priority','Status']} rows={(D.requests || []).map(r => [r.id,r.title,r.submittedBy,r.submittedDate,<FMPriorityPill p={r.priority}/>,<FMStatusPill s={r.status}/>])} filters={['Asset','Location','Priority','Status','+ Add Filter']} primaryAction="+ New Request" onCreate={() => openCreate('request')}/>;
+      case 'assets': return <FMTablePage title="Assets" columns={['Name','Criticality','Status','Location','Manufacturer','Model']} rows={(D.assets || []).map(a => [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.location,a.manufacturer,a.model])} filters={['Criticality','Status','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset" onCreate={() => openCreate('asset')}/>;
       case 'messages': return <FMMessages/>;
-      case 'categories': return <FMCategories/>;
-      case 'parts': return <FMTablePage title="Parts Inventory" columns={['Part Name','Stock','Min','Location','Vendor','Cost / Unit']} rows={FM_MOCK.parts.map(p => [p.name,<span style={{color:p.stock<p.min?FM_COLORS.red:FM_COLORS.text,fontWeight:p.stock<p.min?700:400}}>{p.stock}</span>,p.min,p.location,p.vendor,p.cost])} filters={['Needs Restock','Part Types','Location','Asset','Vendor','+ Add Filter']} primaryAction="+ New Part"/>;
-      case 'wotemplates': return <FMTablePage title="Work Order Templates" columns={['Name','Recurrence','Linked Procedure']} rows={FM_MOCK.woTemplates.map(t => [t.name,t.recurrence,t.linkedProcedure])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="+ New Template"/>;
-      case 'procedures': return <FMTablePage title="Procedures" columns={['Name','Steps','Category','Linked Assets','Last Updated']} rows={FM_MOCK.procedures.map(p => [p.name,p.steps,p.category,p.linkedAssets,p.lastUpdated])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="✨ + New Procedure"/>;
-      case 'meters': return <FMTablePage title="Meters" columns={['Meter Name','Asset','Unit','Current Reading','Last Reading']} rows={FM_MOCK.meters.map(m => [m.name,m.asset,m.unit,m.current,m.lastReading])} filters={['Asset','Location','Meter Type','+ Add Filter']} primaryAction="+ New Meter"/>;
-      case 'automations': return <FMTablePage title="Automations" columns={['Name','Trigger','Action','Status']} rows={FM_MOCK.automations.map(a => [a.name,a.trigger,a.action,<FMStatusPill s={a.enabled?'Online':'Offline'}/>])} filters={['Status','+ Add Filter']} primaryAction="+ New Automation"/>;
-      case 'locations': return <FMTablePage title="Locations" columns={['Name','Address','Sub-Locations','Parent']} rows={FM_MOCK.locations.map(l => [l.isDefault?<><span style={{fontWeight:600}}>{l.name}</span> <span style={{fontSize:10,padding:'1px 6px',background:FM_COLORS.bgSoft,borderRadius:4,color:FM_COLORS.textMuted,marginLeft:4}}>default</span></>:l.name,l.address,l.sub,l.parent?FM_MOCK.locations.find(x => x.id===l.parent)?.name||'—':'—'])} filters={['Teams in Charge','Asset','Part','Procedure','+ Add Filter']} primaryAction="+ New Location"/>;
-      case 'users': return <FMTablePage title="Teams / Users" columns={['Full Name','Role','Teams','Last Visit']} rows={FM_MOCK.users.map(u => [u.name,u.role,u.teams,u.lastVisit])} filters={['Role','Team','+ Add Filter']} primaryAction="+ Invite Users"/>;
-      case 'vendors': return <FMTablePage title="Vendors" columns={['Name','Type','Phone','Email','Trade Licence','Civil Defence']} rows={FM_MOCK.vendors.map(v => [v.name,v.type,v.phone,v.email,v.tradeLicense,v.civilDefence])} filters={['Asset','Location','Part','Vendor Types','+ Add Filter']} primaryAction="+ New Vendor"/>;
+      case 'categories': return <FMCategories data={D}/>;
+      case 'parts': return <FMTablePage title="Parts Inventory" columns={['Part Name','Stock','Min','Location','Vendor','Cost / Unit']} rows={(D.parts || []).map(p => [p.name,<span style={{color:p.stock<p.min?FM_COLORS.red:FM_COLORS.text,fontWeight:p.stock<p.min?700:400}}>{p.stock}</span>,p.min,p.location,p.vendor,p.cost])} filters={['Needs Restock','Part Types','Location','Asset','Vendor','+ Add Filter']} primaryAction="+ New Part" onCreate={() => openCreate('part')}/>;
+      case 'wotemplates': return <FMTablePage title="Work Order Templates" columns={['Name','Recurrence','Linked Procedure']} rows={(D.woTemplates || []).map(t => [t.name,t.recurrence,t.linkedProcedure])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="+ New Template"/>;
+      case 'procedures': return <FMTablePage title="Procedures" columns={['Name','Steps','Category','Linked Assets','Last Updated']} rows={(D.procedures || []).map(p => [p.name,p.steps,p.category,p.linkedAssets,p.lastUpdated])} filters={['Category','Teams in Charge','Location','Asset','+ Add Filter']} primaryAction="✨ + New Procedure"/>;
+      case 'meters': return <FMTablePage title="Meters" columns={['Meter Name','Asset','Unit','Current Reading','Last Reading']} rows={(D.meters || []).map(m => [m.name,m.asset,m.unit,m.current,m.lastReading])} filters={['Asset','Location','Meter Type','+ Add Filter']} primaryAction="+ New Meter"/>;
+      case 'automations': return <FMTablePage title="Automations" columns={['Name','Trigger','Action','Status']} rows={(D.automations || []).map(a => [a.name,a.trigger,a.action,<FMStatusPill s={a.enabled?'Online':'Offline'}/>])} filters={['Status','+ Add Filter']} primaryAction="+ New Automation"/>;
+      case 'locations': return <FMTablePage title="Locations" columns={['Name','Address','Sub-Locations','Parent']} rows={(D.locations || []).map(l => [l.isDefault?<><span style={{fontWeight:600}}>{l.name}</span> <span style={{fontSize:10,padding:'1px 6px',background:FM_COLORS.bgSoft,borderRadius:4,color:FM_COLORS.textMuted,marginLeft:4}}>default</span></>:l.name,l.address,l.sub||0,l.parent?((D.locations || []).find(x => x.id===l.parent)?.name||'—'):'—'])} filters={['Teams in Charge','Asset','Part','Procedure','+ Add Filter']} primaryAction="+ New Location" onCreate={() => openCreate('location')}/>;
+      case 'users': return <FMTablePage title="Teams / Users" columns={['Full Name','Role','Teams','Last Visit']} rows={(D.users || []).map(u => [u.name,u.role,u.teams,u.lastVisit])} filters={['Role','Team','+ Add Filter']} primaryAction="+ Invite Users"/>;
+      case 'vendors': return <FMTablePage title="Vendors" columns={['Name','Type','Phone','Email','Trade Licence','Civil Defence']} rows={(D.vendors || []).map(v => [v.name,v.type,v.phone,v.email,v.tradeLicense,v.civilDefence])} filters={['Asset','Location','Part','Vendor Types','+ Add Filter']} primaryAction="+ New Vendor" onCreate={() => openCreate('vendor')}/>;
       case 'settings': return <FMSettings/>;
-      default: return <FMSetupCenter/>;
+      default: return <FMSetupCenter data={D}/>;
     }
   };
 
@@ -24336,11 +24685,26 @@ const FMApp = ({ onLogout }) => {
       </div>
       <div style={fmStyles.main}>
         <div style={fmStyles.topBanner}>
-          <span><span style={{marginRight:8,color:FM_COLORS.textMuted}}>ℹ</span>VARS FM App — internal demo with mock data. Connect Supabase to wire live data.</span>
-          <span style={{cursor:'pointer',fontWeight:600,color:FM_COLORS.blue}}>Continue Setup ›</span>
+          <span>
+            <span style={{display:'inline-block',width:8,height:8,borderRadius:'50%',background: syncStatus==='online' ? FM_COLORS.green : syncStatus==='schema_missing' ? FM_COLORS.amber : syncStatus==='offline' ? FM_COLORS.red : FM_COLORS.textMuted, marginRight:8, verticalAlign:'middle'}}></span>
+            {syncStatus === 'online' && 'Live — connected to Supabase. Changes persist across devices.'}
+            {syncStatus === 'connecting' && 'Connecting to Supabase…'}
+            {syncStatus === 'local' && 'Local mock data only. Wire Supabase to enable persistence.'}
+            {syncStatus === 'schema_missing' && (<>Tables not yet created. Run <code style={{padding:'1px 6px',background:FM_COLORS.bg,borderRadius:3,fontSize:11}}>fm_schema.sql</code> in Supabase Dashboard.</>)}
+            {syncStatus === 'offline' && 'Supabase offline. Showing local mock data.'}
+          </span>
+          <span onClick={() => setModule('setup')} style={{cursor:'pointer',fontWeight:600,color:FM_COLORS.blue}}>Continue Setup ›</span>
         </div>
         {renderModule()}
       </div>
+      {createModal && (
+        <FMCreateModal
+          title={createModal.title}
+          fields={createModal.fields}
+          onClose={() => setCreateModal(null)}
+          onSubmit={createModal.onSubmit}
+        />
+      )}
     </div>
   );
 };
