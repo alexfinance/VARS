@@ -24275,6 +24275,30 @@ const useFMData = () => {
       if (r) await loadAll();
       return r;
     },
+    // Upload a File to the fm_attachments Storage bucket and return the picture record
+    uploadFile: async (file, prefix) => {
+      if (!supabaseClient || !file) return null;
+      try {
+        const ext = (file.name || 'file').split('.').pop() || 'bin';
+        const path = (prefix || 'misc') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        const { error } = await supabaseClient.storage.from('fm_attachments').upload(path, file, { cacheControl: '3600', upsert: false });
+        if (error) { console.log('[FM] storage upload error:', error.message, '— have you applied fm_storage.sql?'); return null; }
+        const { data } = supabaseClient.storage.from('fm_attachments').getPublicUrl(path);
+        return { url: data.publicUrl, name: file.name, contentType: file.type, size: file.size };
+      } catch (e) {
+        console.log('[FM] upload exception:', e.message);
+        return null;
+      }
+    },
+    // Append picture(s) to an entity's `pictures` JSONB array
+    addPicturesToRow: async (table, id, pictures) => {
+      if (!supabaseClient) return null;
+      const { data: row } = await supabaseClient.from(table).select('pictures').eq('id', id).single();
+      const next = [...((row && row.pictures) || []), ...pictures];
+      const { data: updated } = await supabaseClient.from(table).update({ pictures: next }).eq('id', id).select().single();
+      await loadAll();
+      return updated;
+    },
     addWOOtherCost: async (woId, label, amount) => {
       if (!supabaseClient) return null;
       const { data: wo } = await supabaseClient.from('fm_workorders').select('other_costs').eq('id', woId).single();
@@ -24559,6 +24583,19 @@ const FMWorkOrders = ({ data, ops, onCreate, onEdit }) => {
             <div key={i}><div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5,marginBottom:4}}>{l}</div><div style={{fontSize:14,color:FM_COLORS.navy}}>{v}</div></div>
           ))}
         </div>
+        {/* Photos gallery */}
+        {fullWO && Array.isArray(fullWO.pictures) && fullWO.pictures.length > 0 && (
+          <div style={{marginBottom:20,paddingTop:16,borderTop:`1px solid ${FM_COLORS.border}`}}>
+            <div style={{fontSize:11,color:FM_COLORS.textMuted,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>Photos ({fullWO.pictures.length})</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+              {fullWO.pictures.map((p, i) => (
+                <a key={i} href={p.url} target="_blank" rel="noopener" style={{display:'block',width:88,height:88,borderRadius:6,overflow:'hidden',border:`1px solid ${FM_COLORS.border}`,background:FM_COLORS.bgSoft}}>
+                  <img src={p.url} alt={p.name || 'photo'} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Sub-Work Orders */}
         {childrenWOs && childrenWOs.length > 0 && (
           <div style={{borderTop:`1px solid ${FM_COLORS.border}`,paddingTop:16,marginBottom:16}}>
@@ -25231,12 +25268,13 @@ const FMAIProcedureGenerator = ({ onClose, onGenerated }) => {
 // QR Code generator modal — uses the qrcodejs library already loaded in <head>
 const FMQRCodeModal = ({ entity, entityType, onClose, onSaved }) => {
   const [code, setCode] = React.useState(entity.qr_code || '');
-  const [generated, setGenerated] = React.useState(null);
   const ref = React.useRef(null);
+  // QR encodes a deep-link URL; scanning the code opens the asset/location/part on any device
+  const deepLinkParam = entityType === 'fm_assets' ? 'fmAsset' : entityType === 'fm_locations' ? 'fmLocation' : entityType === 'fm_parts' ? 'fmPart' : 'fmId';
+  const baseUrl = (typeof window !== 'undefined') ? (window.location.origin + window.location.pathname) : '';
+  const deepLink = baseUrl + '?' + deepLinkParam + '=' + entity.id;
   const generate = () => {
-    const newCode = 'VARS-' + entityType.toUpperCase().replace('FM_','') + '-' + Date.now().toString(36).toUpperCase();
-    setCode(newCode);
-    setGenerated(newCode);
+    setCode('VARS-' + entityType.toUpperCase().replace('FM_','') + '-' + Date.now().toString(36).toUpperCase());
   };
   const save = async () => {
     if (!supabaseClient || !code) return;
@@ -25244,30 +25282,138 @@ const FMQRCodeModal = ({ entity, entityType, onClose, onSaved }) => {
     if (onSaved) onSaved();
     onClose();
   };
+  const getImageDataUrl = () => {
+    if (!ref.current) return null;
+    const img = ref.current.querySelector('img') || ref.current.querySelector('canvas');
+    if (!img) return null;
+    return img.tagName === 'IMG' ? img.src : img.toDataURL('image/png');
+  };
+  const downloadPNG = () => {
+    const url = getImageDataUrl(); if (!url) return;
+    const a = document.createElement('a');
+    a.href = url; a.download = (entity.name || 'qr') + '.png'; a.click();
+  };
+  const printQR = () => {
+    const src = getImageDataUrl(); if (!src) return;
+    const w = window.open('', '_blank'); if (!w) return;
+    const safeName = String(entity.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    w.document.write('<html><head><title>QR — ' + safeName + '</title></head><body style="display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:100vh;font-family:Arial,sans-serif;margin:0"><div style="text-align:center;border:1px solid #ccc;padding:24px;border-radius:8px"><img src="' + src + '" style="width:280px;height:280px"/><div style="font-size:14px;font-weight:600;margin-top:12px">' + safeName + '</div><div style="font-size:11px;color:#666;font-family:monospace;margin-top:4px">' + code + '</div></div><script>window.onload=function(){setTimeout(function(){window.print();},200)};<\/script></body></html>');
+    w.document.close();
+  };
   React.useEffect(() => {
     if (!ref.current || !window.QRCode || !code) return;
     ref.current.innerHTML = '';
-    try { new window.QRCode(ref.current, { text: code, width: 180, height: 180, colorDark: '#1a1a1a', colorLight: '#FFFFFF' }); } catch(e) { console.log('QR error', e.message); }
-  }, [code]);
+    try {
+      new window.QRCode(ref.current, { text: deepLink, width: 200, height: 200, colorDark: '#1a1a1a', colorLight: '#FFFFFF', correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 1 });
+    } catch(e) { console.log('QR error', e.message); }
+  }, [code, deepLink]);
   return (
     <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div onClick={e => e.stopPropagation()} style={{background:FM_COLORS.bg,borderRadius:8,width:420,maxWidth:'90%',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',fontFamily:FM_FONT}}>
+      <div onClick={e => e.stopPropagation()} style={{background:FM_COLORS.bg,borderRadius:8,width:460,maxWidth:'92%',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',fontFamily:FM_FONT}}>
         <div style={{padding:'16px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <h3 style={{margin:0,fontSize:16,fontWeight:600,color:FM_COLORS.navy}}>QR Code — {entity.name || entity.full_name}</h3>
+          <h3 style={{margin:0,fontSize:16,fontWeight:600,color:FM_COLORS.navy}}>QR code — {entity.name || entity.full_name}</h3>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:FM_COLORS.textMuted,cursor:'pointer'}}>×</button>
         </div>
         <div style={{padding:24,textAlign:'center'}}>
-          <input value={code} onChange={e => setCode(e.target.value)} placeholder="Code (or click Generate)" style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none',marginBottom:16}}/>
-          <div ref={ref} style={{display:'flex',justifyContent:'center',marginBottom:16,minHeight:180}}>
-            {!code && <div style={{padding:60,color:FM_COLORS.textMuted,fontSize:13}}>Enter or generate a code</div>}
+          <label style={{display:'block',fontSize:11,fontWeight:600,color:FM_COLORS.textMuted,textTransform:'uppercase',letterSpacing:0.5,marginBottom:6,textAlign:'left'}}>Code</label>
+          <div style={{display:'flex',gap:6,marginBottom:16}}>
+            <input value={code} onChange={e => setCode(e.target.value)} placeholder="Click Generate or type a code" style={{flex:1,padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:'monospace',outline:'none'}}/>
+            <button onClick={generate} style={fmStyles.secondaryBtn}>Generate</button>
           </div>
-          <p style={{fontSize:11,color:FM_COLORS.textMuted,margin:'0 0 16px'}}>Print this QR and stick it on the {entityType.replace('fm_','').replace(/s$/,'')}. Scan it on the mobile app to deep-link directly to this record.</p>
-          <div style={{display:'flex',justifyContent:'space-between',gap:8}}>
-            <button onClick={generate} style={fmStyles.secondaryBtn}>Generate new code</button>
+          <div ref={ref} style={{display:'flex',justifyContent:'center',marginBottom:12,minHeight:200,alignItems:'center'}}>
+            {!code && <div style={{padding:60,color:FM_COLORS.textMuted,fontSize:13}}>Generate a code to render the QR</div>}
+          </div>
+          <p style={{fontSize:11,color:FM_COLORS.textMuted,margin:'0 0 16px',fontFamily:'monospace',wordBreak:'break-all',background:FM_COLORS.bgSoft,padding:'6px 10px',borderRadius:4}}>{deepLink}</p>
+          <p style={{fontSize:11,color:FM_COLORS.textMuted,margin:'0 0 16px'}}>Print and stick on the {entityType.replace('fm_','').replace(/s$/,'')}. Scanning opens this record on any device.</p>
+          <div style={{display:'flex',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+            <div style={{display:'flex',gap:6}}>
+              <button onClick={printQR} disabled={!code} style={fmStyles.secondaryBtn}>Print</button>
+              <button onClick={downloadPNG} disabled={!code} style={fmStyles.secondaryBtn}>Download PNG</button>
+            </div>
             <div style={{display:'flex',gap:8}}>
               <button onClick={onClose} style={fmStyles.secondaryBtn}>Cancel</button>
               <button onClick={save} disabled={!code} style={fmStyles.primaryBtn}>Save</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Bulk print all asset QR codes as a PDF (4 cards per A4 page).
+const FMBulkQRPrint = ({ assets, onClose }) => {
+  const [busy, setBusy] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+  const baseUrl = (typeof window !== 'undefined') ? (window.location.origin + window.location.pathname) : '';
+  const renderQRDataUrl = (text) => new Promise(resolve => {
+    const div = document.createElement('div');
+    div.style.position = 'absolute'; div.style.left = '-9999px';
+    document.body.appendChild(div);
+    try {
+      new window.QRCode(div, { text, width: 200, height: 200, colorDark: '#1a1a1a', colorLight: '#FFFFFF' });
+      setTimeout(() => {
+        const img = div.querySelector('img') || div.querySelector('canvas');
+        const url = img ? (img.tagName === 'IMG' ? img.src : img.toDataURL('image/png')) : null;
+        document.body.removeChild(div);
+        resolve(url);
+      }, 100);
+    } catch (e) { document.body.removeChild(div); resolve(null); }
+  });
+  const printAll = async () => {
+    if (!window.jspdf) return;
+    setBusy(true);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = 210;
+    const cardW = 90, cardH = 110;
+    const cols = 2, rows = 2;
+    const startX = (pageWidth - cardW * cols - 10) / 2;
+    const startY = 20;
+    let i = 0;
+    for (const a of assets) {
+      const text = baseUrl + '?fmAsset=' + a.id;
+      const dataUrl = await renderQRDataUrl(text);
+      if (!dataUrl) continue;
+      const idx = i % (cols * rows);
+      if (i > 0 && idx === 0) doc.addPage();
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const x = startX + col * (cardW + 10);
+      const y = startY + row * (cardH + 10);
+      doc.setDrawColor(220); doc.rect(x, y, cardW, cardH);
+      doc.addImage(dataUrl, 'PNG', x + (cardW - 70) / 2, y + 8, 70, 70);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+      const name = String(a.name || '').slice(0, 32);
+      doc.text(name, x + cardW / 2, y + 86, { align: 'center' });
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120);
+      if (a.qr_code) doc.text(String(a.qr_code), x + cardW / 2, y + 92, { align: 'center' });
+      doc.text('VARS Facility Management', x + cardW / 2, y + cardH - 6, { align: 'center' });
+      doc.setTextColor(0);
+      i++;
+    }
+    doc.save('vars-asset-qr-codes-' + new Date().toISOString().slice(0, 10) + '.pdf');
+    setBusy(false); setDone(true);
+    setTimeout(onClose, 1500);
+  };
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:9000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div onClick={e => e.stopPropagation()} style={{background:FM_COLORS.bg,borderRadius:8,width:480,maxWidth:'92%',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',fontFamily:FM_FONT}}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${FM_COLORS.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <h3 style={{margin:0,fontSize:16,fontWeight:600,color:FM_COLORS.navy}}>Print all asset QR codes</h3>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:FM_COLORS.textMuted,cursor:'pointer'}}>×</button>
+        </div>
+        <div style={{padding:24}}>
+          <p style={{fontSize:13,color:FM_COLORS.text,margin:'0 0 12px'}}>Generate a printable PDF with QR codes for all <strong>{assets.length}</strong> assets. 4 cards per A4 page. Each QR encodes a deep-link URL that opens the asset on any device.</p>
+          <ul style={{fontSize:12,color:FM_COLORS.textSecondary,margin:'0 0 20px',paddingLeft:20}}>
+            <li>Includes asset name + code (if set) + VARS branding under each QR.</li>
+            <li>If an asset has no QR code yet, the deep-link still works.</li>
+            <li>Print on A4, cut, laminate, stick on assets.</li>
+          </ul>
+          {done && <div style={{padding:10,background:FM_COLORS.greenBg,color:FM_COLORS.greenText,borderRadius:6,fontSize:13,marginBottom:14}}>PDF downloaded.</div>}
+          <div style={{display:'flex',justifyContent:'flex-end',gap:8}}>
+            <button onClick={onClose} style={fmStyles.secondaryBtn}>Cancel</button>
+            <button onClick={printAll} disabled={busy || assets.length === 0} style={fmStyles.primaryBtn}>{busy ? 'Generating PDF…' : 'Generate PDF'}</button>
           </div>
         </div>
       </div>
@@ -25373,6 +25519,61 @@ const FMImportDialog = ({ entityType, onClose, onImported }) => {
   );
 };
 
+// Reusable picture-upload field. Uploads files to Supabase Storage
+// (fm_attachments bucket) and stores { url, name } records in the
+// entity's `pictures` JSONB column.
+const FMPictureUpload = ({ value, onChange, prefix }) => {
+  const pics = Array.isArray(value) ? value : [];
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+  const inputRef = React.useRef(null);
+  const handleFiles = async (fileList) => {
+    if (!fileList || !fileList.length || !supabaseClient) return;
+    setBusy(true); setErr(null);
+    const uploaded = [];
+    for (const f of Array.from(fileList)) {
+      try {
+        const ext = (f.name || 'file').split('.').pop() || 'jpg';
+        const path = (prefix || 'misc') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        const { error } = await supabaseClient.storage.from('fm_attachments').upload(path, f, { cacheControl: '3600', upsert: false });
+        if (error) {
+          if (/bucket not found|not found/i.test(error.message || '')) {
+            setErr('Storage bucket missing — apply fm_storage.sql in Supabase Dashboard once.');
+          } else {
+            setErr('Upload failed: ' + error.message);
+          }
+          continue;
+        }
+        const { data } = supabaseClient.storage.from('fm_attachments').getPublicUrl(path);
+        uploaded.push({ url: data.publicUrl, name: f.name, contentType: f.type, size: f.size });
+      } catch (e) {
+        setErr(e.message);
+      }
+    }
+    onChange([...pics, ...uploaded]);
+    setBusy(false);
+  };
+  const remove = (i) => { onChange(pics.filter((_, idx) => idx !== i)); };
+  return (
+    <div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:8}}>
+        {pics.map((p, i) => (
+          <div key={i} style={{position:'relative',width:88,height:88,borderRadius:6,overflow:'hidden',border:`1px solid ${FM_COLORS.border}`,background:FM_COLORS.bgSoft}}>
+            <img src={p.url} alt={p.name || 'photo'} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            <button type="button" onClick={() => remove(i)} title="Remove" style={{position:'absolute',top:2,right:2,width:20,height:20,borderRadius:'50%',background:'rgba(0,0,0,0.55)',color:'#fff',border:'none',fontSize:11,cursor:'pointer',lineHeight:'18px',padding:0}}>×</button>
+          </div>
+        ))}
+        <button type="button" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy} style={{width:88,height:88,border:`2px dashed ${FM_COLORS.border}`,borderRadius:6,background:FM_COLORS.bg,color:FM_COLORS.textSecondary,fontSize:11,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,fontFamily:FM_FONT}}>
+          <span style={{fontSize:18}}>+</span>
+          <span>{busy ? 'Uploading…' : 'Add photo'}</span>
+        </button>
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" multiple onChange={e => handleFiles(e.target.files)} style={{display:'none'}}/>
+      {err && <div style={{padding:8,background:FM_COLORS.redBg,color:FM_COLORS.redText,borderRadius:4,fontSize:11,marginTop:4}}>{err}</div>}
+    </div>
+  );
+};
+
 // Generic form modal — handles Create (no initial) and Edit (initial = row data)
 const FMCreateModal = ({ title, fields, onClose, onSubmit, initial, submitLabel, extraActions }) => {
   const [vals, setVals] = React.useState(() => {
@@ -25418,6 +25619,8 @@ const FMCreateModal = ({ title, fields, onClose, onSubmit, initial, submitLabel,
                   <input list={'dl_' + f.name} value={vals[f.name] || ''} onChange={e => setVals({...vals, [f.name]: e.target.value})} placeholder={f.placeholder || 'Type or pick from suggestions'} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none'}}/>
                   <datalist id={'dl_' + f.name}>{(f.options || []).map(o => <option key={o} value={o}/>)}</datalist>
                 </>
+              ) : f.type === 'pictures' ? (
+                <FMPictureUpload value={vals[f.name] || []} onChange={pics => setVals({...vals, [f.name]: pics})} prefix={f.prefix || 'misc'}/>
               ) : (
                 <input type={f.type || 'text'} value={vals[f.name] || ''} onChange={e => setVals({...vals, [f.name]: e.target.value})} required={f.required} placeholder={f.placeholder} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:13,fontFamily:FM_FONT,outline:'none'}}/>
               )}
@@ -25717,6 +25920,7 @@ const FMProcedureExecutionModal = ({ workorder, procedure, onClose, onComplete }
 // Public Request Page — anonymous resident-facing request form (no login required)
 const FMPublicRequestPage = () => {
   const [vals, setVals] = React.useState({ title: '', description: '', priority: 'Medium', submitter_name: '', submitter_email: '', submitter_phone: '', unit_number: '', area_type: 'In-Unit', preferred_contact: 'WhatsApp' });
+  const [pictures, setPictures] = React.useState([]);
   const [done, setDone] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState(null);
@@ -25727,7 +25931,7 @@ const FMPublicRequestPage = () => {
     try {
       const { data: maxRow } = await supabaseClient.from('fm_requests').select('seq_no').eq('org_id', FM_ORG_ID).order('seq_no', { ascending: false }).limit(1).single();
       const nextSeq = ((maxRow && maxRow.seq_no) || 0) + 1;
-      await supabaseClient.from('fm_requests').insert({ ...vals, org_id: FM_ORG_ID, seq_no: nextSeq, status: 'Pending Review' });
+      await supabaseClient.from('fm_requests').insert({ ...vals, pictures, org_id: FM_ORG_ID, seq_no: nextSeq, status: 'Pending Review' });
       setDone(true);
     } catch (e) { setErr(e.message); }
     setBusy(false);
@@ -25775,6 +25979,10 @@ const FMPublicRequestPage = () => {
             <div><label style={{display:'block',fontSize:12,fontWeight:600,color:FM_COLORS.text,marginBottom:6}}>Area</label><select value={vals.area_type} onChange={e => setVals({...vals, area_type: e.target.value})} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:14,fontFamily:FM_FONT,background:FM_COLORS.bg}}>{['In-Unit','Common Area','Outdoor'].map(a => <option key={a}>{a}</option>)}</select></div>
             <div><label style={{display:'block',fontSize:12,fontWeight:600,color:FM_COLORS.text,marginBottom:6}}>Contact me via</label><select value={vals.preferred_contact} onChange={e => setVals({...vals, preferred_contact: e.target.value})} style={{width:'100%',padding:'10px 12px',border:`1px solid ${FM_COLORS.border}`,borderRadius:6,fontSize:14,fontFamily:FM_FONT,background:FM_COLORS.bg}}>{['WhatsApp','SMS','Email','Phone'].map(c => <option key={c}>{c}</option>)}</select></div>
           </div>
+          <div style={{marginBottom:14}}>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:FM_COLORS.text,marginBottom:6}}>Photos (optional)</label>
+            <FMPictureUpload value={pictures} onChange={setPictures} prefix="public-requests"/>
+          </div>
           {err && <div style={{padding:10,background:FM_COLORS.redBg,color:FM_COLORS.redText,borderRadius:6,fontSize:13,marginBottom:14}}>{err}</div>}
           <button type="submit" disabled={busy} style={{...fmStyles.primaryBtn,width:'100%',padding:'14px',fontSize:14}}>{busy ? 'Submitting…' : 'Submit Request'}</button>
         </form>
@@ -25794,7 +26002,10 @@ const FMApp = ({ onLogout }) => {
   const [aiGenOpen, setAiGenOpen] = React.useState(false);
   const [importDialog, setImportDialog] = React.useState(null); // entity_type
   const [qrModal, setQrModal] = React.useState(null); // { entity, entityType }
+  const [bulkQRPrint, setBulkQRPrint] = React.useState(false);
   const { data, ops, syncStatus } = useFMData();
+
+  const deepLinkProcessedRef = React.useRef(false);
 
   // Map module → create-modal config
   const openCreate = (kind) => {
@@ -25806,8 +26017,20 @@ const FMApp = ({ onLogout }) => {
           { name: 'address', label: 'Address' },
           { name: 'description', label: 'Description', type: 'textarea' },
           { name: 'parent_id', label: 'Parent Location', type: 'select', options: (data.locations || []).filter(l => !l.parent).map(l => ({ value: l.id, label: l.name })) },
+          { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'locations' },
         ],
-        onSubmit: ops.createLocation,
+        onSubmit: async (vals) => {
+          let payload = { ...vals };
+          if (supabaseClient) {
+            try {
+              const { data: setRow } = await supabaseClient.from('fm_settings').select('qr_auto_gen').eq('org_id', FM_ORG_ID).single();
+              if (setRow && setRow.qr_auto_gen && setRow.qr_auto_gen.locations) {
+                payload.code = 'VARS-LOCATIONS-' + Date.now().toString(36).toUpperCase();
+              }
+            } catch (e) {}
+          }
+          return ops.createLocation(payload);
+        },
       },
       asset: {
         title: 'New Asset',
@@ -25816,13 +26039,27 @@ const FMApp = ({ onLogout }) => {
           { name: 'criticality', label: 'Criticality', type: 'select', options: [{value:'Critical',label:'Critical'},{value:'Important',label:'Important'},{value:'Normal',label:'Normal'}] },
           { name: 'status', label: 'Status', type: 'select', options: [{value:'Online',label:'Online'},{value:'Offline',label:'Offline'},{value:'Standby',label:'Standby'},{value:'Decommissioned',label:'Decommissioned'},{value:'Do Not Track',label:'Do Not Track'}] },
           { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
-          { name: 'parent_id', label: 'Parent Asset (for hierarchy)', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
+          { name: 'parent_id', label: 'Parent Asset (for hierarchy / sub-asset)', type: 'select', options: (data.assets || []).map(a => ({ value: a.id, label: a.name })) },
           { name: 'manufacturer', label: 'Manufacturer (suggestions from existing assets)', type: 'datalist', options: [...new Set((data.assets || []).map(a => a.manufacturer).filter(Boolean))] },
           { name: 'model', label: 'Model' },
           { name: 'serial_number', label: 'Serial Number' },
           { name: 'asset_type', label: 'Asset Type' },
+          { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'assets' },
         ],
-        onSubmit: ops.createAsset,
+        onSubmit: async (vals) => {
+          // Auto-generate QR code if Settings → Operations → Auto-generate for Assets is ON.
+          // Settings live in fm_settings.qr_auto_gen JSONB; we read once via Supabase here.
+          let payload = { ...vals };
+          if (supabaseClient) {
+            try {
+              const { data: setRow } = await supabaseClient.from('fm_settings').select('qr_auto_gen').eq('org_id', FM_ORG_ID).single();
+              if (setRow && setRow.qr_auto_gen && setRow.qr_auto_gen.assets) {
+                payload.qr_code = 'VARS-ASSETS-' + Date.now().toString(36).toUpperCase();
+              }
+            } catch (e) {}
+          }
+          return ops.createAsset(payload);
+        },
       },
       workorder: {
         title: 'New Work Order',
@@ -25848,6 +26085,7 @@ const FMApp = ({ onLogout }) => {
             {value:'yearly',label:'Yearly'},
           ] },
           { name: 'parent_wo_id', label: 'Parent Work Order (makes this a sub-WO)', type: 'select', options: (data.workOrders || []).filter(w => w._id).map(w => ({ value: w._id, label: w.id + ' — ' + w.title })) },
+          { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'workorders' },
         ],
         onSubmit: async (vals) => {
           // Build proper payload
@@ -25872,6 +26110,7 @@ const FMApp = ({ onLogout }) => {
           { name: 'unit_number', label: 'Unit Number' },
           { name: 'area_type', label: 'Area Type', type: 'select', options: [{value:'Common Area',label:'Common Area'},{value:'In-Unit',label:'In-Unit'},{value:'Outdoor',label:'Outdoor'}] },
           { name: 'preferred_contact', label: 'Preferred Contact', type: 'select', options: [{value:'WhatsApp',label:'WhatsApp'},{value:'SMS',label:'SMS'},{value:'Email',label:'Email'},{value:'Phone',label:'Phone'}] },
+          { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'requests' },
         ],
         onSubmit: ops.createRequest,
       },
@@ -25896,6 +26135,7 @@ const FMApp = ({ onLogout }) => {
           { name: 'cost_per_unit', label: 'Cost per Unit (AED)', type: 'number' },
           { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
           { name: 'vendor_id', label: 'Vendor', type: 'select', options: (data.vendors || []).map(v => ({ value: v.id, label: v.name })) },
+          { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'parts' },
         ],
         onSubmit: ops.createPart,
       },
@@ -26020,6 +26260,7 @@ const FMApp = ({ onLogout }) => {
             { name: 'name', label: 'Location Name', required: true },
             { name: 'address', label: 'Address' },
             { name: 'description', label: 'Description', type: 'textarea' },
+            { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'locations' },
           ], onSubmit: (vals) => ops.updateLocation(rowId, vals),
             extraActions: [
               { label: 'Use in new work order', onClick: () => { setCreateModal(null); setTimeout(() => { openCreate('workorder'); setTimeout(() => { setCreateModal(prev => prev ? { ...prev, title: prev.title, fields: prev.fields.map(f => f.name === 'location_id' ? { ...f, defaultValue: rowId } : f) } : prev); }, 100); }, 100); } },
@@ -26036,6 +26277,7 @@ const FMApp = ({ onLogout }) => {
             { name: 'manufacturer', label: 'Manufacturer (suggestions)', type: 'datalist', options: [...new Set((data.assets || []).map(a => a.manufacturer).filter(Boolean))] },
             { name: 'model', label: 'Model' },
             { name: 'serial_number', label: 'Serial Number' },
+            { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'assets' },
           ], onSubmit: (vals) => ops.updateAsset(rowId, vals),
             extraActions: [
               { label: 'Use in new work order', onClick: () => { setCreateModal(null); setTimeout(() => { openCreate('workorder'); }, 100); } },
@@ -26052,6 +26294,7 @@ const FMApp = ({ onLogout }) => {
             { name: 'location_id', label: 'Location', type: 'select', options: (data.locations || []).map(l => ({ value: l.id, label: l.name })) },
             { name: 'due_date', label: 'Due Date', type: 'date' },
             { name: 'estimated_hours', label: 'Estimated Hours', type: 'number' },
+            { name: 'pictures', label: 'Photos', type: 'pictures', prefix: 'workorders' },
           ], onSubmit: (vals) => ops.updateWorkOrder(rowId, vals) },
           request: { title: 'Edit Request', fields: [
             { name: 'title', label: 'Title', required: true },
@@ -26176,6 +26419,7 @@ const FMApp = ({ onLogout }) => {
                     <button onClick={() => setAssetViewMode('panel')} style={{padding:'6px 10px',background:assetViewMode==='panel'?FM_COLORS.blueBg:FM_COLORS.bg,color:assetViewMode==='panel'?FM_COLORS.blue:FM_COLORS.textSecondary,border:'none',cursor:'pointer',fontSize:12}}>Panel</button>
                     <button onClick={() => setAssetViewMode('tree')} style={{padding:'6px 10px',background:assetViewMode==='tree'?FM_COLORS.blueBg:FM_COLORS.bg,color:assetViewMode==='tree'?FM_COLORS.blue:FM_COLORS.textSecondary,border:'none',cursor:'pointer',fontSize:12}}>Tree</button>
                   </div>
+                  <button style={fmStyles.secondaryBtn} onClick={() => setBulkQRPrint(true)}>Print all QR codes</button>
                   <button style={fmStyles.secondaryBtn} onClick={() => setImportDialog('fm_assets')}>Import</button>
                   <button style={fmStyles.primaryBtn} onClick={() => openCreate('asset')}>+ New Asset</button>
                 </div>
@@ -26191,7 +26435,7 @@ const FMApp = ({ onLogout }) => {
         return <FMTablePage title={<span>Assets <span style={{display:'inline-flex',gap:0,border:`1px solid ${FM_COLORS.border}`,borderRadius:6,marginLeft:12,fontSize:11,verticalAlign:'middle'}}>
           <button onClick={() => setAssetViewMode('panel')} style={{padding:'4px 10px',background:FM_COLORS.blueBg,color:FM_COLORS.blue,border:'none',cursor:'pointer',fontSize:11}}>Panel</button>
           <button onClick={() => setAssetViewMode('tree')} style={{padding:'4px 10px',background:FM_COLORS.bg,color:FM_COLORS.textSecondary,border:'none',cursor:'pointer',fontSize:11}}>Tree</button>
-        </span></span>} columns={['Name','Criticality','Status','Manufacturer','Model','QR']} rows={(D.assets || []).map(a => ({ id: a.id, status: a.status, locationId: a.location_id, cells: [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.manufacturer,a.model,
+        </span> <button onClick={() => setBulkQRPrint(true)} style={{...fmStyles.secondaryBtn,padding:'4px 10px',fontSize:11,marginLeft:8,verticalAlign:'middle'}}>Print all QR</button></span>} columns={['Name','Criticality','Status','Manufacturer','Model','QR']} rows={(D.assets || []).map(a => ({ id: a.id, status: a.status, locationId: a.location_id, cells: [a.name,<FMStatusPill s={a.criticality}/>,<FMStatusPill s={a.status}/>,a.manufacturer,a.model,
         <button onClick={e => { e.stopPropagation(); setQrModal({ entity: { id: a.id, name: a.name, qr_code: a.qr_code }, entityType: 'fm_assets' }); }} title="QR Code" style={{background:'none',border:`1px solid ${FM_COLORS.border}`,color:FM_COLORS.textSecondary,cursor:'pointer',padding:'4px 10px',borderRadius:4,fontSize:11,fontWeight:500}}>QR</button>
       ] }))} filters={['Criticality','Downtime Reason','Asset Types','+ Add Filter']} primaryAction="+ New Asset" onCreate={() => openCreate('asset')} onImport={() => setImportDialog('fm_assets')} onRowClick={(id) => openEdit('asset', id)} onRowDelete={ops.deleteAsset} statusOptions={['Online','Offline','Standby','Decommissioned','Do Not Track']} statusFilter={statusFilters.assets} onStatusFilterChange={v => setStatusFilters({...statusFilters, assets: v})} locationOptions={(D.locations || []).filter(l => !l.parent)} locationFilter={locationFilters.assets} onLocationFilterChange={v => setLocationFilters({...locationFilters, assets: v})} bulkActions={bulkActionsForAssets}/>;
       }
@@ -26387,8 +26631,46 @@ const FMApp = ({ onLogout }) => {
           onSaved={() => ops.refresh && ops.refresh()}
         />
       )}
+      {bulkQRPrint && (
+        <FMBulkQRPrint
+          assets={data.assets || []}
+          onClose={() => setBulkQRPrint(false)}
+        />
+      )}
+      <FMDeepLinkRouter
+        deepLinkProcessedRef={deepLinkProcessedRef}
+        data={data}
+        setModule={setModule}
+        openEdit={openEdit}
+      />
     </div>
   );
+};
+
+// Tiny helper component that runs the deep-link router after openEdit is defined.
+// Looks at ?fmAsset / ?fmLocation / ?fmPart in the URL once data is loaded;
+// switches to the right module and opens the edit modal pre-filled.
+const FMDeepLinkRouter = ({ deepLinkProcessedRef, data, setModule, openEdit }) => {
+  React.useEffect(() => {
+    if (deepLinkProcessedRef.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const aid = params.get('fmAsset');
+    const lid = params.get('fmLocation');
+    const pid = params.get('fmPart');
+    const tryOpen = (kind, modulePage, id, list) => {
+      if (!id || !list || !list.length) return false;
+      if (!list.find(x => x.id === id)) return false;
+      deepLinkProcessedRef.current = true;
+      setModule(modulePage);
+      setTimeout(() => openEdit(kind, id), 100);
+      return true;
+    };
+    tryOpen('asset', 'assets', aid, data.assets) ||
+    tryOpen('location', 'locations', lid, data.locations) ||
+    tryOpen('part', 'parts', pid, data.parts);
+  }, [data.assets && data.assets.length, data.locations && data.locations.length, data.parts && data.parts.length]);
+  return null;
 };
 
 // ==================== MAIN APP ====================
